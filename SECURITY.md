@@ -2,11 +2,12 @@
 
 ## Supported versions
 
-Until a newer stable line is released, security fixes target the latest 0.1.x release and the current default branch.
+Security fixes target the latest 0.2.x release and the current default branch. Every v0.1.x release and tag has been revoked and is unsupported.
 
 | Version | Supported |
 |---|---|
-| latest 0.1.x | yes |
+| latest 0.2.x | yes |
+| any 0.1.x artifact | revoked; unsupported |
 | older snapshots | no guaranteed support |
 
 ## Reporting a vulnerability

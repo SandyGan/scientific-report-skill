@@ -1,6 +1,6 @@
 {
   "name": "scientific-report-reference-runtime",
-  "version": "0.2.0-dev",
+  "version": "0.2.0",
   "private": true,
   "description": "Optional strict validator and deterministic renderer for the Scientific Report skill",
   "license": "Apache-2.0",

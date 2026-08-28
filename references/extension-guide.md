@@ -43,7 +43,7 @@ When two extension rules conflict, preserve more uncertainty and less disclosure
 
 ## Contract-coherence preflight
 
-Before designing an extension, inspect `reviews/zero-based/INTEGRATION_BLOCKERS.md` and pin the protocol, schema, rule-registry, prompt, renderer/view-model, attestation, and manifest versions the extension expects. An extension may not route around a core mismatch with aliases, free text, parallel status fields, or renderer fallbacks.
+Before designing an extension, inspect `references/legacy-toolchain-reviews/INTEGRATION_BLOCKERS.md` and pin the protocol, schema, rule-registry, prompt, renderer/view-model, attestation, and manifest versions the extension expects. An extension may not route around a core mismatch with aliases, free text, parallel status fields, or renderer fallbacks.
 
 If the extension touches an unresolved area—currently including public-withheld provenance, missingness/applicability provenance, source coverage, attempt/segment outcomes, result axes, claim/argument/bridge/conflict records, reproducibility units, or human-review outcomes—resolve or migrate that core contract across schemas, rules, types, fixtures, and rendering before declaring the extension supported. Preserve source facts and explicit missingness in the meantime; do not use the extension namespace to publish a lossy substitute.
 

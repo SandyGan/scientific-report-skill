@@ -59,7 +59,7 @@ Perform this gate before scientific scoring or tracing.
 - Can every applicable protocol concept be represented losslessly by the active schema?
 - Are enum names and states identical where identity is required, rather than mapped by undocumented aliases?
 - Does the attestation state exactly which checks ran, and are unimplemented/skipped checks visible?
-- Are any items in `reviews/zero-based/INTEGRATION_BLOCKERS.md` applicable to the payload?
+- Are any items in `references/legacy-toolchain-reviews/INTEGRATION_BLOCKERS.md` applicable to the payload?
 
 **Blockers**
 
