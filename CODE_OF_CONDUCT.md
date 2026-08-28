@@ -1,6 +1,6 @@
 # Code of conduct
 
-Scientific Report Console is committed to a professional, inclusive, evidence-focused community.
+Scientific Report Skill is committed to a professional, inclusive, evidence-focused community.
 
 Participants are expected to:
 

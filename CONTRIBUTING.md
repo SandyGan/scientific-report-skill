@@ -1,17 +1,20 @@
-# Contributing to Scientific Report Console
+# Contributing to Scientific Report Skill
 
 Thank you for helping improve evidence-led scientific reporting. Contributions may affect serialized scientific records and release decisions, so contract changes require more care than ordinary presentation changes.
 
-## Development setup
+## Skill development
 
-Requirements:
+The user-facing product has no Node.js requirement. Edit `SKILL.md`, references, contracts, prompts, and templates directly, then validate the skill structure.
+
+The optional reference runtime requires:
 
 - Node.js 22 or later;
 - npm 10 or later.
 
-Install dependencies and run the complete local gate:
+To work on that runtime, enter its directory before installing dependencies:
 
 ```bash
+cd tools/reference-runtime
 npm install
 npm run check
 ```

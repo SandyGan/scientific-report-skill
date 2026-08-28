@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Scientific report working copy</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, sans-serif; line-height: 1.55; }
+    body { max-width: 74rem; margin: 0 auto; padding: 2rem; color: #18212b; background: #f7f9fb; }
+    header, section { background: white; border: 1px solid #d7dee7; border-radius: .6rem; padding: 1.25rem; margin: 0 0 1rem; }
+    .warning { border-left: .4rem solid #b45309; background: #fff7ed; }
+    h1, h2 { line-height: 1.2; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #d7dee7; padding: .5rem; text-align: left; vertical-align: top; }
+    code { overflow-wrap: anywhere; }
+  </style>
+</head>
+<body>
+  <header data-report-slot="identity-and-status" class="warning">
+    <h1>Scientific report working copy</h1>
+    <p>This shell has not been populated. Do not deliver it as a completed report.</p>
+  </header>
+  <main>
+    <section data-report-slot="scope-and-source-coverage"><h2>Scope and source coverage</h2></section>
+    <section data-report-slot="questions-and-resolution"><h2>Questions and resolution</h2></section>
+    <section data-report-slot="work-and-methods"><h2>Work, methods, and execution history</h2></section>
+    <section data-report-slot="results-failures-conflicts"><h2>Results, failures, and conflicts</h2></section>
+    <section data-report-slot="claims-and-evidence"><h2>Claims and evidence</h2></section>
+    <section data-report-slot="provenance-and-reproducibility"><h2>Provenance and reproducibility</h2></section>
+    <section data-report-slot="limitations-and-review"><h2>Limitations and unresolved review</h2></section>
+  </main>
+</body>
+</html>

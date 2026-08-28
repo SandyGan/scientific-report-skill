@@ -1,0 +1,88 @@
+{
+  "name": "scientific-report-reference-runtime",
+  "version": "0.2.0-dev",
+  "private": true,
+  "description": "Optional strict validator and deterministic renderer for the Scientific Report skill",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SandyGan/scientific-report-skill.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SandyGan/scientific-report-skill/issues"
+  },
+  "homepage": "https://github.com/SandyGan/scientific-report-skill#readme",
+  "keywords": [
+    "scientific-reporting",
+    "reproducibility",
+    "research-integrity",
+    "provenance",
+    "offline-report"
+  ],
+  "type": "module",
+  "bin": {
+    "scientific-report-reference": "dist/cli/index.js"
+  },
+  "exports": {
+    "./normalizer": {
+      "types": "./dist/normalizer/index.d.ts",
+      "import": "./dist/normalizer/index.js"
+    },
+    "./projection": {
+      "types": "./dist/projection/index.d.ts",
+      "import": "./dist/projection/index.js"
+    },
+    "./validator": {
+      "types": "./dist/validator/index.d.ts",
+      "import": "./dist/validator/index.js"
+    },
+    "./renderer": {
+      "types": "./dist/renderer/index.d.ts",
+      "import": "./dist/renderer/index.js"
+    },
+    "./bundler": {
+      "types": "./dist/bundler/index.d.ts",
+      "import": "./dist/bundler/index.js"
+    },
+    "./verifier": {
+      "types": "./dist/verifier/index.d.ts",
+      "import": "./dist/verifier/index.js"
+    },
+    "./generation": {
+      "types": "./dist/generation/index.d.ts",
+      "import": "./dist/generation/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "cli": "tsx src/cli/index.ts",
+    "demo": "tsx src/cli/index.ts demo",
+    "validate:example": "tsx src/cli/index.ts validate ../../examples/cross-domain/scientific-report.json --source-report ../../examples/cross-domain/scientific-report.canonical.json --projection ../../examples/cross-domain/disclosure-projection.json",
+    "render:example": "tsx src/cli/index.ts render ../../examples/cross-domain/scientific-report.json --source-report ../../examples/cross-domain/scientific-report.canonical.json --projection ../../examples/cross-domain/disclosure-projection.json --out dist/demo",
+    "verify:bundle": "tsx src/cli/index.ts verify dist/demo",
+    "check": "npm run typecheck && npm test && npm run build"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "commander": "^14.0.0",
+    "handlebars": "^4.7.8",
+    "parse5": "^7.3.0",
+    "yaml": "^2.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "jsdom": "^26.1.0",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=22",
+    "npm": ">=10"
+  },
+  "packageManager": "npm@10.9.4"
+}

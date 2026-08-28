@@ -32,31 +32,12 @@ jobs:
         with:
           node-version: 22
           cache: npm
+          cache-dependency-path: tools/reference-runtime/package-lock.json
 
       - name: Install locked dependencies
+        working-directory: tools/reference-runtime
         run: npm ci
 
-      - name: Typecheck, test, and build
+      - name: Check optional reference runtime
+        working-directory: tools/reference-runtime
         run: npm run check
-
-  package:
-    name: Package allowlist
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    needs: quality
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v7
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Install locked dependencies
-        run: npm ci
-
-      - name: Inspect publish contents
-        run: npm pack --dry-run

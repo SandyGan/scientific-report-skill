@@ -1,0 +1,4 @@
+interface:
+  display_name: "Scientific Report"
+  short_description: "Build evidence-led scientific reports from project materials"
+  default_prompt: "Use $scientific-report to turn my project materials into an evidence-led offline scientific report."
