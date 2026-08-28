@@ -1,0 +1,754 @@
+{
+  "schema_version": "1.0.0",
+  "round": 1,
+  "matrix_kind": "frozen-finding-repair",
+  "project_root": "<project-root>",
+  "frozen_finding_count": 44,
+  "summary": {
+    "fixed": 44,
+    "not_fixed": 0,
+    "regression_test_named": 44,
+    "release_blockers_remaining": 0
+  },
+  "observed_commands": {
+    "check": {
+      "command": "npm --prefix <project-root> run check",
+      "status": "pass",
+      "outcome": "TypeScript source/test typechecks passed; 30 Vitest files and 275 tests passed; production tsc build passed."
+    },
+    "release_and_working_copy": {
+      "command": "report-prompt demo --release-only --out <temporary-directory>/report-prompt-release-only --json; report-prompt demo --out <temporary-directory>/report-prompt-working-copy --json",
+      "status": "pass",
+      "outcome": "Release demo verified in release mode with releaseEligible=true; working copy verified in integrity_only mode with releaseEligible=false."
+    },
+    "cli_pipeline": {
+      "command": "report-prompt init -> normalize -> project -> validate -> render --working-copy -> verify --working-copy",
+      "status": "pass",
+      "outcome": "The source-empty scaffold remained honestly non-release-eligible, projection completed, render/bundle completed, and integrity-only verification passed from a foreign current working directory."
+    },
+    "npm_pack": {
+      "command": "npm pack <project-root> --pack-destination <temporary-directory>/report-prompt-final-pack",
+      "status": "pass",
+      "outcome": "prepack reran the full check and created scientific-report-console-0.1.0.tgz (734117 bytes; 294 entries); tar inspection found no src/, tests/, reviews/, node_modules/, PROJECT_PLAN.md, or package-lock.json members."
+    },
+    "consumer_smoke": {
+      "command": "npm install <temporary-directory>/report-prompt-final-pack/scientific-report-console-0.1.0.tgz; report-prompt --help; report-prompt demo --release-only; report-prompt verify; import documented package subpaths",
+      "status": "pass",
+      "outcome": "Installed CLI version 0.1.0 exposed init/normalize/project/validate/render/bundle/verify; the installed 11-member release demo and explicit verifier both returned releaseEligible=true in release mode; normalizer/projection/validator/renderer/bundler/verifier ESM subpath imports loaded."
+    }
+  },
+  "findings": {
+    "F1": {
+      "status": "fixed",
+      "changed_files": [
+        "schemas/generation-request.schema.json",
+        "schemas/generation-response.schema.json",
+        "prompts/core/output-patch-contract.md",
+        "tests/prompt-conformance/generation-contract-regressions.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "tests/prompt-conformance/generation-contract-regressions.test.ts",
+          "name": "requires full typed accepted collections for S6 and detects body/hash tampering (F1)"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "F2": {
+      "status": "fixed",
+      "changed_files": [
+        "schemas/generation-request.schema.json",
+        "schemas/generation-response.schema.json",
+        "prompts/core/output-patch-contract.md",
+        "prompts/contracts/response.example.json",
+        "tests/prompt-conformance/generation-contract-regressions.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "tests/prompt-conformance/generation-contract-regressions.test.ts",
+          "name": "applies the published patch to an existing target root and rejects unauthorized, absent, or mismatched roots before atomic application (F2)"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "F3": {
+      "status": "fixed",
+      "changed_files": [
+        "schemas/generation-request.schema.json",
+        "prompts/README.md",
+        "prompts/stages/03-normalization-route.md",
+        "prompts/stages/09-author-reproducibility.md",
+        "tests/prompt-conformance/generation-contract-regressions.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "tests/prompt-conformance/generation-contract-regressions.test.ts",
+          "name": "proves a stage-code bijection and routes normalization only to deterministic non-LLM code (F3)"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "F4": {
+      "status": "fixed",
+      "changed_files": [
+        "schemas/generation-response.schema.json",
+        "prompts/README.md",
+        "prompts/contracts/response.example.json",
+        "tests/prompt-conformance/generation-contract-regressions.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "tests/prompt-conformance/generation-contract-regressions.test.ts",
+          "name": "validates every documented JSON snippet unchanged against its named structural contract (F4)"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "F5": {
+      "status": "fixed",
+      "changed_files": [
+        "schemas/defs/common.schema.json",
+        "prompts/stages/02-extract-atomic-records.md",
+        "tests/prompt-conformance/chunk-continuation-regressions.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "tests/prompt-conformance/chunk-continuation-regressions.test.ts",
+          "name": "reassembles a split immediately before a failed-control qualification exactly once and blocks unknown/truncated boundaries (F5)"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "F6": {
+      "status": "fixed",
+      "changed_files": [
+        "schemas/generation-request.schema.json",
+        "schemas/generation-response.schema.json",
+        "tests/prompt-conformance/chunk-continuation-regressions.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "tests/prompt-conformance/chunk-continuation-regressions.test.ts",
+          "name": "fails closed unless resume lineage has trusted verification and rejects tampering, replay, mismatch, staleness, altered history, and duplicate operations (F6)"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "F7": {
+      "status": "fixed",
+      "changed_files": [
+        "schemas/defs/common.schema.json",
+        "schemas/generation-response.schema.json",
+        "src/lib/types.ts",
+        "tests/fixtures/base-report.ts",
+        "examples/cross-domain/scientific-report.json",
+        "tests/prompt-conformance/generation-contract-regressions.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "tests/prompt-conformance/generation-contract-regressions.test.ts",
+          "name": "requires immutable source, excerpt, chunk, and parser identity for source-derived operations (F7)"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "F8": {
+      "status": "fixed",
+      "changed_files": [
+        "schemas/generation-response.schema.json",
+        "prompts/contracts/cannot-complete.example.json",
+        "tests/prompt-conformance/generation-contract-regressions.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "tests/prompt-conformance/generation-contract-regressions.test.ts",
+          "name": "rejects bare unreadable/excluded IDs and accepts complete traceable dispositions (F8)"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "F9": {
+      "status": "fixed",
+      "changed_files": [
+        "prompts/contracts/request.example.json",
+        "prompts/core/output-patch-contract.md",
+        "tests/prompt-conformance/generation-contract-regressions.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "tests/prompt-conformance/generation-contract-regressions.test.ts",
+          "name": "resolves every referenced prompt uniquely with current version and exact byte hash (F9)"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "SCI-001": {
+      "status": "fixed",
+      "changed_files": [
+        "src/validator/claim-rules.ts",
+        "tests/argument-graph/argument-integrity.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "tests/argument-graph/argument-integrity.test.ts",
+          "name": "[SCI-001] raises BRG001 for a mechanistic MD-to-wet-lab claim after every declared bridge ID and bridge record is removed"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "SCI-002": {
+      "status": "fixed",
+      "changed_files": [
+        "schemas/defs/claim-argument.schema.json",
+        "src/validator/claim-rules.ts",
+        "tests/argument-graph/argument-integrity.test.ts",
+        "examples/cross-domain/scientific-report.json"
+      ],
+      "regression_tests": [
+        {
+          "file": "tests/argument-graph/argument-integrity.test.ts",
+          "name": "[SCI-002] rejects a bridge labelled valid when 1 nM versus 10 µM dose and occupancy versus viability endpoint are mismatched"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "SCI-003": {
+      "status": "fixed",
+      "changed_files": [
+        "schemas/defs/claim-argument.schema.json",
+        "src/validator/claim-rules.ts",
+        "tests/argument-graph/argument-integrity.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "tests/argument-graph/argument-integrity.test.ts",
+          "name": "[SCI-003] raises CLM001 when a resolved question names only an unsupported evidence-free claim as satisfying its criterion"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "SCI-004": {
+      "status": "fixed",
+      "changed_files": [
+        "src/validator/revision-rules.ts",
+        "tests/argument-graph/argument-integrity.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "tests/argument-graph/argument-integrity.test.ts",
+          "name": "[SCI-004] reopens a resolved question and invalidates its derived answer when the sole support is retracted"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "SCI-005": {
+      "status": "fixed",
+      "changed_files": [
+        "src/validator/claim-rules.ts",
+        "tests/argument-graph/argument-integrity.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "tests/argument-graph/argument-integrity.test.ts",
+          "name": "[SCI-005] requires a conflict record for like-for-like equivalence versus increase conclusions"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "SCI-006": {
+      "status": "fixed",
+      "changed_files": [
+        "schemas/defs/result-and-disposition.schema.json",
+        "src/validator/negative-rules.ts",
+        "tests/argument-graph/argument-integrity.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "tests/argument-graph/argument-integrity.test.ts",
+          "name": "[SCI-006] raises NUL001 when a failed control and unknown MDE are used to support biological absence"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "SCI-007": {
+      "status": "fixed",
+      "changed_files": [
+        "src/validator/domain-rules.ts",
+        "tests/derivation/material-and-derivation.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "tests/derivation/material-and-derivation.test.ts",
+          "name": "[SCI-007] raises WET001 when two pools from one donor are declared as biological N=2"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "REPRO-001": {
+      "status": "fixed",
+      "changed_files": [
+        "schemas/recipe.schema.json",
+        "schemas/defs/reproducibility-unit.schema.json",
+        "src/validator/reproducibility-rules.ts",
+        "tests/reproducibility/round-1-regressions.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "tests/reproducibility/round-1-regressions.test.ts",
+          "name": "REPRO-001 resolvable replay records > caps the original invented-recipe/unknown-invocation/null-capture probe at R0"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "REPRO-002": {
+      "status": "fixed",
+      "changed_files": [
+        "schemas/defs/reproducibility-unit.schema.json",
+        "src/validator/reproducibility-rules.ts",
+        "tests/reproducibility/round-1-regressions.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "tests/reproducibility/round-1-regressions.test.ts",
+          "name": "REPRO-002 machine-verifiable R2 comparison > rejects the original bare-met replay with unknown semantics and absent replay evidence/context"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "REPRO-003": {
+      "status": "fixed",
+      "changed_files": [
+        "src/bundler/reproducibility.ts",
+        "src/bundler/index.ts",
+        "src/verifier/index.ts",
+        "src/cli/index.ts",
+        "src/bundler/index.test.ts",
+        "tests/reproducibility/round-1-regressions.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "src/bundler/index.test.ts",
+          "name": "[REPRO-003] refuses a bundle that omits a declared public available R1 dependency"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "REPRO-004": {
+      "status": "fixed",
+      "changed_files": [
+        "schemas/defs/quantitative-derivation.schema.json",
+        "src/validator/reproducibility-rules.ts",
+        "src/validator/derivation-rules.ts",
+        "tests/reproducibility/round-1-regressions.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "tests/reproducibility/round-1-regressions.test.ts",
+          "name": "REPRO-004 exact DataSlice selection > rejects the original 12-of-14 table-name-only probe and caps its derivation claim at partial"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "REPRO-005": {
+      "status": "fixed",
+      "changed_files": [
+        "src/lib/summaries.ts",
+        "src/validator/reproducibility-rules.ts",
+        "tests/reproducibility/round-1-regressions.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "tests/reproducibility/round-1-regressions.test.ts",
+          "name": "REPRO-005 independent denominators > never infers the claim denominator from the same covered IDs and lists uncovered targets"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "REPRO-006": {
+      "status": "fixed",
+      "changed_files": [
+        "schemas/defs/reproducibility-unit.schema.json",
+        "src/validator/reproducibility-rules.ts",
+        "tests/reproducibility/round-1-regressions.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "tests/reproducibility/round-1-regressions.test.ts",
+          "name": "REPRO-006 actionable access and nonvacuous dependencies > rejects the original unknown verified-procedure/empty-dependency probe"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "REPRO-007": {
+      "status": "fixed",
+      "changed_files": [
+        "prompts/stages/09-author-reproducibility.md",
+        "src/validator/reproducibility-rules.ts",
+        "tests/reproducibility/round-1-regressions.test.ts",
+        "tests/prompt-conformance/generation-contract-regressions.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "tests/reproducibility/round-1-regressions.test.ts",
+          "name": "REPRO-007 semantic authoring gate > blocks the original computational report with six provenance record classes and zero reproducibility units"
+        },
+        {
+          "file": "tests/prompt-conformance/generation-contract-regressions.test.ts",
+          "name": "requires a dedicated reproducibility response to disposition every independently inventoried computation (REPRO-007 prompt portion)"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "SC-02": {
+      "status": "fixed",
+      "changed_files": [
+        "schemas/validation-attestation.schema.json",
+        "src/validator/semantic.ts",
+        "src/validator/index.ts",
+        "src/validator/attestation.ts",
+        "src/validator/index.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "src/validator/index.test.ts",
+          "name": "[SC-02] marks selected-rule validation incomplete and never release-eligible"
+        },
+        {
+          "file": "src/validator/index.test.ts",
+          "name": "marks an explicitly skipped domain-pack check not_run and blocks release"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "SC-03": {
+      "status": "fixed",
+      "changed_files": [
+        "src/lib/rule-support.ts",
+        "src/validator/semantic.ts",
+        "src/validator/index.ts",
+        "src/validator/index.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "src/validator/index.test.ts",
+          "name": "[SC-03] fails closed when a loaded rule condition differs from compiled support"
+        },
+        {
+          "file": "src/validator/index.test.ts",
+          "name": "fails closed when an overlay schema id or executable binding differs"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "SC-04": {
+      "status": "fixed",
+      "changed_files": [
+        "src/projection/project.ts",
+        "src/projection/verify.ts",
+        "src/validator/disclosure-rules.ts",
+        "src/validator/index.ts",
+        "src/validator/index.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "src/validator/index.test.ts",
+          "name": "[SC-04] rejects a hash-consistent known-to-unknown disclosure laundering attack"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "SC-05": {
+      "status": "fixed",
+      "changed_files": [
+        "schemas/defs/source-coverage.schema.json",
+        "src/lib/source-extraction.ts",
+        "src/validator/negative-rules.ts",
+        "src/validator/semantic.ts",
+        "src/validator/index.test.ts",
+        "tests/coverage/extraction-coverage.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "src/validator/index.test.ts",
+          "name": "[SC-05] finds a failed run in neutral-titled source bytes and requires a failure record"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "SC-06": {
+      "status": "fixed",
+      "changed_files": [
+        "src/validator/derivation-rules.ts",
+        "src/validator/index.test.ts",
+        "tests/derivation/material-and-derivation.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "src/validator/index.test.ts",
+          "name": "[SC-06] rejects a quantitative claim supported only by a whole-source locator"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "SC-09": {
+      "status": "fixed",
+      "changed_files": [
+        "src/normalizer/normalize.ts",
+        "src/normalizer/schema-shapes.ts",
+        "src/normalizer/normalize.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "src/normalizer/normalize.test.ts",
+          "name": "[SC-09] prevalidates authoring input and accepts every normalizer-supported canonical record kind"
+        },
+        {
+          "file": "src/normalizer/normalize.test.ts",
+          "name": "uses collection-specific enums and postvalidates the normalized output"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "renderer-absolute-path-root-bypass": {
+      "status": "fixed",
+      "changed_files": [
+        "src/lib/absolute-path.ts",
+        "src/validator/disclosure-rules.ts",
+        "src/renderer/safety.ts",
+        "src/projection/project.ts",
+        "src/bundler/offline.ts",
+        "src/verifier/index.ts",
+        "src/lib/absolute-path.test.ts",
+        "tests/security-and-redaction/renderer-security.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "tests/security-and-redaction/renderer-security.test.ts",
+          "name": "[renderer-absolute-path-root-bypass] rejects generic /opt host-local references before duplicating them into public files"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "reproducibility-axis-substitution": {
+      "status": "fixed",
+      "changed_files": [
+        "src/renderer/view-model.ts",
+        "templates/scientific-console/partials/provenance-and-reproduction.html",
+        "tests/render-semantics/renderer-record-semantics.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "tests/render-semantics/renderer-record-semantics.test.ts",
+          "name": "[reproducibility-axis-substitution] uses canonical axis_assessments for prominent replay tiles and keeps record diagnostics separate"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "renderer-partial-attestation-validation": {
+      "status": "fixed",
+      "changed_files": [
+        "src/renderer/safety.ts",
+        "schemas/validation-attestation.schema.json",
+        "tests/security-and-redaction/renderer-security.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "tests/security-and-redaction/renderer-security.test.ts",
+          "name": "[renderer-partial-attestation-validation] rejects the malformed partial-attestation probe before rendering a valid badge"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "unsupported-overview-superlatives": {
+      "status": "fixed",
+      "changed_files": [
+        "src/renderer/view-model.ts",
+        "templates/scientific-console/partials/global-overview.html",
+        "tests/render-semantics/renderer-record-semantics.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "tests/render-semantics/renderer-record-semantics.test.ts",
+          "name": "[unsupported-overview-superlatives] uses neutral ordered-overview labels when later records have stronger declared support"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "interval-unit-omitted": {
+      "status": "fixed",
+      "changed_files": [
+        "src/renderer/view-model.ts",
+        "templates/scientific-console/partials/results-and-failures.html",
+        "tests/render-semantics/renderer-record-semantics.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "tests/render-semantics/renderer-record-semantics.test.ts",
+          "name": "[interval-unit-omitted] renders each interval's distinct unit and preserves unknown interval-unit missingness"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "filter-hidden-safety-undercount": {
+      "status": "fixed",
+      "changed_files": [
+        "templates/scientific-console/assets/report.js",
+        "tests/render-semantics/filter-and-audit.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "tests/render-semantics/filter-and-audit.test.ts",
+          "name": "[filter-hidden-safety-undercount] reports an exact hidden safety-record count when working-view filters exclude records"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "PT-09": {
+      "status": "fixed",
+      "changed_files": [
+        "src/renderer/view-model.ts",
+        "templates/scientific-console/report.html",
+        "templates/scientific-console/assets/report.js",
+        "tests/render-semantics/filter-and-audit.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "tests/render-semantics/filter-and-audit.test.ts",
+          "name": "[PT-09] derives every domain, state, and kind choice from every emitted data-record token"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "PT-02": {
+      "status": "fixed",
+      "changed_files": [
+        "src/renderer/index.ts",
+        "src/renderer/templates.ts",
+        "tests/security-and-redaction/renderer-security.test.ts",
+        "tests/integration/round-1-cross-module.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "tests/security-and-redaction/renderer-security.test.ts",
+          "name": "[PT-02] ignores a foreign scientific-console tree in the current working directory"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "cli_pipeline", "status": "pass" }
+    },
+    "PT-01": {
+      "status": "fixed",
+      "changed_files": [
+        "src/bundler/trusted-render.ts",
+        "src/bundler/index.ts",
+        "src/verifier/index.ts",
+        "src/bundler/index.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "src/bundler/index.test.ts",
+          "name": "[PT-01] rejects a benign-manifest rebundle when HTML contradicts the scientific payload"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "offline-html-entity-url-bypass": {
+      "status": "fixed",
+      "changed_files": [
+        "src/bundler/offline.ts",
+        "src/bundler/offline.test.ts",
+        "package.json",
+        "package-lock.json",
+        "templates/scientific-console/report.html",
+        "templates/scientific-console/annex.html"
+      ],
+      "regression_tests": [
+        {
+          "file": "src/bundler/offline.test.ts",
+          "name": "[offline-html-entity-url-bypass] rejects decimal, hexadecimal, named-entity, mixed-case, malformed, protocol-relative, and CSP-less remote resources"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "human-review-cross-file-binding": {
+      "status": "fixed",
+      "changed_files": [
+        "src/verifier/index.ts",
+        "src/bundler/index.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "src/bundler/index.test.ts",
+          "name": "[human-review-cross-file-binding] rejects an approving attestation for unrelated package bytes"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "PT-04": {
+      "status": "fixed",
+      "changed_files": [
+        "src/projection/project.ts",
+        "src/projection/verify.ts",
+        "src/projection/types.ts",
+        "src/cli/index.ts",
+        "src/bundler/index.ts",
+        "src/verifier/index.ts",
+        "tests/integration/round-1-cross-module.test.ts",
+        "README.md",
+        "docs/authoring-guide.md"
+      ],
+      "regression_tests": [
+        {
+          "file": "tests/integration/round-1-cross-module.test.ts",
+          "name": "[PT-04] completes init-to-normalize-to-project-to-validate-to-render-to-verify as an honest working copy"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "cli_pipeline", "status": "pass" }
+    },
+    "PT-06": {
+      "status": "fixed",
+      "changed_files": [
+        "src/bundler/types.ts",
+        "src/verifier/index.ts",
+        "src/cli/index.ts",
+        "src/bundler/index.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "src/bundler/index.test.ts",
+          "name": "[PT-06] qualifies allow-extra-files as integrity-only and lists every unverified path"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "check", "status": "pass" }
+    },
+    "PT-07": {
+      "status": "fixed",
+      "changed_files": [
+        "package.json",
+        "package-lock.json",
+        "tests/integration/round-1-cross-module.test.ts",
+        "README.md"
+      ],
+      "regression_tests": [
+        {
+          "file": "tests/integration/round-1-cross-module.test.ts",
+          "name": "[PT-07] gates npm packing and allowlists only runtime/contract assets"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "npm_pack", "status": "pass" }
+    },
+    "PT-08": {
+      "status": "fixed",
+      "changed_files": [
+        "README.md",
+        "tests/integration/round-1-cross-module.test.ts"
+      ],
+      "regression_tests": [
+        {
+          "file": "tests/integration/round-1-cross-module.test.ts",
+          "name": "[PT-08] gives packed consumers an installable tarball workflow rather than a missing-lockfile command"
+        }
+      ],
+      "observed_command_outcome": { "command_id": "consumer_smoke", "status": "pass" }
+    }
+  }
+}

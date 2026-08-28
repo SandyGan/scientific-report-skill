@@ -1,0 +1,1147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.report-prompt.org/v1/packs/molecular-dynamics.schema.json",
+  "title": "Molecular-dynamics domain payload",
+  "description": "A provider-neutral extension payload for molecular-system preparation, simulation history, trajectory analysis, and convergence evidence.",
+  "$comment": "Instances are identifiable domain payload objects stored under the core /extensions/domain_payloads collection; the domain discriminator selects this schema.",
+  "type": "object",
+  "required": [
+    "payload_id",
+    "domain",
+    "pack_version",
+    "applies_to",
+    "section_coverage",
+    "structure_records",
+    "system_records",
+    "protonation_records",
+    "force_field_records",
+    "solvation_records",
+    "phase_records",
+    "replica_records",
+    "segment_records",
+    "restart_records",
+    "trajectory_analysis_records"
+  ],
+  "properties": {
+    "payload_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "domain": {
+      "const": "molecular_dynamics"
+    },
+    "pack_version": {
+      "$ref": "../defs/common.schema.json#/$defs/Version"
+    },
+    "applies_to": {
+      "$ref": "#/$defs/appliesTo"
+    },
+    "section_coverage": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/sectionCoverage"
+      },
+      "minItems": 11,
+      "allOf": [
+        {
+          "contains": {
+            "properties": {
+              "section_id": {
+                "const": "source_structure_and_mapping"
+              }
+            },
+            "required": [
+              "section_id"
+            ]
+          },
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "section_id": {
+                "const": "system_composition"
+              }
+            },
+            "required": [
+              "section_id"
+            ]
+          },
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "section_id": {
+                "const": "protonation_and_chemistry"
+              }
+            },
+            "required": [
+              "section_id"
+            ]
+          },
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "section_id": {
+                "const": "force_field_and_parameters"
+              }
+            },
+            "required": [
+              "section_id"
+            ]
+          },
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "section_id": {
+                "const": "solvation_ions_and_boundary"
+              }
+            },
+            "required": [
+              "section_id"
+            ]
+          },
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "section_id": {
+                "const": "simulation_protocol"
+              }
+            },
+            "required": [
+              "section_id"
+            ]
+          },
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "section_id": {
+                "const": "replicas_and_randomness"
+              }
+            },
+            "required": [
+              "section_id"
+            ]
+          },
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "section_id": {
+                "const": "segments_checkpoints_and_restarts"
+              }
+            },
+            "required": [
+              "section_id"
+            ]
+          },
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "section_id": {
+                "const": "trajectory_slicing_and_processing"
+              }
+            },
+            "required": [
+              "section_id"
+            ]
+          },
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "section_id": {
+                "const": "equilibration_correlation_and_effective_samples"
+              }
+            },
+            "required": [
+              "section_id"
+            ]
+          },
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "section_id": {
+                "const": "convergence_and_replica_heterogeneity"
+              }
+            },
+            "required": [
+              "section_id"
+            ]
+          },
+          "minContains": 1
+        }
+      ]
+    },
+    "structure_records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/structureRecord"
+      }
+    },
+    "system_records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/systemRecord"
+      }
+    },
+    "protonation_records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/protonationRecord"
+      }
+    },
+    "force_field_records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/forceFieldRecord"
+      }
+    },
+    "solvation_records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/solvationRecord"
+      }
+    },
+    "phase_records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/phaseRecord"
+      }
+    },
+    "replica_records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/replicaRecord"
+      }
+    },
+    "segment_records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/segmentRecord"
+      }
+    },
+    "restart_records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/restartRecord"
+      }
+    },
+    "trajectory_analysis_records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/trajectoryAnalysisRecord"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "identifier": {
+      "$ref": "../defs/common.schema.json#/$defs/Identifier"
+    },
+    "identifierList": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/identifier"
+      },
+      "uniqueItems": true
+    },
+    "sourceBindings": {
+      "type": "array",
+      "items": {
+        "$ref": "../defs/common.schema.json#/$defs/SourceBinding"
+      },
+      "uniqueItems": true
+    },
+    "scientificValue": {
+      "description": "Core explicit-missingness and provenance envelope; domain packs do not weaken it.",
+      "$ref": "../defs/common.schema.json#/$defs/KnownValue"
+    },
+    "appliesTo": {
+      "type": "object",
+      "required": [
+        "work_unit_ids",
+        "attempt_ids",
+        "result_ids",
+        "entity_ids"
+      ],
+      "properties": {
+        "work_unit_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "attempt_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "result_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "entity_ids": {
+          "$ref": "#/$defs/identifierList"
+        }
+      },
+      "additionalProperties": false
+    },
+    "sectionCoverage": {
+      "allOf": [
+        {
+          "$ref": "../defs/common.schema.json#/$defs/SectionCoverage"
+        },
+        {
+          "properties": {
+            "section_id": {
+              "enum": [
+                "source_structure_and_mapping",
+                "system_composition",
+                "protonation_and_chemistry",
+                "force_field_and_parameters",
+                "solvation_ions_and_boundary",
+                "simulation_protocol",
+                "replicas_and_randomness",
+                "segments_checkpoints_and_restarts",
+                "trajectory_slicing_and_processing",
+                "equilibration_correlation_and_effective_samples",
+                "convergence_and_replica_heterogeneity"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "structureRecord": {
+      "type": "object",
+      "required": [
+        "structure_record_id",
+        "source_bindings",
+        "accession",
+        "assembly",
+        "model",
+        "chains",
+        "source_version",
+        "source_hash",
+        "residue_and_atom_mapping_artifact_id",
+        "altloc_policy",
+        "missing_residue_policy",
+        "mutations",
+        "termini_and_caps",
+        "disulfides",
+        "covalent_connections"
+      ],
+      "properties": {
+        "structure_record_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "accession": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "assembly": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "model": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "chains": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "source_version": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "source_hash": {
+          "$ref": "#/$defs/scientificHash"
+        },
+        "residue_and_atom_mapping_artifact_id": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "altloc_policy": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "missing_residue_policy": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "mutations": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "termini_and_caps": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "disulfides": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "covalent_connections": {
+          "$ref": "#/$defs/scientificValue"
+        }
+      },
+      "additionalProperties": false
+    },
+    "systemRecord": {
+      "type": "object",
+      "required": [
+        "system_id",
+        "structure_record_ids",
+        "source_bindings",
+        "name",
+        "system_hash",
+        "components",
+        "atom_count",
+        "net_charge",
+        "construct_definition",
+        "build_artifact_ids"
+      ],
+      "properties": {
+        "system_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "structure_record_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "name": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "system_hash": {
+          "$ref": "#/$defs/scientificHash"
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/systemComponent"
+          },
+          "minItems": 1
+        },
+        "atom_count": {
+          "$ref": "#/$defs/scientificInteger"
+        },
+        "net_charge": {
+          "$ref": "#/$defs/scientificNumber"
+        },
+        "construct_definition": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "build_artifact_ids": {
+          "$ref": "#/$defs/identifierList"
+        }
+      },
+      "additionalProperties": false
+    },
+    "systemComponent": {
+      "type": "object",
+      "required": [
+        "component_id",
+        "kind",
+        "source_bindings",
+        "identity",
+        "sequence_or_chemical_version",
+        "copy_count",
+        "parameter_record_ids"
+      ],
+      "properties": {
+        "component_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "kind": {
+          "enum": [
+            "protein",
+            "nucleic_acid",
+            "lipid",
+            "glycan",
+            "ligand",
+            "metal",
+            "cofactor",
+            "water",
+            "ion",
+            "other",
+            "unknown"
+          ]
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "identity": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "sequence_or_chemical_version": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "copy_count": {
+          "$ref": "#/$defs/scientificInteger"
+        },
+        "parameter_record_ids": {
+          "$ref": "#/$defs/identifierList"
+        }
+      },
+      "additionalProperties": false
+    },
+    "protonationRecord": {
+      "type": "object",
+      "required": [
+        "protonation_record_id",
+        "system_id",
+        "source_bindings",
+        "target_ph",
+        "assignment_method",
+        "method_version",
+        "histidine_states",
+        "other_titratable_states",
+        "uncertain_sites",
+        "manual_overrides",
+        "assignment_artifact_id"
+      ],
+      "properties": {
+        "protonation_record_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "system_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "target_ph": {
+          "$ref": "#/$defs/scientificNumber"
+        },
+        "assignment_method": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "method_version": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "histidine_states": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "other_titratable_states": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "uncertain_sites": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "manual_overrides": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "assignment_artifact_id": {
+          "$ref": "#/$defs/scientificValue"
+        }
+      },
+      "additionalProperties": false
+    },
+    "forceFieldRecord": {
+      "type": "object",
+      "required": [
+        "force_field_record_id",
+        "system_id",
+        "source_bindings",
+        "component_ids",
+        "family",
+        "version",
+        "parameter_file_artifact_ids",
+        "parameter_hashes",
+        "charge_method",
+        "atom_typing_method",
+        "combination_rule",
+        "custom_parameter_provenance"
+      ],
+      "properties": {
+        "force_field_record_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "system_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "component_ids": {
+          "type": "array",
+          "$ref": "#/$defs/identifierList",
+          "minItems": 1
+        },
+        "family": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "version": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "parameter_file_artifact_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "parameter_hashes": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "charge_method": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "atom_typing_method": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "combination_rule": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "custom_parameter_provenance": {
+          "$ref": "#/$defs/scientificValue"
+        }
+      },
+      "additionalProperties": false
+    },
+    "solvationRecord": {
+      "type": "object",
+      "required": [
+        "solvation_record_id",
+        "system_id",
+        "source_bindings",
+        "water_model",
+        "ion_models",
+        "salt_identity",
+        "target_concentration",
+        "neutralization_policy",
+        "box_shape",
+        "box_dimensions",
+        "solute_box_distance",
+        "periodic_boundary_conditions",
+        "solvated_system_artifact_id"
+      ],
+      "properties": {
+        "solvation_record_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "system_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "water_model": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "ion_models": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "salt_identity": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "target_concentration": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "neutralization_policy": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "box_shape": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "box_dimensions": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "solute_box_distance": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "periodic_boundary_conditions": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "solvated_system_artifact_id": {
+          "$ref": "#/$defs/scientificValue"
+        }
+      },
+      "additionalProperties": false
+    },
+    "phaseRecord": {
+      "type": "object",
+      "required": [
+        "phase_id",
+        "work_unit_id",
+        "system_id",
+        "phase_kind",
+        "order",
+        "source_bindings",
+        "ensemble",
+        "duration_or_steps",
+        "integrator",
+        "time_step",
+        "thermostat",
+        "barostat",
+        "constraints",
+        "nonbonded_cutoff",
+        "long_range_electrostatics",
+        "restraints",
+        "enhanced_sampling",
+        "invocation_id",
+        "input_artifact_ids",
+        "output_artifact_ids"
+      ],
+      "properties": {
+        "phase_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "work_unit_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "system_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "phase_kind": {
+          "enum": [
+            "minimization",
+            "nvt",
+            "npt",
+            "restraint_release",
+            "production",
+            "enhanced_sampling",
+            "other",
+            "unknown"
+          ]
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "ensemble": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "duration_or_steps": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "integrator": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "time_step": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "thermostat": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "barostat": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "constraints": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "nonbonded_cutoff": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "long_range_electrostatics": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "restraints": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "enhanced_sampling": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "invocation_id": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "input_artifact_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "output_artifact_ids": {
+          "$ref": "#/$defs/identifierList"
+        }
+      },
+      "additionalProperties": false
+    },
+    "replicaRecord": {
+      "type": "object",
+      "required": [
+        "replica_id",
+        "work_unit_id",
+        "system_id",
+        "source_bindings",
+        "independence_basis",
+        "root_seed",
+        "seed_derivation",
+        "initial_condition_artifact_ids",
+        "segment_ids",
+        "checkpoint_artifact_ids"
+      ],
+      "properties": {
+        "replica_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "work_unit_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "system_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "independence_basis": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "root_seed": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "seed_derivation": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "initial_condition_artifact_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "segment_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "checkpoint_artifact_ids": {
+          "$ref": "#/$defs/identifierList"
+        }
+      },
+      "additionalProperties": false
+    },
+    "segmentRecord": {
+      "type": "object",
+      "required": [
+        "segment_record_id",
+        "core_segment_id",
+        "replica_id",
+        "phase_id",
+        "parent_segment_record_id",
+        "source_bindings",
+        "status",
+        "start_time",
+        "end_time",
+        "parameter_snapshot_hash",
+        "invocation_id",
+        "input_checkpoint_artifact_id",
+        "output_checkpoint_artifact_ids",
+        "trajectory_artifact_ids",
+        "failure_event_ids",
+        "partial_outputs_usable",
+        "partial_output_disposition",
+        "superseded_by_segment_record_ids"
+      ],
+      "properties": {
+        "segment_record_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "core_segment_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "replica_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "phase_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "parent_segment_record_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "status": {
+          "enum": [
+            "planned",
+            "running",
+            "completed",
+            "failed",
+            "cancelled",
+            "unknown"
+          ]
+        },
+        "start_time": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "end_time": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "parameter_snapshot_hash": {
+          "$ref": "#/$defs/scientificHash"
+        },
+        "invocation_id": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "input_checkpoint_artifact_id": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "output_checkpoint_artifact_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "trajectory_artifact_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "failure_event_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "partial_outputs_usable": {
+          "$ref": "#/$defs/scientificBoolean"
+        },
+        "partial_output_disposition": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "superseded_by_segment_record_ids": {
+          "$ref": "#/$defs/identifierList"
+        }
+      },
+      "additionalProperties": false
+    },
+    "restartRecord": {
+      "type": "object",
+      "required": [
+        "restart_record_id",
+        "replica_id",
+        "prior_segment_record_id",
+        "new_segment_record_id",
+        "source_bindings",
+        "trigger",
+        "checkpoint_artifact_id",
+        "changed_parameters",
+        "scientific_impact_assessment",
+        "history_preserved"
+      ],
+      "properties": {
+        "restart_record_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "replica_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "prior_segment_record_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "new_segment_record_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "trigger": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "checkpoint_artifact_id": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "changed_parameters": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "scientific_impact_assessment": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "history_preserved": {
+          "$ref": "#/$defs/scientificBoolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "trajectoryAnalysisRecord": {
+      "type": "object",
+      "required": [
+        "trajectory_analysis_id",
+        "analysis_run_id",
+        "result_ids",
+        "replica_ids",
+        "segment_record_ids",
+        "source_bindings",
+        "trajectory_artifact_ids",
+        "periodic_boundary_processing",
+        "fit_selection",
+        "measurement_selection",
+        "frame_range",
+        "stride",
+        "data_slice_id",
+        "burn_in_definition",
+        "burn_in_decision_timing",
+        "observable_definitions",
+        "autocorrelation_method",
+        "correlation_time_estimates",
+        "effective_sample_sizes",
+        "convergence_criteria",
+        "convergence_diagnostics",
+        "replica_level_results",
+        "replica_heterogeneity",
+        "convergence_conclusion",
+        "sampling_adequacy_assessment"
+      ],
+      "properties": {
+        "trajectory_analysis_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "analysis_run_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "result_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "replica_ids": {
+          "type": "array",
+          "$ref": "#/$defs/identifierList",
+          "minItems": 1
+        },
+        "segment_record_ids": {
+          "type": "array",
+          "$ref": "#/$defs/identifierList",
+          "minItems": 1
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "trajectory_artifact_ids": {
+          "type": "array",
+          "$ref": "#/$defs/identifierList",
+          "minItems": 1
+        },
+        "periodic_boundary_processing": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "fit_selection": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "measurement_selection": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "frame_range": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "stride": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "data_slice_id": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "burn_in_definition": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "burn_in_decision_timing": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "observable_definitions": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "autocorrelation_method": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "correlation_time_estimates": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "effective_sample_sizes": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "convergence_criteria": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "convergence_diagnostics": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "replica_level_results": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "replica_heterogeneity": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "convergence_conclusion": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "sampling_adequacy_assessment": {
+          "$ref": "#/$defs/samplingAdequacyAssessment"
+        }
+      },
+      "additionalProperties": false
+    },
+    "samplingAdequacyAssessment": {
+      "type": "object",
+      "required": [
+        "conclusion_status",
+        "assessed_observables",
+        "criteria_met",
+        "diagnostics_support_conclusion",
+        "effective_sample_sizes_support_conclusion",
+        "replica_assessment_supports_conclusion",
+        "rationale",
+        "source_bindings"
+      ],
+      "properties": {
+        "conclusion_status": {
+          "enum": ["no_conclusion", "insufficient_sampling", "qualified_adequacy", "adequate", "converged", "unknown", "withheld"]
+        },
+        "assessed_observables": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "criteria_met": {
+          "$ref": "#/$defs/scientificBoolean"
+        },
+        "diagnostics_support_conclusion": {
+          "$ref": "#/$defs/scientificBoolean"
+        },
+        "effective_sample_sizes_support_conclusion": {
+          "$ref": "#/$defs/scientificBoolean"
+        },
+        "replica_assessment_supports_conclusion": {
+          "$ref": "#/$defs/scientificBoolean"
+        },
+        "rationale": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "scientificString": {
+      "$ref": "../defs/common.schema.json#/$defs/StringField"
+    },
+    "scientificNumber": {
+      "$ref": "../defs/common.schema.json#/$defs/NumberField"
+    },
+    "scientificInteger": {
+      "$ref": "../defs/common.schema.json#/$defs/IntegerField"
+    },
+    "scientificBoolean": {
+      "$ref": "../defs/common.schema.json#/$defs/BooleanField"
+    },
+    "scientificHash": {
+      "$ref": "../defs/common.schema.json#/$defs/HashField"
+    },
+    "scientificStringArray": {
+      "$ref": "../defs/common.schema.json#/$defs/StringArrayField"
+    }
+  }
+}

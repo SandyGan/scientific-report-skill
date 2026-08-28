@@ -1,0 +1,477 @@
+{
+  "candidates": [
+    {
+      "candidate_id": "F1",
+      "category": "contract-completeness",
+      "evidence": "The later-stage prompts require accepted, version-pinned object content and a trusted-state declaration, but generation-request.schema.json exposes only object references/hashes plus untrusted input_chunks. The reported probe accepted an S6 request with no accepted-state payload and rejected accepted_working_state_objects as an additional property.",
+      "failure_scenario": "A schema-valid S6_argument_graph request provides IDs and hashes but no claim, evidence, failure, or negative-finding bodies. The model must reject a nominally valid request, invent a graph from names and hashes, or consume unaudited copies from raw chunks/extensions.",
+      "file": "<project-root>/schemas/generation-request.schema.json",
+      "line": 386,
+      "minimal_fix": "Add stage-discriminated required inputs, including typed accepted working-state objects with exact version/hash, full payload, and explicit trust/acceptance status; reject later-stage requests whose required content is absent or supplied only through untyped extensions.",
+      "reproduction": "Run node <temporary-directory>/report_prompt_contract_probe.mjs and compare S6-request-without-accepted-state-content (valid:true) with S6-request-with-explicit-accepted-state-content (valid:false, additionalProperties).",
+      "severity": "high",
+      "source_reviewers": [
+        "prompt-contract-reviewer"
+      ],
+      "title": "Later-stage trusted state has no request channel"
+    },
+    {
+      "candidate_id": "F2",
+      "category": "patch-safety",
+      "evidence": "The published response operations target /staging/atomic_records/-, but the declared scientific-report target has additionalProperties:false and no staging property. The request schema has no permitted_patch_roots field, and the reported probes accepted an out-of-target response path while rejecting the proposed roots field.",
+      "failure_scenario": "A schema-valid S2 response reaches a patch applier, but /staging/atomic_records/- does not exist in the declared target, so application fails; alternatively, a patch to validation or unrelated state also passes response validation because no request-bound root is enforced.",
+      "file": "<project-root>/prompts/contracts/response.example.json",
+      "line": 16,
+      "minimal_fix": "Add typed required permitted_patch_roots, enforce every operation against those roots and the selected target schema, correct the example target/path pairing, and add apply-to-target and out-of-root tests.",
+      "reproduction": "Run node <temporary-directory>/report_prompt_contract_probe.mjs and inspect request-without-permitted-patch-roots, request-with-required-permitted-patch-roots, and response-with-unrequested-target-path; then search scientific-report.schema.json for staging or atomic_records.",
+      "severity": "high",
+      "source_reviewers": [
+        "prompt-contract-reviewer"
+      ],
+      "title": "Published patches target an unauthorized nonexistent root"
+    },
+    {
+      "candidate_id": "F3",
+      "category": "stage-routing",
+      "evidence": "The schemas accept nine stage codes including S3_normalization, while the bundle has eight stage files and no normalization prompt. No stage prompt declares an exact schema stage code, and the reported adversarial S3 request validates.",
+      "failure_scenario": "An orchestrator receives a schema-valid S3_normalization request but has no S3 prompt to invoke. It must fail or choose another prompt, even though S2 forbids normalization and S4 assumes normalized accepted records, making behavior integration-dependent.",
+      "file": "<project-root>/schemas/generation-request.schema.json",
+      "line": 311,
+      "minimal_fix": "Declare an exact stage code in every stage prompt, add a conformance test for a one-to-one enum-to-prompt mapping, and add the missing normalization contract or revise the enum/file model consistently.",
+      "reproduction": "Search the reviewable project for S0_ through S8_ stage declarations and run node <temporary-directory>/report_prompt_contract_probe.mjs; the report states no prompt declares a stage code and adversarial-valid-S3-request returns valid:true.",
+      "severity": "high",
+      "source_reviewers": [
+        "prompt-contract-reviewer"
+      ],
+      "title": "Valid stage codes have missing or ambiguous prompts"
+    },
+    {
+      "candidate_id": "F4",
+      "category": "schema-drift",
+      "evidence": "The README requires top-level prompt_id and prompt_version, continuation.state, and source_binding_ids, while the response schema forbids those fields, requires continuation.status, and requires inline source_bindings. The reported probes reject responses following the README vocabulary.",
+      "failure_scenario": "A provider follows the normative README and emits otherwise complete JSON, but schema validation rejects the documented prompt identity, continuation, and binding-reference fields; following the example instead violates the README contract.",
+      "file": "<project-root>/prompts/README.md",
+      "line": 28,
+      "minimal_fix": "Choose one response vocabulary across README, core/stage prompts, examples, schema, and generated types, then validate every documented JSON snippet and required field against the schema.",
+      "reproduction": "Run node <temporary-directory>/report_prompt_contract_probe.mjs and inspect response-following-readme-required-shape and candidate-operations-following-readme-binding-ids; both are reported invalid for documented fields.",
+      "severity": "high",
+      "source_reviewers": [
+        "prompt-contract-reviewer"
+      ],
+      "title": "README-required response shape is schema-invalid"
+    },
+    {
+      "candidate_id": "F5",
+      "category": "truncation",
+      "evidence": "Stage 02 requires ordered chunks with truncation/overlap metadata, but ContentChunk forbids completeness, truncation, overlap, sequence, parser status/quality, and stable sub-item inventory fields. The reported truncation-aware chunk is rejected for additional properties.",
+      "failure_scenario": "A chunk ends before a failed-control qualification, but the request cannot declare trailing truncation. The model can mark the chunk processed and continuation complete while silently losing negative or control evidence outside the supplied bytes.",
+      "file": "<project-root>/schemas/defs/common.schema.json",
+      "line": 1429,
+      "minimal_fix": "Add required source-extent, ordering, truncation/overlap, parser-result, and stable sub-item metadata; require cannot_complete or explicit omissions when completeness is unknown, and test split boundaries around failures and qualifications.",
+      "reproduction": "Run node <temporary-directory>/report_prompt_contract_probe.mjs; request-with-chunk-truncation-metadata is reported invalid because truncated and continuation_after are forbidden additional properties.",
+      "severity": "high",
+      "source_reviewers": [
+        "prompt-contract-reviewer"
+      ],
+      "title": "Chunk contract cannot disclose upstream truncation"
+    },
+    {
+      "candidate_id": "F6",
+      "category": "continuation",
+      "evidence": "continuation_cursor accepts any nonempty string and prior_response_hash is syntax-only. The response contract supplies no signed claims, response hash, prior operation set, or structured lineage. The reported probe validates instruction-like cursor text with a fabricated zero hash.",
+      "failure_scenario": "A resumed request resends prior and remaining units with a tampered but schema-valid cursor/hash. A stateless provider cannot determine what was already returned or accepted, so it may duplicate earlier operations, skip remaining failures, or falsely mark completion.",
+      "file": "<project-root>/schemas/generation-request.schema.json",
+      "line": 409,
+      "minimal_fix": "Make cursors orchestration-owned signed or server-stored tokens bound to request, stage, snapshot, schema, state, next unit, prior response, and returned/accepted operation IDs; validate before invocation and test tampering, replay, stale state, and deduplication.",
+      "reproduction": "Run node <temporary-directory>/report_prompt_contract_probe.mjs; arbitrary-resume-cursor is reported valid:true despite instruction-like cursor content and an all-zero prior hash.",
+      "severity": "high",
+      "source_reviewers": [
+        "prompt-contract-reviewer"
+      ],
+      "title": "Resume cursors are arbitrary and unverifiable"
+    },
+    {
+      "candidate_id": "F7",
+      "category": "provenance",
+      "evidence": "SourceBinding requires only source_item_id, locator, and binding_role; snapshot ID, content hash, excerpt hash, and parser identity are optional/nullable, and operation binding arrays have no minimum size. The reported weakened published response still validates.",
+      "failure_scenario": "A result binds only to a mutable source label and free-text locator. If the item is replaced or reparsed, a reviewer cannot identify the supporting bytes or reproduce extraction, while changed content may inherit the old apparent provenance.",
+      "file": "<project-root>/schemas/defs/common.schema.json",
+      "line": 61,
+      "minimal_fix": "Require immutable snapshot/content identity and applicable parser identity for content-derived bindings, require at least one binding for source-derived operations, and define typed premise references for accepted-state derivations.",
+      "reproduction": "Run node <temporary-directory>/report_prompt_contract_probe.mjs; response-with-unbound-source-bindings is reported valid:true after immutable and parser identity fields are removed.",
+      "severity": "high",
+      "source_reviewers": [
+        "prompt-contract-reviewer"
+      ],
+      "title": "Source bindings need no immutable content identity"
+    },
+    {
+      "candidate_id": "F8",
+      "category": "failure-recording",
+      "evidence": "The prompts require an explicit reason for every unreadable/excluded item, but generation-response.schema.json represents unreadable_item_ids and excluded_item_ids as bare strings. The reported structured reason object is rejected while a bare ID validates.",
+      "failure_scenario": "Unreadable items caused by checksum mismatch, disclosure restriction, or failed control are represented only by IDs, so the pipeline cannot explain, distinguish, or reproduce why evidence was unavailable or whether retry is possible.",
+      "file": "<project-root>/schemas/generation-response.schema.json",
+      "line": 417,
+      "minimal_fix": "Replace bare arrays with structured dispositions, or add required one-to-one records carrying reason code/explanation, parser/access status, source binding, retryability, and stage disposition.",
+      "reproduction": "Run node <temporary-directory>/report_prompt_contract_probe.mjs and compare response-with-required-unreadable-reason (valid:false) with response-with-unreasoned-unreadable-id (valid:true).",
+      "severity": "medium",
+      "source_reviewers": [
+        "prompt-contract-reviewer"
+      ],
+      "title": "Failure diagnostics reject the required reasons"
+    },
+    {
+      "candidate_id": "F9",
+      "category": "reproducibility",
+      "evidence": "All prompt files reportedly declare 0.1.0, but the six request.example prompt_contract references claim 1.0.0. One output-patch hash also differs from current file bytes, yet the example passes schema validation because only formats are checked.",
+      "failure_scenario": "A researcher cannot resolve the recorded output-patch contract to checked-in bytes with both the claimed version and hash, leaving the exact generation instructions ambiguous and preventing faithful reproduction.",
+      "file": "<project-root>/prompts/contracts/request.example.json",
+      "line": 280,
+      "minimal_fix": "Regenerate references from canonical prompt bytes and declared versions, correct the stale hash, and add a conformance test that resolves each contract ID, parses its version, computes its canonical SHA-256, and compares both values.",
+      "reproduction": "Run node <temporary-directory>/report_prompt_reference_probe.mjs; the report states all rows show referencedVersion 1.0.0 versus declaredVersion 0.1.0 and the output-patch row shows referencedHashMatches:false.",
+      "severity": "medium",
+      "source_reviewers": [
+        "prompt-contract-reviewer"
+      ],
+      "title": "Published prompt references do not identify current prompts"
+    },
+    {
+      "candidate_id": "SCI-001",
+      "category": "cross-domain reasoning",
+      "evidence": "claim-rules.ts returns early when cross_domain_bridge_ids is empty. In the reported missing-cross-domain-bridge probe, a supported MD-to-wet-lab mechanistic claim had admissible evidence but no bridge IDs, and BRG001 plus full validation reported no failure.",
+      "failure_scenario": "A report links molecular-dynamics evidence directly to a wet-lab mechanistic conclusion, marks the claim supported, and leaves cross_domain_bridge_ids empty. The validator reports the bridge check passed and allows the unsupported transfer to remain report-facing.",
+      "file": "<project-root>/src/validator/claim-rules.ts",
+      "line": 148,
+      "minimal_fix": "Derive bridge necessity from claim/evidence domains and mappings, fail BRG001 when a required bridge is absent or unresolved, validate the enabled path, and cover all identity/state/effect transfers with no-bridge regression tests.",
+      "reproduction": "Run <project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-science-review.ts and inspect missing-cross-domain-bridge; BRG001 is reported pass with zero findings and full validation has no failed evaluation.",
+      "severity": "high",
+      "source_reviewers": [
+        "scientific-reasoning-reviewer"
+      ],
+      "title": "BRG001 skips claims with no bridge"
+    },
+    {
+      "candidate_id": "SCI-002",
+      "category": "bridge validity",
+      "evidence": "The valid-bridge schema guard requires only identity, construct, condition, and scale alignment, omitting dose and endpoint/observable compatibility required elsewhere. The reported probe passes a valid bridge despite explicit 1 nM versus 10 µM and endpoint mismatch/unknown metadata.",
+      "failure_scenario": "A bridge maps MD contact occupancy at 1 nM to wet-lab viability at 10 µM without a transformation, but remains valid because the four aggregate alignment fields are matched; its mechanistic claim remains supported.",
+      "file": "<project-root>/schemas/defs/claim-argument.schema.json",
+      "line": 275,
+      "minimal_fix": "Add typed dose/intervention, endpoint/observable, and relevant state/time alignments with source-bound transformations; require applicable dimensions to be matched or bounded before valid status and reconcile explicit limitations with validity.",
+      "reproduction": "Run the focused science script and inspect valid-bridge-ignores-dose-and-endpoint-mismatch; SCHEMA001 and BRG001 are reported pass despite the explicit mismatch.",
+      "severity": "high",
+      "source_reviewers": [
+        "scientific-reasoning-reviewer"
+      ],
+      "title": "Valid bridges omit dose and endpoint alignment"
+    },
+    {
+      "candidate_id": "SCI-003",
+      "category": "resolution criteria",
+      "evidence": "For resolution_status resolved, the schema requires only a criterion string, answer, and claim ID. The reported probe links a resolved question solely to an unsupported claim with no evidence; schema and all semantic evaluations pass.",
+      "failure_scenario": "A report marks a research question resolved and supplies a confident answer even though its only linked claim is explicitly unsupported and cannot satisfy the recorded evidence criterion.",
+      "file": "<project-root>/schemas/defs/claim-argument.schema.json",
+      "line": 51,
+      "minimal_fix": "Add a semantic release gate requiring structured criterion assessment, at least one admissibly supported or qualified claim, and no unresolved blocker; otherwise force a non-resolved status.",
+      "reproduction": "Run the focused science script and inspect resolved-question-with-unsupported-claim; the report states SCHEMA001, REF001, CLM001, TIM001, and REV001 pass and full validation has failed:[].",
+      "severity": "high",
+      "source_reviewers": [
+        "scientific-reasoning-reviewer"
+      ],
+      "title": "Resolved questions need no supported claim"
+    },
+    {
+      "candidate_id": "SCI-004",
+      "category": "revision invalidation",
+      "evidence": "revision-rules.ts propagates revision effects through evidence, argument steps, and claims but not research questions or summaries, despite a protocol requirement to recompute question resolution. The reported retraction scenario leaves the question resolved after its only claim becomes review_required.",
+      "failure_scenario": "After the sole supporting evidence is retracted, the evidence and claim are downgraded, but the report still states that the question is resolved and preserves the obsolete answer.",
+      "file": "<project-root>/src/validator/revision-rules.ts",
+      "line": 164,
+      "minimal_fix": "Extend revision closure into every citing research question and derived summary; require recomputed status/answer unless an independent valid path still meets the criterion, and test through rendered resolution state.",
+      "reproduction": "Run the focused science script and inspect revision-does-not-invalidate-question-resolution; REV001 is reported pass and full validation has no failed evaluation.",
+      "severity": "high",
+      "source_reviewers": [
+        "scientific-reasoning-reviewer"
+      ],
+      "title": "Retractions do not reopen resolved questions"
+    },
+    {
+      "candidate_id": "SCI-005",
+      "category": "conflict versus heterogeneity",
+      "evidence": "claim-rules.ts defines incompatibility only as increase versus decrease. The reported like-for-like equivalence-versus-increase results had no ConflictSet, yet CNF001 and full validation passed.",
+      "failure_scenario": "Two aligned analyses assert mutually incompatible equivalence and increase conclusions, but the report presents both without a ConflictSet or contested downstream status while the conflict rule reports pass.",
+      "file": "<project-root>/src/validator/claim-rules.ts",
+      "line": 242,
+      "minimal_fix": "Use a declared incompatibility matrix across scientific-effect and statistical-decision axes and compare the full context key, requiring ConflictSet membership only for incompatible aligned records while preserving contextual heterogeneity.",
+      "reproduction": "Run the focused science script and inspect equivalence-versus-increase-not-registered-as-conflict; CNF001 is reported pass and full validation has failed:[].",
+      "severity": "high",
+      "source_reviewers": [
+        "scientific-reasoning-reviewer"
+      ],
+      "title": "CNF001 detects only increase/decrease conflicts"
+    },
+    {
+      "candidate_id": "SCI-006",
+      "category": "null-result qualification",
+      "evidence": "negative-rules.ts derives eligibility from self-declared aggregate statuses rather than linked records. In the reported wet-lab payload, a required positive control explicitly failed, no analysis population/context was present, but detached flags declared valid controls and biological-counterevidence eligibility; NUL001, WFA006, and full validation passed.",
+      "failure_scenario": "A failed positive control produces no signal, yet the result is marked interpretable and eligible to support biological absence by setting a detached control flag to valid, turning assay failure into biological counterevidence.",
+      "file": "<project-root>/src/validator/negative-rules.ts",
+      "line": 15,
+      "minimal_fix": "Link negative assessments to control, QC, population/context, measurement, and decision records; reconcile those records so failed/indeterminate required controls or missing population/sensitivity/context block absence or equivalence claims.",
+      "reproduction": "Run the focused science script and inspect failed-positive-control-and-pseudoreplicated-n; NUL001 and WFA006 are reported pass with zero findings and full validation has failed:[].",
+      "severity": "high",
+      "source_reviewers": [
+        "scientific-reasoning-reviewer"
+      ],
+      "title": "Null eligibility ignores failed control records"
+    },
+    {
+      "candidate_id": "SCI-007",
+      "category": "biological versus technical N",
+      "evidence": "domain-rules.ts flags biological N only when it exceeds raw pool-record count. The reported payload contains two pools sharing the same sole donor but biological_n=2; WET001 and full validation pass because the rule does not traverse lineage.",
+      "failure_scenario": "One donor is split into two pools and counted as biological N=2. Uncertainty and evidence weight use pseudoreplicates while the pool-independence blocker reports pass.",
+      "file": "<project-root>/src/validator/domain-rules.ts",
+      "line": 110,
+      "minimal_fix": "Compute biological N from independent ancestor groups by traversing parent_specimen_ids and pool_members, require an independence basis, and separately reconcile technical N and analysis-unit counts.",
+      "reproduction": "Run the focused science script and inspect failed-positive-control-and-pseudoreplicated-n; WET001 is reported pass with zero findings and full validation has failed:[].",
+      "severity": "high",
+      "source_reviewers": [
+        "scientific-reasoning-reviewer"
+      ],
+      "title": "WET001 counts shared-donor pools as independent"
+    },
+    {
+      "candidate_id": "REPRO-001",
+      "category": "reproducibility-level",
+      "evidence": "reproducibility-rules.ts reportedly grants R1 when recipe_id is merely non-null and relies on self-declared invocation/environment/random-state labels; the canonical report has no recipe collection and reference validation does not resolve recipe_id. The probe reports release eligibility for R1 despite absent recipe content, argv, working directory, inputs, and environment/random-state IDs.",
+      "failure_scenario": "An author invents a syntactically valid recipe ID and marks assessment axes satisfied while the executable replay recipe, exact invocation context, inputs, and environment records are lost. Validation and packaging still present the unit as R1 replay-ready.",
+      "file": "<project-root>/src/validator/reproducibility-rules.ts",
+      "line": 63,
+      "minimal_fix": "Require versioned resolvable recipe records and complete historical invocation, input/output, environment, and random-state bindings; derive axis status from those records and cap the unit at R0 when prerequisites are absent.",
+      "reproduction": "Run <project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-artifact-check.ts; the report states releaseEligible:true and R1 with recipe.replayable, null environment/random IDs, unknown command/working directory, zero arguments/inputs, and verifierOk:true.",
+      "severity": "high",
+      "source_reviewers": [
+        "reproducibility-reviewer"
+      ],
+      "title": "R1 accepts identifiers and labels instead of replay records"
+    },
+    {
+      "candidate_id": "REPRO-002",
+      "category": "comparator-validation",
+      "evidence": "The R2 rule accepts a completed verification event with comparison_result met and hashed outputs, while comparator equivalence definitions, tolerances, and nondeterminism policy may remain unknown. The reported probe reaches R2 with no comparison artifact, event inputs, usable command, or event environment.",
+      "failure_scenario": "A rerun emits a hashed output but no retained numerical agreement definition. The author sets comparison_result to met, and the release claims R2 even though no researcher can determine or independently verify what agreement meant.",
+      "file": "<project-root>/src/validator/reproducibility-rules.ts",
+      "line": 102,
+      "minimal_fix": "Validate comparator-type-specific semantics and, for R2, require complete recipe/input/environment/invocation bindings plus hash-bound target-level comparison evidence; recompute machine-checkable comparisons or require a qualified bound attestation.",
+      "reproduction": "Run <project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-repro-r2-check.ts; the report states releaseEligible:true, no findings, and one R2 unit while comparator details are unknown and replay evidence/inputs/environment are absent.",
+      "severity": "high",
+      "source_reviewers": [
+        "reproducibility-reviewer"
+      ],
+      "title": "R2 trusts a bare met flag under an undefined comparator"
+    },
+    {
+      "candidate_id": "REPRO-003",
+      "category": "offline-artifact-closure",
+      "evidence": "renderer/index.ts emits a fixed output set and does not copy report Artifact.location members or replay dependencies. The verifier checks only manifest-selected files and does not reconcile report artifacts against package members. The reported bundle omits an available, known-hash R1 artifact but still verifies.",
+      "failure_scenario": "A researcher follows an R1 unit to a relative input, output, recipe, checkpoint, or environment-lock path marked available_now, but the file is absent from the offline package while verification reports PASS.",
+      "file": "<project-root>/src/renderer/index.ts",
+      "line": 78,
+      "minimal_fix": "Copy and hash-verify every public R1+ dependency into the bundle, manifest it by source_artifact_id, and make verification reconcile the report's required/available artifacts against manifest path, size, and hash.",
+      "reproduction": "Run <project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-artifact-check.ts; the report states artifacts/artifact.replayable-output.json is open and known-hash but absent from the bundle/manifest while verifierOk:true.",
+      "severity": "high",
+      "source_reviewers": [
+        "reproducibility-reviewer"
+      ],
+      "title": "Verified offline bundles can omit declared replay artifacts"
+    },
+    {
+      "candidate_id": "REPRO-004",
+      "category": "data-slice-provenance",
+      "evidence": "derivation-rules.ts treats a slice as usable when any locator field is known, so table_or_object alone suffices. The reported probe retains a table name but leaves row selector, query, and filters unknown; DER001 still passes with complete closure.",
+      "failure_scenario": "Two analyses select different 12-of-14 rows from the same table, but only the table name and final slice hash are retained. A researcher cannot reconstruct the analyzed cohort or exclusions even though the report labels derivation closure complete.",
+      "file": "<project-root>/src/validator/derivation-rules.ts",
+      "line": 78,
+      "minimal_fix": "Validate locator-kind-specific selection semantics, requiring explicit selectors/query/filters or an all-records declaration plus deterministic details; unknown selection must make closure partial despite known table identity or slice hash.",
+      "reproduction": "Run <project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-data-slice-check.ts; the report states releaseEligible:true, DER001 pass, complete closure, known table, and unknown row selector/query/filters.",
+      "severity": "high",
+      "source_reviewers": [
+        "reproducibility-reviewer"
+      ],
+      "title": "A table name alone is accepted as an exact data slice"
+    },
+    {
+      "candidate_id": "REPRO-005",
+      "category": "conservative-summary",
+      "evidence": "summaries.ts reportedly defaults target claim/output sets from the same covered IDs used as numerators, making default nonempty coverage tautologically 100%. Critical units are selected from a mutable enum without an independent decision-bound set; probes show relabeling raises the floor and an independent denominator changes 1/1 to 1/2.",
+      "failure_scenario": "A weak key unit is relabeled supporting or a key claim is omitted from all units. The floor rises and coverage appears complete because omitted targets disappear from numerator and denominator.",
+      "file": "<project-root>/src/lib/summaries.ts",
+      "line": 116,
+      "minimal_fix": "Add independent source/decision-bound critical-unit and claim/output target sets, validate inclusion/exclusions and criticality changes, compute coverage against those sets, list uncovered IDs, and derive the floor over the complete selected critical set.",
+      "reproduction": "Run <project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-criticality-check.ts and <temporary-directory>/report-prompt-summary-denominator-check.ts; the report states an unreviewed enum change raises R0 to R1 and default 1/1 becomes 1/2 with an independent denominator.",
+      "severity": "high",
+      "source_reviewers": [
+        "reproducibility-reviewer"
+      ],
+      "title": "Critical floors and coverage use self-selected denominators"
+    },
+    {
+      "candidate_id": "REPRO-006",
+      "category": "access-provenance",
+      "evidence": "The R1 rule accepts access status verified_procedure without requiring known conditions or a nonempty dependency set; every(hashKnown) is vacuously true for no artifacts. The reported probe grants R1 with unknown conditions, no assessed/evidence artifacts, and no historical inputs.",
+      "failure_scenario": "A controlled dataset or licensed checkpoint is required, but no actionable procedure, authority, license, actor, or artifact list is retained. An author sets verified_procedure and the report still says R1.",
+      "file": "<project-root>/src/validator/reproducibility-rules.ts",
+      "line": 66,
+      "minimal_fix": "Require R1 access assessment to enumerate and reconcile all dependencies, identify the scoped actor, retain actionable conditions or a bound private attestation, and reject unknown conditions or empty artifact sets when dependencies exist.",
+      "reproduction": "Run <project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-access-check.ts; the report states releaseEligible:true, no findings, R1 count 1, verified_procedure, unknown conditions, and empty artifact/input arrays.",
+      "severity": "high",
+      "source_reviewers": [
+        "reproducibility-reviewer"
+      ],
+      "title": "R1 accepts an unknown, empty access procedure"
+    },
+    {
+      "candidate_id": "REPRO-007",
+      "category": "prompt-coverage",
+      "evidence": "The stage inventory ends at 08 and the reported search finds no ReproducibilityUnit, comparison specification, replay event, conservative level, or recipe authoring instruction in any stage. A computational report with provenance records but zero reproducibility units remains release-eligible.",
+      "failure_scenario": "An operator follows all documented prompt stages after model training, analysis, or simulation, but no stage assembles replay recipes, comparators, access boundaries, checkpoints, events, levels, or explicit replay gaps; the final console omits the researcher-facing replay assessment.",
+      "file": "<project-root>/prompts/README.md",
+      "line": 84,
+      "minimal_fix": "Add a dedicated reproducibility stage that covers every key computation with a bounded unit or explicit gap/non-applicability decision, and add a semantic gate requiring that coverage.",
+      "reproduction": "List prompts/stages and search them for ReproducibilityUnit, reproducibility_unit, comparison_specification, replay_events, conservative_level, and recipe_id; then run <temporary-directory>/report-prompt-data-slice-check.ts. The report states no stage matches and a report with six computational provenance records, zero units, and no findings is release-eligible.",
+      "severity": "high",
+      "source_reviewers": [
+        "reproducibility-reviewer"
+      ],
+      "title": "The prompt pipeline has no reproducibility authoring stage"
+    },
+    {
+      "candidate_id": "renderer-absolute-path-root-bypass",
+      "category": "redaction",
+      "evidence": "renderer/safety.ts recognizes only a fixed set of POSIX roots. The reported mutation to /opt/acme/private/source.txt remains in public JSON/HTML while rendering and verification pass and the manifest says absolute_paths_present:false.",
+      "failure_scenario": "A command, locator, or artifact location contains a host path rooted at /opt or /mnt. The path is released publicly even though verification and the manifest assert that no absolute paths are present.",
+      "file": "<project-root>/src/renderer/safety.ts",
+      "line": 91,
+      "minimal_fix": "Centralize a field-aware generic absolute-filesystem-path detector across validation, rendering, bundling, and verification; distinguish permitted URI/JSON-pointer fields and derive the manifest flag from the completed scan.",
+      "reproduction": "Copy the cross-domain example, set source_coverage.items[0].location.value to /opt/acme/private/source.txt, run the render CLI, then inspect generated public JSON/HTML and package-manifest.json; the report states release and verification pass while the path remains.",
+      "severity": "high",
+      "source_reviewers": [
+        "renderer-bundler-reviewer"
+      ],
+      "title": "Absolute /opt and /mnt paths pass release redaction"
+    },
+    {
+      "candidate_id": "offline-html-entity-url-bypass",
+      "category": "offline-integrity",
+      "evidence": "offline.ts decodes only a small set of named entities before URL classification. The reported report.html mutation uses an https URL encoded with numeric character references plus a decoy local member; bundle verification reports no remote dependency, while JSDOM resolves the attribute to https://example.com/tracker.png.",
+      "failure_scenario": "A rendered or post-processed HTML resource URL encodes its scheme separators as character references. Opening the report triggers a network request although package construction and verification certify no remote dependencies or active external content.",
+      "file": "<project-root>/src/bundler/offline.ts",
+      "line": 47,
+      "minimal_fix": "Use a standards-compliant HTML parser, classify browser-decoded resource attributes after URL resolution, require appropriate CSP handling, and test decimal, hexadecimal, named-entity, malformed-markup, and missing-CSP cases.",
+      "reproduction": "Starting from a verified release tree, remove its manifest and CSP, insert <img src=\"https&#58;&#47;&#47;example.com/tracker.png\">, add a file named https&, and rebuild with the bundle CLI; the report states verification passes while JSDOM resolves the image URL remotely.",
+      "severity": "high",
+      "source_reviewers": [
+        "renderer-bundler-reviewer"
+      ],
+      "title": "Encoded remote URLs pass the offline verifier"
+    },
+    {
+      "candidate_id": "human-review-cross-file-binding",
+      "category": "attestation-binding",
+      "evidence": "verifier/index.ts validates and hashes an optional human-review file but reportedly does not compare its report identity, scientific payload hash, validation-attestation identity/hash, or observed status with the package. An approval for an unrelated report and hashes passes attestation_binding.",
+      "failure_scenario": "A stale human approval from another report is copied into a new release directory. Verification passes and falsely associates that approval with the bundled scientific report.",
+      "file": "<project-root>/src/verifier/index.ts",
+      "line": 684,
+      "minimal_fix": "Retain the parsed human-review object and compare all report and validation-attestation identities, hashes, and status with actual package members during both bundle construction and final verification.",
+      "reproduction": "Add a schema-valid approving human-review-attestation.json targeting a different report, scientific hash, and validation attestation to a verified release tree, remove/rebuild the manifest, and run bundle verification; the report states PASS with no binding finding.",
+      "severity": "high",
+      "source_reviewers": [
+        "renderer-bundler-reviewer"
+      ],
+      "title": "Unrelated human approval verifies as package-bound"
+    },
+    {
+      "candidate_id": "reproducibility-axis-substitution",
+      "category": "factual-rendering",
+      "evidence": "view-model.ts reportedly substitutes bound environment/random-record assessments and access status for canonical reproducibility axis assessments. A probe sets environment_capture unsatisfied while the bound environment record is satisfied; the rendered matrix reports satisfied.",
+      "failure_scenario": "A report records that an environment object exists but canonical environment capture is unsatisfied for replay. The console displays the prominent environment/random-state axis as satisfied, overstating replay readiness.",
+      "file": "<project-root>/src/renderer/view-model.ts",
+      "line": 763,
+      "minimal_fix": "Populate tiles from canonical axis_assessments, show bound-record/access/input diagnostics separately, and conservatively combine axes only while retaining both canonical states and rationales.",
+      "reproduction": "Build a schema-valid report with environment_record.assessment.state satisfied and axis_assessments.environment_capture.state unsatisfied, call buildReportViewModel, and inspect reproducibility_units[0].axes.environment.status; the report states it is satisfied.",
+      "severity": "high",
+      "source_reviewers": [
+        "renderer-bundler-reviewer"
+      ],
+      "title": "Replay matrix substitutes non-axis status as satisfied"
+    },
+    {
+      "candidate_id": "renderer-partial-attestation-validation",
+      "category": "attestation-rendering",
+      "evidence": "renderer/safety.ts uses a hand-written subset of validation-attestation invariants rather than full schema validation. The reported focused call accepts an attestation with payload_byte_size 0, invalid formats, missing required fields, and empty checks, then renders Attestation: valid.",
+      "failure_scenario": "A caller of the exported renderer API supplies a malformed or truncated attestation whose identity/hash and self-declared valid status satisfy the subset checks. The standalone rendered report shows a valid badge despite the record violating its contract.",
+      "file": "<project-root>/src/renderer/safety.ts",
+      "line": 274,
+      "minimal_fix": "Validate normalized attestations against the full schema, compare exact serialized payload size, reconcile check/summary cardinality, reject malformed records, and expose validation scope with status.",
+      "reproduction": "Call renderReport with the reported minimal correctly identity/hash-bound but otherwise malformed valid attestation; the report states rendering succeeds, validationAttestationBound is true, and HTML contains the valid badge.",
+      "severity": "medium",
+      "source_reviewers": [
+        "renderer-bundler-reviewer"
+      ],
+      "title": "Malformed attestations render as valid"
+    },
+    {
+      "candidate_id": "unsupported-overview-superlatives",
+      "category": "factual-rendering",
+      "evidence": "The overview mapper selects first array members, but the template labels them Best-supported claim, Strongest counterevidence, and Primary blocker or open gap despite no ranking/designation contract.",
+      "failure_scenario": "A qualified claim precedes a supported claim or the first global counterevidence belongs to another question. Array order is displayed as scientific rank or relevance, misleading the scan-first overview.",
+      "file": "<project-root>/templates/scientific-console/partials/global-overview.html",
+      "line": 42,
+      "minimal_fix": "Rename cards to factual first-record labels or add explicit ranked/designated IDs and render only those.",
+      "reproduction": "Render a report whose first question orders a qualified claim before a supported claim and whose first global counterevidence concerns another question; inspect the overview superlative headings assigned to the first records.",
+      "severity": "medium",
+      "source_reviewers": [
+        "renderer-bundler-reviewer"
+      ],
+      "title": "Array order is presented as scientific ranking"
+    },
+    {
+      "candidate_id": "interval-unit-omitted",
+      "category": "quantitative-rendering",
+      "evidence": "formatInterval in view-model.ts emits bounds, level, and kind but omits interval.unit. The only Unit column uses effect_estimate.unit, and the schema permits the estimate and interval units to differ. The reported probe drops a recorded log-scale interval unit.",
+      "failure_scenario": "An estimate and uncertainty interval use different recorded scales or units. The console shows the interval under the estimate's unit, causing a researcher to interpret or reproduce it on the wrong scale.",
+      "file": "<project-root>/src/renderer/view-model.ts",
+      "line": 959,
+      "minimal_fix": "Include interval.unit and its missingness state in formatted intervals or a dedicated column, without borrowing the estimate unit, and test differing units.",
+      "reproduction": "Set effect_estimate.unit to arbitrary unit and effect_estimate.interval.unit to log arbitrary unit, then call buildReportViewModel; the report states the interval string omits the latter and only the estimate unit is exposed.",
+      "severity": "medium",
+      "source_reviewers": [
+        "renderer-bundler-reviewer"
+      ],
+      "title": "Quantitative intervals drop their recorded unit"
+    },
+    {
+      "candidate_id": "filter-hidden-safety-undercount",
+      "category": "filter-disclosure",
+      "evidence": "report.js builds its safety set only from nodes already selected by [data-record] and checks direct hidden state, omitting safety-marked descendants hidden by ancestors. The reported JSDOM probe finds 23 effectively hidden safety nodes but reports 17.",
+      "failure_scenario": "A method deviation or other safety disclosure lacks data-record and is hidden by a filtered ancestor. The status undercounts hidden safety-relevant content or can claim none is hidden, weakening filtered and filtered-print omission warnings.",
+      "file": "<project-root>/templates/scientific-console/assets/report.js",
+      "line": 117,
+      "minimal_fix": "Build the safety set from every data-safety-record=true node, determine effective hiding through the node and hidden ancestors, and use that set for counts and no-hidden assertions.",
+      "reproduction": "Render the semantics fixture, run report.js in JSDOM, select work-unit, and compare the displayed hidden-safety count with nodes matching node.hidden || node.closest('[hidden]'); the report states 17 versus 23.",
+      "severity": "medium",
+      "source_reviewers": [
+        "renderer-bundler-reviewer"
+      ],
+      "title": "Filters undercount hidden safety disclosures"
+    }
+  ],
+  "coverage_summary": [
+    "Processed every supplied candidate across prompt/schema contracts, scientific reasoning, replay/reproducibility, and renderer/bundler/verifier review scopes; compared candidates by concrete failure scenario rather than by title or category.",
+    "All 31 supplied candidates had a concrete absolute file path, line anchor, and reproducible failure description, so all 31 survive for independent verification.",
+    "No exact duplicate failure scenarios were found. Related but distinct candidates were retained separately, including general stage routing versus the missing reproducibility-authoring stage; R1 replay-record, access-procedure, and offline-artifact closure failures; and human-attestation cross-file binding versus renderer-side attestation validation.",
+    "The five source blocker labels (F1 and REPRO-001 through REPRO-004) were conservatively normalized to high because the reports demonstrate critical contract or release-assurance failures but not complete system-wide unusability. Other source severities were retained.",
+    "This is deduplication and severity normalization only; no candidate was independently verified or treated as established fact."
+  ],
+  "discarded_as_non_actionable": []
+}

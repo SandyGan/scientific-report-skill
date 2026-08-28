@@ -1,0 +1,224 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.report-prompt.org/v1/defs/random-state.schema.json",
+  "title": "Random state",
+  "description": "Explicit seed tree and nondeterminism record. Unknown and withheld seed values remain explicit rather than being guessed or replaced with sentinel strings.",
+  "$defs": {
+    "SeedAssignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "seed_assignment_id",
+        "scope",
+        "scope_key",
+        "seed_value",
+        "derivation_method",
+        "parent_seed_assignment_id",
+        "source_bindings"
+      ],
+      "properties": {
+        "seed_assignment_id": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "scope": {
+          "enum": [
+            "global",
+            "run",
+            "trial",
+            "replicate",
+            "worker",
+            "rank",
+            "fold",
+            "sampling_operation",
+            "other"
+          ]
+        },
+        "scope_key": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "seed_value": {
+          "$ref": "./common.schema.json#/$defs/IntegerField"
+        },
+        "derivation_method": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "parent_seed_assignment_id": {
+          "oneOf": [
+            {
+              "$ref": "./common.schema.json#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source_bindings": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/SourceBinding"
+          }
+        }
+      }
+    },
+    "NondeterministicOperation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "status",
+        "mitigation",
+        "impact"
+      ],
+      "properties": {
+        "operation": {
+          "$ref": "./common.schema.json#/$defs/NonEmptyString"
+        },
+        "status": {
+          "enum": [
+            "deterministic",
+            "nondeterministic",
+            "conditionally_deterministic",
+            "unknown",
+            "not_applicable"
+          ]
+        },
+        "mitigation": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "impact": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        }
+      }
+    },
+    "RandomState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "random_state_id",
+        "random_state_version",
+        "randomness_used",
+        "deterministic_intent",
+        "generator_or_algorithm",
+        "seed_assignments",
+        "nondeterministic_operations",
+        "capture_status",
+        "source_bindings",
+        "extensions"
+      ],
+      "properties": {
+        "random_state_id": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "random_state_version": {
+          "$ref": "./common.schema.json#/$defs/Version"
+        },
+        "randomness_used": {
+          "enum": [
+            "yes",
+            "no",
+            "unknown",
+            "not_applicable"
+          ]
+        },
+        "deterministic_intent": {
+          "$ref": "./common.schema.json#/$defs/BooleanField"
+        },
+        "generator_or_algorithm": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "seed_assignments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedAssignment"
+          }
+        },
+        "nondeterministic_operations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/NondeterministicOperation"
+          }
+        },
+        "capture_status": {
+          "enum": [
+            "complete",
+            "partial",
+            "absent",
+            "unknown",
+            "not_applicable"
+          ]
+        },
+        "state_artifact_id": {
+          "oneOf": [
+            { "$ref": "./common.schema.json#/$defs/Identifier" },
+            { "type": "null" }
+          ]
+        },
+        "captured_invocation_ids": {
+          "type": "array",
+          "items": { "$ref": "./common.schema.json#/$defs/Identifier" },
+          "uniqueItems": true
+        },
+        "not_applicability_justification": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "source_bindings": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/SourceBinding"
+          }
+        },
+        "extensions": {
+          "$ref": "./common.schema.json#/$defs/ExtensionMap"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "randomness_used": {
+                "const": "no"
+              }
+            },
+            "required": [
+              "randomness_used"
+            ]
+          },
+          "then": {
+            "properties": {
+              "capture_status": {
+                "const": "not_applicable"
+              },
+              "seed_assignments": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "capture_status": {
+                "const": "complete"
+              },
+              "randomness_used": {
+                "const": "yes"
+              }
+            },
+            "required": [
+              "capture_status",
+              "randomness_used"
+            ]
+          },
+          "then": {
+            "properties": {
+              "seed_assignments": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "$ref": "#/$defs/RandomState"
+}

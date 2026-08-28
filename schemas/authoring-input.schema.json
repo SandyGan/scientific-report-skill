@@ -1,0 +1,285 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.report-prompt.org/v1/authoring-input.schema.json",
+  "title": "Scientific report authoring input",
+  "description": "Compact, source-bound authoring payload for normalization into the canonical scientific report. Flexible domain facts are isolated inside explicitly typed record payloads.",
+  "$defs": {
+    "IdRegistryEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "object_type",
+        "local_key",
+        "canonical_id",
+        "object_version",
+        "identity_status"
+      ],
+      "properties": {
+        "object_type": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "local_key": {
+          "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+        },
+        "canonical_id": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "object_version": {
+          "$ref": "./defs/common.schema.json#/$defs/Version"
+        },
+        "identity_status": {
+          "enum": [
+            "confirmed",
+            "provisional",
+            "ambiguous",
+            "review_required"
+          ]
+        }
+      }
+    },
+    "AuthoringRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_id",
+        "record_kind",
+        "execution_assertion",
+        "domain_module_id",
+        "subject_ids",
+        "payload",
+        "source_bindings",
+        "missing_fields",
+        "review_status"
+      ],
+      "properties": {
+        "record_id": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "record_kind": {
+          "enum": [
+            "research_question",
+            "applicability_decision",
+            "entity",
+            "campaign",
+            "work_unit",
+            "attempt",
+            "segment",
+            "method",
+            "decision",
+            "material",
+            "material_relationship",
+            "analysis_population",
+            "data_slice",
+            "derivation",
+            "invocation",
+            "environment",
+            "random_state",
+            "analysis_run",
+            "result",
+            "failure",
+            "evidence",
+            "claim",
+            "claim_dependency",
+            "argument",
+            "bridge",
+            "conflict",
+            "artifact",
+            "reproducibility",
+            "limitation",
+            "revision",
+            "other"
+          ]
+        },
+        "execution_assertion": {
+          "enum": [
+            "performed",
+            "planned",
+            "inferred",
+            "external",
+            "not_performed",
+            "unknown",
+            "not_applicable"
+          ]
+        },
+        "domain_module_id": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "subject_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./defs/common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "payload": {
+          "type": "object"
+        },
+        "source_bindings": {
+          "type": "array",
+          "items": {
+            "$ref": "./defs/common.schema.json#/$defs/SourceBinding"
+          }
+        },
+        "missing_fields": {
+          "type": "array",
+          "items": {
+            "$ref": "./defs/common.schema.json#/$defs/MissingnessRecord"
+          }
+        },
+        "review_status": {
+          "enum": [
+            "unreviewed",
+            "review_required",
+            "author_confirmed",
+            "rejected"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "execution_assertion": {
+                "enum": [
+                  "performed",
+                  "external"
+                ]
+              }
+            },
+            "required": [
+              "execution_assertion"
+            ]
+          },
+          "then": {
+            "properties": {
+              "source_bindings": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ExistingObject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "object_ref",
+        "object_hash",
+        "value"
+      ],
+      "properties": {
+        "object_ref": {
+          "$ref": "./defs/common.schema.json#/$defs/ObjectReference"
+        },
+        "object_hash": {
+          "$ref": "./defs/common.schema.json#/$defs/Hash"
+        },
+        "value": {
+          "type": "object"
+        }
+      }
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "authoring_input_id",
+    "authoring_input_version",
+    "schema_version",
+    "project_id",
+    "title",
+    "language",
+    "report_mode",
+    "scope",
+    "enabled_modules",
+    "source_coverage",
+    "input_chunks",
+    "id_registry",
+    "existing_objects",
+    "records",
+    "review_tasks",
+    "disclosure_level",
+    "extensions"
+  ],
+  "properties": {
+    "authoring_input_id": {
+      "$ref": "./defs/common.schema.json#/$defs/Identifier"
+    },
+    "authoring_input_version": {
+      "$ref": "./defs/common.schema.json#/$defs/Version"
+    },
+    "schema_version": {
+      "$ref": "./defs/common.schema.json#/$defs/Version"
+    },
+    "project_id": {
+      "$ref": "./defs/common.schema.json#/$defs/Identifier"
+    },
+    "title": {
+      "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+    },
+    "language": {
+      "$ref": "./defs/common.schema.json#/$defs/LanguageTag"
+    },
+    "report_mode": {
+      "enum": [
+        "summary",
+        "full_archive",
+        "filtered_working_copy"
+      ]
+    },
+    "scope": {
+      "$ref": "./defs/common.schema.json#/$defs/Scope"
+    },
+    "enabled_modules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "./defs/common.schema.json#/$defs/ModuleManifestItem"
+      }
+    },
+    "source_coverage": {
+      "$ref": "./defs/source-coverage.schema.json#/$defs/SourceCoverage"
+    },
+    "input_chunks": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/common.schema.json#/$defs/ContentChunk"
+      }
+    },
+    "id_registry": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/IdRegistryEntry"
+      }
+    },
+    "existing_objects": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ExistingObject"
+      }
+    },
+    "records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/AuthoringRecord"
+      }
+    },
+    "review_tasks": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/common.schema.json#/$defs/ReviewTask"
+      }
+    },
+    "disclosure_level": {
+      "enum": [
+        "public",
+        "internal",
+        "restricted"
+      ]
+    },
+    "extensions": {
+      "$ref": "./defs/common.schema.json#/$defs/ExtensionMap"
+    }
+  }
+}

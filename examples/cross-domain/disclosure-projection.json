@@ -1,0 +1,85 @@
+{
+  "projection_id": "projection.cross-domain-example.public-v1",
+  "projection_version": "1.0.0",
+  "schema_version": "1.0.0",
+  "source_report_id": "report.cross-domain-example",
+  "source_report_version": "1.0.0",
+  "source_payload_hash": "sha256:35fadfd830bf00b3ada8b52bb74df9649754ec6a8364a987dd4ae43aa48732af",
+  "projected_report_id": "report.cross-domain-example",
+  "projected_report_version": "1.0.0",
+  "projected_payload_hash": "sha256:c099b2376b463b2556b55435efe06e1d173077e1e3baa26afc3394fbb35de049",
+  "source_disclosure_level": "public",
+  "target_disclosure_level": "public",
+  "policy_id": "policy.cross-domain-example.public-v1",
+  "policy_version": "1.0.0",
+  "policy_hash": "sha256:00a4e2776b9a5d0c316c1ff8dcbca5f37bc95bffe993f63c11a65943a89e9ad6",
+  "created_at": "2026-08-24T00:00:00.000Z",
+  "projection_status": "complete",
+  "field_actions": [],
+  "counts": {
+    "retained": 0,
+    "withheld_envelope": 0,
+    "omitted_object": 0,
+    "generalized": 0,
+    "replaced_with_public_identifier": 0,
+    "hash_only": 0
+  },
+  "disclosure_checks": [
+    {
+      "check_id": "projection.secret-scan",
+      "check_kind": "secret_scan",
+      "status": "pass",
+      "finding_count": 0,
+      "executed_at": "2026-08-24T00:00:00.000Z",
+      "tool_name": "report-prompt-disclosure-projector",
+      "tool_version": "1.0.0",
+      "details_artifact_id": null
+    },
+    {
+      "check_id": "projection.absolute-path-scan",
+      "check_kind": "absolute_path_scan",
+      "status": "pass",
+      "finding_count": 0,
+      "executed_at": "2026-08-24T00:00:00.000Z",
+      "tool_name": "report-prompt-disclosure-projector",
+      "tool_version": "1.0.0",
+      "details_artifact_id": null
+    },
+    {
+      "check_id": "projection.dangerous-url-scan",
+      "check_kind": "dangerous_url_scan",
+      "status": "pass",
+      "finding_count": 0,
+      "executed_at": "2026-08-24T00:00:00.000Z",
+      "tool_name": "report-prompt-disclosure-projector",
+      "tool_version": "1.0.0",
+      "details_artifact_id": null
+    },
+    {
+      "check_id": "projection.withheld-leak-scan",
+      "check_kind": "withheld_value_leak_scan",
+      "status": "pass",
+      "finding_count": 0,
+      "executed_at": "2026-08-24T00:00:00.000Z",
+      "tool_name": "report-prompt-disclosure-projector",
+      "tool_version": "1.0.0",
+      "details_artifact_id": null
+    }
+  ],
+  "unresolved_review_task_ids": [],
+  "extensions": {
+    "report_prompt.projection": {
+      "implementation": "report-prompt-disclosure-projector/1.0.0",
+      "hash_basis": "canonical-json-v1",
+      "intrinsic_metadata_changes": [
+        "/payload_role",
+        "/disclosure_state"
+      ],
+      "policy_contract": {
+        "source_level": "public",
+        "default_action": "retain",
+        "protected_fields": "remain explicit withheld envelopes"
+      }
+    }
+  }
+}

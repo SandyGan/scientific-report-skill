@@ -1,0 +1,392 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.report-prompt.org/v1/defs/reproducibility-unit.schema.json",
+  "title": "Reproducibility unit",
+  "description": "Protocol-aligned per-unit replay and independent reproduction assessment with explicit axes and evidence events.",
+  "$defs": {
+    "AxisState": {
+      "enum": ["satisfied", "partial", "unsatisfied", "unknown", "not_applicable", "withheld"]
+    },
+    "AxisAssessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "rationale", "evidence_artifact_ids", "source_bindings"],
+      "properties": {
+        "state": { "$ref": "#/$defs/AxisState" },
+        "rationale": { "$ref": "./common.schema.json#/$defs/NonEmptyString" },
+        "evidence_artifact_ids": {
+          "type": "array",
+          "items": { "$ref": "./common.schema.json#/$defs/Identifier" },
+          "uniqueItems": true
+        },
+        "source_bindings": {
+          "type": "array",
+          "items": { "$ref": "./common.schema.json#/$defs/SourceBinding" }
+        }
+      }
+    },
+    "AccessAssessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "conditions", "artifact_ids", "source_bindings"],
+      "properties": {
+        "status": { "enum": ["available_now", "verified_procedure", "controlled_access", "unavailable", "unknown", "not_applicable", "withheld"] },
+        "conditions": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "artifact_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "actor_scope": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "authority": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "license_or_terms": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "procedure_attestation_artifact_id": {
+          "oneOf": [
+            { "$ref": "./common.schema.json#/$defs/Identifier" },
+            { "type": "null" }
+          ]
+        },
+        "source_bindings": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/SourceBinding" } }
+      }
+    },
+    "ComparatorDecisionRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["metric", "operator", "threshold", "lower_bound", "upper_bound", "unit", "implementation", "implementation_artifact_id"],
+      "properties": {
+        "metric": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "operator": {
+          "enum": [
+            "exact_hash",
+            "canonical_hash_equal",
+            "absolute_difference_lte",
+            "relative_difference_lte",
+            "distance_lte",
+            "p_value_gte",
+            "within_bounds"
+          ]
+        },
+        "threshold": { "$ref": "./common.schema.json#/$defs/NumberField" },
+        "lower_bound": { "$ref": "./common.schema.json#/$defs/NumberField" },
+        "upper_bound": { "$ref": "./common.schema.json#/$defs/NumberField" },
+        "unit": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "implementation": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "implementation_artifact_id": {
+          "oneOf": [
+            { "$ref": "./common.schema.json#/$defs/Identifier" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "ComparisonSpecification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["comparator_id", "timing_classification", "comparator_type", "targets", "equivalence_definition", "tolerances", "allowed_nondeterminism", "failure_conditions", "source_bindings"],
+      "properties": {
+        "comparator_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "timing_classification": { "enum": ["predefined", "adaptive", "post_hoc", "missing", "not_applicable"] },
+        "comparator_type": { "enum": ["byte_identical", "canonical_record_identical", "numeric_tolerance", "distributional_equivalence", "scientific_acceptance_bounds", "manual_protocol_criteria"] },
+        "targets": { "$ref": "./common.schema.json#/$defs/StringArrayField" },
+        "target_artifact_ids": {
+          "type": "array",
+          "items": { "$ref": "./common.schema.json#/$defs/Identifier" },
+          "uniqueItems": true
+        },
+        "decision_rule": { "$ref": "#/$defs/ComparatorDecisionRule" },
+        "equivalence_definition": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "tolerances": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "allowed_nondeterminism": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "failure_conditions": { "$ref": "./common.schema.json#/$defs/StringArrayField" },
+        "source_bindings": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/SourceBinding" } }
+      }
+    },
+    "TargetComparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_id", "reference_artifact_id", "replay_artifact_id", "comparison_evidence_artifact_id", "observed_value", "result"],
+      "properties": {
+        "target_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "reference_artifact_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "replay_artifact_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "comparison_evidence_artifact_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "observed_value": { "$ref": "./common.schema.json#/$defs/NumberField" },
+        "result": { "enum": ["met", "did_not_meet", "inconclusive"] }
+      }
+    },
+    "ReplayEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["replay_event_id", "executor", "execution_time", "recipe_version", "environment_id", "input_artifact_ids", "actual_invocation_id", "exit_or_completion_status", "output_artifact_ids", "comparator_id", "comparison_result", "deviations", "source_bindings"],
+      "properties": {
+        "replay_event_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "executor": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "execution_time": { "$ref": "./common.schema.json#/$defs/DateTimeField" },
+        "recipe_version": { "$ref": "./common.schema.json#/$defs/Version" },
+        "recipe_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "environment_id": {
+          "oneOf": [
+            { "$ref": "./common.schema.json#/$defs/Identifier" },
+            { "type": "null" }
+          ]
+        },
+        "input_artifact_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "actual_invocation_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "exit_or_completion_status": { "enum": ["completed", "failed", "interrupted", "unknown", "withheld"] },
+        "output_artifact_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "comparator_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "comparison_result": { "enum": ["met", "did_not_meet", "inconclusive", "not_run", "unknown", "withheld"] },
+        "comparison_evidence_artifact_ids": {
+          "type": "array",
+          "items": { "$ref": "./common.schema.json#/$defs/Identifier" },
+          "uniqueItems": true
+        },
+        "target_comparisons": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/TargetComparison" }
+        },
+        "deviations": { "$ref": "./common.schema.json#/$defs/StringArrayField" },
+        "source_bindings": { "type": "array", "minItems": 1, "items": { "$ref": "./common.schema.json#/$defs/SourceBinding" } }
+      }
+    },
+    "IndependentReproductionEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reproduction_event_id", "reproduction_kind", "independence_assessment", "shared_dependency_ids", "comparison_result", "comparator_id", "output_artifact_ids", "source_bindings"],
+      "properties": {
+        "reproduction_event_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "reproduction_kind": { "enum": ["computational", "experimental"] },
+        "independence_assessment": { "enum": ["independent", "partially_independent", "not_independent", "unknown", "withheld"] },
+        "shared_dependency_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "independent_actor": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "executor": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "execution_time": { "$ref": "./common.schema.json#/$defs/DateTimeField" },
+        "execution_record_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "actual_invocation_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "experimental_execution_record_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "actual_attempt_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "input_artifact_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "input_material_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "environment_id": {
+          "oneOf": [
+            { "$ref": "./common.schema.json#/$defs/Identifier" },
+            { "type": "null" }
+          ]
+        },
+        "implementation_boundary": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "implementation_or_protocol_boundary": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "random_state_id": {
+          "oneOf": [
+            { "$ref": "./common.schema.json#/$defs/Identifier" },
+            { "type": "null" }
+          ]
+        },
+        "random_state_applicability": { "enum": ["applicable", "not_applicable"] },
+        "random_state_justification": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "comparison_result": { "enum": ["met", "did_not_meet", "inconclusive", "not_run", "unknown", "withheld"] },
+        "comparator_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "output_artifact_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "output_result_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "deviations": { "$ref": "./common.schema.json#/$defs/StringArrayField" },
+        "failure_event_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "failure_assessment": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "comparison_evidence_artifact_ids": {
+          "type": "array",
+          "items": { "$ref": "./common.schema.json#/$defs/Identifier" },
+          "uniqueItems": true
+        },
+        "target_comparisons": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/TargetComparison" }
+        },
+        "source_bindings": { "type": "array", "minItems": 1, "items": { "$ref": "./common.schema.json#/$defs/SourceBinding" } }
+      }
+    },
+    "DenominatorExclusion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_kind", "target_id", "justification", "source_bindings"],
+      "properties": {
+        "target_kind": { "enum": ["claim", "output"] },
+        "target_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "justification": { "$ref": "./common.schema.json#/$defs/NonEmptyString" },
+        "source_bindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "./common.schema.json#/$defs/SourceBinding" }
+        }
+      }
+    },
+    "CoverageDenominatorDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decision_event_id", "critical_unit_membership", "critical_claim_ids", "critical_output_ids", "exclusions", "rationale", "source_bindings"],
+      "properties": {
+        "decision_event_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "critical_unit_membership": { "enum": ["included", "excluded"] },
+        "critical_claim_ids": {
+          "type": "array",
+          "items": { "$ref": "./common.schema.json#/$defs/Identifier" },
+          "uniqueItems": true
+        },
+        "critical_output_ids": {
+          "type": "array",
+          "items": { "$ref": "./common.schema.json#/$defs/Identifier" },
+          "uniqueItems": true
+        },
+        "exclusions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/DenominatorExclusion" }
+        },
+        "rationale": { "$ref": "./common.schema.json#/$defs/NonEmptyString" },
+        "source_bindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "./common.schema.json#/$defs/SourceBinding" }
+        }
+      }
+    },
+    "CoverageDisposition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "justification", "source_bindings"],
+      "properties": {
+        "status": { "enum": ["assessed", "explicit_gap"] },
+        "justification": { "$ref": "./common.schema.json#/$defs/NonEmptyString" },
+        "source_bindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "./common.schema.json#/$defs/SourceBinding" }
+        }
+      }
+    },
+    "BoundRecordAssessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record_id", "assessment"],
+      "properties": {
+        "record_id": {
+          "oneOf": [
+            { "$ref": "./common.schema.json#/$defs/Identifier" },
+            { "type": "null" }
+          ]
+        },
+        "assessment": { "$ref": "#/$defs/AxisAssessment" }
+      }
+    },
+    "AxisAssessments": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provenance_closure",
+        "recipe_fidelity",
+        "data_and_artifact_access",
+        "environment_capture",
+        "random_state_capture",
+        "replay_verification",
+        "independent_computational_reproduction",
+        "independent_experimental_replication",
+        "claim_and_output_coverage"
+      ],
+      "properties": {
+        "provenance_closure": { "$ref": "#/$defs/AxisAssessment" },
+        "recipe_fidelity": { "$ref": "#/$defs/AxisAssessment" },
+        "data_and_artifact_access": { "$ref": "#/$defs/AxisAssessment" },
+        "environment_capture": { "$ref": "#/$defs/AxisAssessment" },
+        "random_state_capture": { "$ref": "#/$defs/AxisAssessment" },
+        "replay_verification": { "$ref": "#/$defs/AxisAssessment" },
+        "independent_computational_reproduction": { "$ref": "#/$defs/AxisAssessment" },
+        "independent_experimental_replication": { "$ref": "#/$defs/AxisAssessment" },
+        "claim_and_output_coverage": { "$ref": "#/$defs/AxisAssessment" }
+      }
+    },
+    "ReproducibilityUnit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reproducibility_unit_id",
+        "object_version",
+        "title",
+        "unit_kind",
+        "criticality",
+        "scope",
+        "covered_work_unit_ids",
+        "covered_analysis_run_ids",
+        "covered_claim_ids",
+        "covered_output_ids",
+        "historical_invocation_ids",
+        "recipe_id",
+        "input_closure",
+        "artifact_closure",
+        "environment_record",
+        "random_state_record",
+        "access_assessment",
+        "comparison_specification",
+        "replay_events",
+        "independent_reproduction_events",
+        "axis_assessments",
+        "conservative_level",
+        "level_reason",
+        "limitation_ids",
+        "source_bindings",
+        "extensions"
+      ],
+      "properties": {
+        "reproducibility_unit_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "object_version": { "$ref": "./common.schema.json#/$defs/Version" },
+        "title": { "$ref": "./common.schema.json#/$defs/NonEmptyString" },
+        "unit_kind": { "enum": ["data_acquisition", "material_preparation", "wet_lab_experiment", "data_transformation", "statistical_analysis", "model_training", "model_inference", "simulation", "trajectory_analysis", "figure_or_table_derivation", "integrated_workflow", "other_declared"] },
+        "criticality": { "enum": ["critical", "supporting", "contextual"] },
+        "scope": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "covered_work_unit_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "covered_analysis_run_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "covered_claim_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "covered_output_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "historical_invocation_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "recipe_id": {
+          "oneOf": [
+            { "$ref": "./common.schema.json#/$defs/Identifier" },
+            { "type": "null" }
+          ]
+        },
+        "recipe_artifact_id": {
+          "oneOf": [
+            { "$ref": "./common.schema.json#/$defs/Identifier" },
+            { "type": "null" }
+          ]
+        },
+        "recipe_record": {
+          "oneOf": [
+            { "$ref": "../recipe.schema.json" },
+            { "type": "null" }
+          ]
+        },
+        "recipe_record_hash": { "$ref": "./common.schema.json#/$defs/Hash" },
+        "bundle_dependency_artifact_ids": {
+          "type": "array",
+          "items": { "$ref": "./common.schema.json#/$defs/Identifier" },
+          "uniqueItems": true
+        },
+        "coverage_denominator_decision": { "$ref": "#/$defs/CoverageDenominatorDecision" },
+        "coverage_disposition": { "$ref": "#/$defs/CoverageDisposition" },
+        "input_closure": { "$ref": "#/$defs/AxisAssessment" },
+        "artifact_closure": { "$ref": "#/$defs/AxisAssessment" },
+        "environment_record": { "$ref": "#/$defs/BoundRecordAssessment" },
+        "random_state_record": { "$ref": "#/$defs/BoundRecordAssessment" },
+        "access_assessment": { "$ref": "#/$defs/AccessAssessment" },
+        "comparison_specification": { "$ref": "#/$defs/ComparisonSpecification" },
+        "replay_events": { "type": "array", "items": { "$ref": "#/$defs/ReplayEvent" } },
+        "independent_reproduction_events": { "type": "array", "items": { "$ref": "#/$defs/IndependentReproductionEvent" } },
+        "axis_assessments": { "$ref": "#/$defs/AxisAssessments" },
+        "conservative_level": { "enum": ["not_assessed", "R0_documented", "R1_replay_ready", "R2_verified_replay", "R3_independent_reproduction"] },
+        "level_reason": { "$ref": "./common.schema.json#/$defs/NonEmptyString" },
+        "limitation_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "source_bindings": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/SourceBinding" } },
+        "extensions": { "$ref": "./common.schema.json#/$defs/ExtensionMap" }
+      },
+      "anyOf": [
+        { "properties": { "covered_work_unit_ids": { "minItems": 1 } } },
+        { "properties": { "covered_analysis_run_ids": { "minItems": 1 } } },
+        { "properties": { "covered_claim_ids": { "minItems": 1 } } },
+        { "properties": { "covered_output_ids": { "minItems": 1 } } }
+      ]
+    }
+  },
+  "$ref": "#/$defs/ReproducibilityUnit"
+}

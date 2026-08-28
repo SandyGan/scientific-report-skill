@@ -1,0 +1,170 @@
+<section id="arguments" class="report-section" aria-labelledby="arguments-title">
+  <header class="section-heading">
+    <div>
+      <p class="section-code">L2 / argument inspector</p>
+      <h2 id="arguments-title">Claims, evidence, dependencies, and challenges</h2>
+    </div>
+    <p class="section-purpose">Follow each statement through direct evidence and intermediate reasoning. Evidence sharing and counterevidence remain visible.</p>
+  </header>
+
+  <div class="coverage-banner" data-status="{{section_coverage.claims.state}}">
+    <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-coverage"></use></svg>
+    <span><strong>Section coverage:</strong> <span class="empty-fallback">{{section_coverage.claims.state}}</span></span>
+    <span class="coverage-banner__reason empty-fallback">{{section_coverage.claims.reason}}</span>
+  </div>
+
+  <div class="argument-list">
+    {{#each claims}}
+    <article class="claim-card" data-record data-kind="claim" data-domain="{{domain}}" data-state="{{status}}" data-safety-record="{{safety_relevance}}">
+      <div class="evidence-bus" aria-hidden="true"><span></span><span></span><span></span></div>
+      <header class="claim-card__header">
+        <div class="record-id-block">
+          <span class="record-type">{{#if claim_class}}{{claim_class}}{{else}}Claim{{/if}}</span>
+          <code>{{claim_id}}</code>
+        </div>
+        <div class="record-statuses">
+          <span class="status-chip" data-status="{{status}}"><span class="status-marker" aria-hidden="true"></span><span class="empty-fallback">{{status}}</span></span>
+          <span class="dependency-tag empty-fallback">{{independence_class}}</span>
+        </div>
+      </header>
+
+      <h3 class="claim-statement empty-fallback">{{statement}}</h3>
+      {{#if qualification}}
+      <p class="claim-qualification"><strong>Qualification:</strong> {{qualification}}</p>
+      {{/if}}
+
+      <div class="claim-scope-strip">
+        <span><span class="meta-label">Domain</span> <span class="empty-fallback">{{domain}}</span></span>
+        <span><span class="meta-label">Status</span> <span class="empty-fallback">{{status}}</span></span>
+        <span><span class="meta-label">Scope</span> <span class="empty-fallback">{{scope_text}}</span></span>
+        <span><span class="meta-label">Version</span> <code>{{object_version}}</code></span>
+      </div>
+
+      <details class="disclosure claim-inspector" data-disclosure>
+        <summary>
+          <span>Open evidence inspector</span>
+          <span class="summary-meta"><span class="empty-fallback">{{evidence_count}}</span> evidence · <span class="empty-fallback">{{counterevidence_count}}</span> counterevidence · <span class="empty-fallback">{{dependency_count}}</span> dependencies</span>
+        </summary>
+        <div class="disclosure__body argument-grid">
+          <section class="argument-lane argument-lane--support" aria-label="Direct evidence">
+            <header>
+              <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-evidence"></use></svg>
+              <h4>Direct evidence</h4>
+            </header>
+            <ol class="evidence-list">
+              {{#each evidence}}
+              <li class="evidence-item" data-record data-kind="evidence" data-domain="{{domain}}" data-state="{{status}}">
+                <div class="evidence-item__heading"><code>{{evidence_id}}</code><span class="status-chip status-chip--small" data-status="{{status}}">{{status}}</span></div>
+                <p>{{summary}}</p>
+                <dl class="key-value-list key-value-list--compact">
+                  <div><dt>Role</dt><dd class="empty-fallback">{{role}}</dd></div>
+                  <div><dt>Source locator</dt><dd><code class="wrap-code empty-fallback">{{source_locator}}</code></dd></div>
+                  <div><dt>Independence</dt><dd class="empty-fallback">{{independence_class}}</dd></div>
+                  <div><dt>Disposition</dt><dd class="empty-fallback">{{disposition}}</dd></div>
+                </dl>
+              </li>
+              {{else}}
+              <li class="missing-entry">No direct-evidence records supplied.</li>
+              {{/each}}
+            </ol>
+          </section>
+
+          <section class="argument-lane" aria-label="Reasoning and dependencies">
+            <header>
+              <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-bridge"></use></svg>
+              <h4>Reasoning and dependencies</h4>
+            </header>
+            <ol class="argument-step-list">
+              {{#each argument_steps}}
+              <li data-record data-kind="argument-step" data-domain="{{domain}}" data-state="{{status}}">
+                <span class="step-index">{{step_index}}</span>
+                <div>
+                  <code>{{argument_step_id}}</code>
+                  <p>{{statement}}</p>
+                  <span class="state-label">Premise status: <strong class="empty-fallback">{{premise_status}}</strong></span>
+                </div>
+              </li>
+              {{else}}
+              <li class="missing-entry">No intermediate argument steps supplied; inspect whether the claim is intended to be directly supported.</li>
+              {{/each}}
+            </ol>
+
+            <h5>Upstream dependencies</h5>
+            <ul class="dependency-list">
+              {{#each dependencies}}
+              <li><code>{{upstream_claim_id}}</code><span>{{relationship}}</span><span class="status-chip status-chip--small" data-status="{{validity_status}}">{{validity_status}}</span></li>
+              {{else}}
+              <li class="missing-entry">No upstream claim dependencies supplied.</li>
+              {{/each}}
+            </ul>
+
+            {{#each bridges}}
+            <article class="bridge-record" data-record data-kind="cross-domain-bridge" data-domain="{{domains}}" data-state="{{status}}" data-safety-record="{{safety_relevance}}">
+              <header><span class="field-label">Cross-domain bridge</span><code>{{bridge_id}}</code></header>
+              <p>{{statement}}</p>
+              <dl class="key-value-list key-value-list--compact">
+                <div><dt>Entity alignment</dt><dd class="empty-fallback">{{entity_alignment}}</dd></div>
+                <div><dt>Construct alignment</dt><dd class="empty-fallback">{{construct_alignment}}</dd></div>
+                <div><dt>Condition alignment</dt><dd class="empty-fallback">{{condition_alignment}}</dd></div>
+                <div><dt>Intervention alignment</dt><dd class="empty-fallback">{{intervention_alignment}}</dd></div>
+                <div><dt>Dose alignment</dt><dd class="empty-fallback">{{dose_alignment}}</dd></div>
+                <div><dt>Endpoint alignment</dt><dd class="empty-fallback">{{endpoint_alignment}}</dd></div>
+                <div><dt>Time alignment</dt><dd class="empty-fallback">{{time_alignment}}</dd></div>
+                <div><dt>State alignment</dt><dd class="empty-fallback">{{state_alignment}}</dd></div>
+                <div><dt>Scale alignment</dt><dd class="empty-fallback">{{scale_alignment}}</dd></div>
+                <div><dt>Status</dt><dd class="empty-fallback">{{status}}</dd></div>
+              </dl>
+            </article>
+            {{/each}}
+          </section>
+
+          <section class="argument-lane argument-lane--challenge" aria-label="Counterevidence, conflicts, and limitations">
+            <header>
+              <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-counterevidence"></use></svg>
+              <h4>Challenges and boundaries</h4>
+            </header>
+            <ul class="challenge-list">
+              {{#each counterevidence}}
+              <li data-record data-kind="counterevidence" data-domain="{{domain}}" data-state="{{status}}" data-safety-record="true">
+                <div><code>{{evidence_id}}</code><span class="status-chip status-chip--small" data-status="{{status}}">{{status}}</span></div>
+                <p>{{summary}}</p>
+                <span class="locator">Locator: <code class="wrap-code empty-fallback">{{source_locator}}</code></span>
+              </li>
+              {{else}}
+              <li class="missing-entry">No counterevidence records supplied; absence is not interpreted as a completed challenge search.</li>
+              {{/each}}
+            </ul>
+
+            <h5>Registered conflicts</h5>
+            <ul class="challenge-list">
+              {{#each conflicts}}
+              <li data-record data-kind="conflict" data-domain="{{domain}}" data-state="{{status}}" data-safety-record="true">
+                <div><code>{{conflict_id}}</code><span class="status-chip status-chip--small" data-status="{{status}}">{{status}}</span></div>
+                <p>{{summary}}</p>
+                <span class="state-label">Adjudication: <strong class="empty-fallback">{{adjudication_status}}</strong></span>
+              </li>
+              {{else}}
+              <li class="missing-entry">No conflict records supplied.</li>
+              {{/each}}
+            </ul>
+
+            <h5>Limitations</h5>
+            <ul class="compact-list">
+              {{#each limitations}}
+              <li><code>{{limitation_id}}</code> {{statement}} <span class="state-label empty-fallback">{{status}}</span></li>
+              {{else}}
+              <li class="missing-entry">No claim-specific limitations supplied.</li>
+              {{/each}}
+            </ul>
+          </section>
+        </div>
+      </details>
+    </article>
+    {{else}}
+    <div class="section-empty" data-state="{{section_coverage.claims.state}}">
+      <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-unknown"></use></svg>
+      <div><h3>No claims rendered</h3><p>Consult the section-coverage state. A blank list does not establish that the report contains no claims.</p></div>
+    </div>
+    {{/each}}
+  </div>
+</section>

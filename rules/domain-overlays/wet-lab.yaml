@@ -1,0 +1,243 @@
+overlay_version: 1.0.0
+schema_version: report-domain-overlay/v1
+overlay_id: wet-lab-1
+registry: ../registry.yaml
+domain: wet_lab
+payload_schema: ../../schemas/packs/wet-lab.schema.json
+payload_schema_id: https://schemas.report-prompt.org/v1/packs/wet-lab.schema.json
+description: Activates wet-lab semantic checks and binds the authoritative catalog to the wet-lab payload.
+  This file contains no duplicate rule meaning; condition, message, remediation, severity floor, and waiver
+  policy remain in registry.yaml.
+applicability:
+  module_manifest_token: wet_lab
+  payload_collection_pointer: /extensions/domain_payloads
+  payload_discriminator_pointer: /domain
+  payload_discriminator_value: wet_lab
+  behavior:
+    enabled_without_payload: finding
+    payload_without_manifest_entry: finding
+    multiple_payloads: allowed_if_payload_id_unique
+missingness_contract:
+  state_pointer_suffix: /state
+  value_pointer_suffix: /value
+  source_bindings_pointer_suffix: /source_bindings
+  missing_reason_pointer_suffix: /missing_reason
+  provenance_status_pointer_suffix: /provenance_status
+  states:
+    - known
+    - unknown
+    - not_applicable
+    - withheld
+  forbid_implicit_sentinels:
+    - ""
+    - TBD
+    - N/A
+    - NA
+    - unknown_string
+  withheld_value_must_be_null: true
+  unknown_value_must_be_null: true
+  not_applicable_requires_basis: true
+required_sections:
+  - specimens_and_lineage
+  - materials_and_identity
+  - replicates_and_units
+  - allocation_and_blinding
+  - controls_and_sensitivity
+  - protocol_and_calibration
+  - imaging_and_roi
+  - analysis_population
+  - quality_failures_and_exclusions
+enabled_rule_ids:
+  - COV001
+  - COV002
+  - WRK001
+  - WRK002
+  - WRK003
+  - TIM001
+  - MAT001
+  - DER001
+  - CLM001
+  - BRG001
+  - DEP001
+  - CNF001
+  - NUL001
+  - NEG001
+  - REV001
+  - REP001
+  - ATT001
+  - RED001
+  - SEC001
+  - A11Y001
+  - APP001
+  - APP002
+  - APP003
+  - APP004
+  - APP005
+  - MNF001
+  - MNF002
+  - MNF003
+  - MNF004
+  - MNF005
+  - WFA001
+  - WFA002
+  - WFA003
+  - WFA004
+  - WFA005
+  - WFA006
+  - WET001
+  - WET002
+  - WET003
+  - WET004
+evaluation_bindings:
+  APP004:
+    module_manifest: /module_manifest
+    domain_trigger_sources:
+      - /entities/*/entity_kind
+      - /work_units/*/domain
+      - /extensions/domain_payloads/*/domain
+    expected_module_token: wet_lab
+  MNF001:
+    section_manifest: $overlay.required_sections
+    section_coverage: /extensions/domain_payloads/*[domain=wet_lab]/section_coverage
+  MNF002:
+    section_coverage: /extensions/domain_payloads/*[domain=wet_lab]/section_coverage
+  MNF003:
+    source_accounting: /extensions/domain_payloads/*[domain=wet_lab]/section_coverage/*/source_item_ids
+  MNF004:
+    static_section_output: /render_validation/sections/*[domain=wet_lab]
+  MNF005:
+    domain_trigger_sources:
+      - /entities/*/entity_kind
+      - /work_units/*/domain
+    expected_sections: $overlay.required_sections
+  WFA001:
+    target: /extensions/domain_payloads/*[domain=wet_lab]/specimen_records/*/organism
+  WFA002:
+    target: /extensions/domain_payloads/*[domain=wet_lab]/specimen_records/*/donor
+  WFA003:
+    target: /extensions/domain_payloads/*[domain=wet_lab]/material_records/*/passage
+  WFA004:
+    target: /extensions/domain_payloads/*[domain=wet_lab]/replicate_designs/*/randomization
+  WFA005:
+    target: /extensions/domain_payloads/*[domain=wet_lab]/replicate_designs/*/blinding
+  WFA006:
+    target: /extensions/domain_payloads/*[domain=wet_lab]/control_records/*/assay_sensitivity
+    result_trigger: /results/*/scientific_effect_class
+  MAT001:
+    payload_pointer: /extensions/domain_payloads/*[domain=wet_lab]
+    node_collections:
+      - /specimen_records
+      - /material_records
+    parent_edges: /specimen_records/*/parent_specimen_ids
+    pool_members: /specimen_records/*/pool_members
+    included_population: /analysis_contexts/*/included_specimen_ids
+    excluded_population: /analysis_contexts/*/excluded_specimen_ids
+    exclusion_reasons: /analysis_contexts/*/exclusion_reasons
+    count_fields:
+      - /replicate_designs/*/biological_n
+      - /replicate_designs/*/technical_n
+  DER001:
+    quantitative_fields:
+      - /control_records/*/detection_limit
+      - /control_records/*/minimum_detectable_effect
+      - /control_records/*/equivalence_bounds
+      - /replicate_designs/*/biological_n
+      - /replicate_designs/*/technical_n
+      - /analysis_contexts/*/detection_limit
+      - /analysis_contexts/*/minimum_detectable_effect
+      - /analysis_contexts/*/equivalence_bounds
+    analysis_run_links: /analysis_contexts/*/analysis_run_id
+  DEP001:
+    independence_units:
+      - /replicate_designs/*/biological_unit
+      - /replicate_designs/*/experimental_unit
+      - /replicate_designs/*/analysis_unit
+    nesting_edges:
+      - /specimen_records/*/parent_specimen_ids
+      - /specimen_records/*/pool_members
+  NUL001:
+    result_selector: /results/*[domain_payload_id=$payload_id]
+    control_records: /control_records
+    positive_control_selector: /control_records/*[kind=positive]
+    control_status: /control_records/*/status
+    sensitivity_fields:
+      - /control_records/*/assay_sensitivity
+      - /control_records/*/detection_limit
+      - /control_records/*/minimum_detectable_effect
+      - /control_records/*/equivalence_bounds
+    population_fields:
+      - /analysis_contexts/*/population_definition
+      - /analysis_contexts/*/included_specimen_ids
+      - /analysis_contexts/*/excluded_specimen_ids
+  NEG001:
+    adverse_record_collections:
+      - /qc_events
+      - /protocol_records/*/deviations
+      - /analysis_contexts/*/excluded_specimen_ids
+    source_reconciliation_keys:
+      - attempt_id
+      - work_unit_id
+      - specimen_id
+      - result_id
+  WET001:
+    specimens: /specimen_records
+    parent_edges: /specimen_records/*/parent_specimen_ids
+    pool_members: /specimen_records/*[kind=pool]/pool_members
+    design_members: /replicate_designs/*/specimen_ids
+    biological_n: /replicate_designs/*/biological_n
+    technical_n: /replicate_designs/*/technical_n
+    biological_unit: /replicate_designs/*/biological_unit
+    pool_counting_policy: /replicate_designs/*/pool_counting_policy
+  WET002:
+    criticality_source: /claims/*/evidence_item_ids
+    material_records: /material_records
+    specimen_records: /specimen_records
+    identity_fields:
+      - /specimen_records/*/organism
+      - /specimen_records/*/cell_line
+      - /specimen_records/*/donor
+      - /specimen_records/*/sample_identity
+      - /material_records/*/catalog_number
+      - /material_records/*/lot_number
+      - /material_records/*/rrid
+      - /material_records/*/sequence_version
+      - /material_records/*/sequence_hash
+      - /material_records/*/passage
+      - /material_records/*/authentication
+      - /material_records/*/mycoplasma_status
+      - /material_records/*/equipment_calibration
+  WET003:
+    design_records: /replicate_designs
+    process_fields:
+      - /replicate_designs/*/randomization
+      - /replicate_designs/*/batch_balance
+      - /replicate_designs/*/blinding
+      - /replicate_designs/*/unblinding
+      - /replicate_designs/*/dropout_policy
+    qc_events: /qc_events
+    specimen_lineage: /specimen_records/*/parent_specimen_ids
+  WET004:
+    deviation_records:
+      - /protocol_records/*/deviations
+      - /qc_events
+    affected_ids: /qc_events/*/affected_ids
+    impact_fields:
+      - /protocol_records/*/deviations/*/impact_assessment
+      - /qc_events/*/action_taken
+cross_domain_exports:
+  entity_identity:
+    - /specimen_records/*/specimen_id
+    - /specimen_records/*/sample_identity
+    - /material_records/*/material_id
+    - /material_records/*/sequence_version
+    - /material_records/*/sequence_hash
+  experimental_context:
+    - /protocol_records/*/protocol_id
+    - /protocol_records/*/version
+    - /replicate_designs/*/work_unit_id
+  compatibility_targets:
+    - construct_identity
+    - sequence_version
+    - condition
+    - intervention_or_dose
+    - time_scale

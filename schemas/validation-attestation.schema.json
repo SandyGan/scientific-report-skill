@@ -1,0 +1,662 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.report-prompt.org/v1/validation-attestation.schema.json",
+  "title": "Validation attestation",
+  "description": "Independent structural and semantic validation record cryptographically bound to one exact scientific payload hash.",
+  "$defs": {
+    "ValidatorIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "version",
+        "build_hash"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+        },
+        "version": {
+          "$ref": "./defs/common.schema.json#/$defs/Version"
+        },
+        "build_hash": {
+          "$ref": "./defs/common.schema.json#/$defs/Hash"
+        }
+      }
+    },
+    "Waiver": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "waiver_id",
+        "authorized_by",
+        "reason",
+        "authorized_at",
+        "expires_at"
+      ],
+      "properties": {
+        "waiver_id": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "authorized_by": {
+          "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+        },
+        "reason": {
+          "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+        },
+        "authorized_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "expires_at": {
+          "oneOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "ValidationCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "check_id",
+        "category",
+        "rule_code",
+        "status",
+        "severity",
+        "message",
+        "instance_pointer",
+        "affected_object_ids",
+        "waiver",
+        "evidence_artifact_ids"
+      ],
+      "properties": {
+        "check_id": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "category": {
+          "enum": [
+            "package_and_identity",
+            "schema_and_missingness",
+            "source_coverage",
+            "references_and_graph",
+            "execution_state",
+            "decision_timing",
+            "material_lineage",
+            "quantitative_derivation",
+            "claims_and_argument",
+            "revision_propagation",
+            "domain_overlay",
+            "access_and_reproducibility",
+            "disclosure_and_security",
+            "offline_and_accessibility",
+            "other"
+          ]
+        },
+        "rule_code": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "status": {
+          "enum": [
+            "pass",
+            "fail",
+            "waived",
+            "not_run",
+            "error",
+            "not_applicable"
+          ]
+        },
+        "severity": {
+          "enum": [
+            "information",
+            "warning",
+            "blocking"
+          ]
+        },
+        "message": {
+          "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+        },
+        "instance_pointer": {
+          "$ref": "./defs/common.schema.json#/$defs/JsonPointer"
+        },
+        "affected_object_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./defs/common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "waiver": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Waiver"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidence_artifact_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./defs/common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "waived"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "waiver": {
+                "$ref": "#/$defs/Waiver"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "waiver": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ValidationSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "total",
+        "passed",
+        "failed",
+        "not_run",
+        "errors",
+        "not_applicable",
+        "warnings",
+        "blocking_findings",
+        "waived_findings"
+      ],
+      "properties": {
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "passed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "failed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "not_run": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "errors": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "not_applicable": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "warnings": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "blocking_findings": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "waived_findings": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "DisclosureProjectionBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "projection_id",
+        "projection_hash",
+        "source_payload_hash",
+        "projected_payload_hash",
+        "verification_status"
+      ],
+      "properties": {
+        "projection_id": { "$ref": "./defs/common.schema.json#/$defs/Identifier" },
+        "projection_hash": { "$ref": "./defs/common.schema.json#/$defs/Hash" },
+        "source_payload_hash": { "$ref": "./defs/common.schema.json#/$defs/Hash" },
+        "projected_payload_hash": { "$ref": "./defs/common.schema.json#/$defs/Hash" },
+        "verification_status": { "const": "pass" }
+      }
+    },
+    "ValidationCoverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "registry_rule_count",
+        "executed_registry_rule_ids",
+        "skipped_registry_rule_ids",
+        "loaded_overlay_ids",
+        "domain_pack_status",
+        "profile_prerequisite_status",
+        "full_registry_coverage",
+        "full_domain_coverage",
+        "profile_prerequisites_complete",
+        "release_coverage_complete",
+        "compiled_support_manifest_hash"
+      ],
+      "properties": {
+        "registry_rule_count": { "type": "integer", "minimum": 0 },
+        "executed_registry_rule_ids": {
+          "type": "array",
+          "items": { "$ref": "./defs/common.schema.json#/$defs/Identifier" },
+          "uniqueItems": true
+        },
+        "skipped_registry_rule_ids": {
+          "type": "array",
+          "items": { "$ref": "./defs/common.schema.json#/$defs/Identifier" },
+          "uniqueItems": true
+        },
+        "loaded_overlay_ids": {
+          "type": "array",
+          "items": { "$ref": "./defs/common.schema.json#/$defs/Identifier" },
+          "uniqueItems": true
+        },
+        "domain_pack_status": {
+          "enum": ["pass", "fail", "waived", "not_run", "error", "not_applicable"]
+        },
+        "profile_prerequisite_status": {
+          "enum": ["pass", "fail", "waived", "not_run", "error", "not_applicable"]
+        },
+        "full_registry_coverage": { "type": "boolean" },
+        "full_domain_coverage": { "type": "boolean" },
+        "profile_prerequisites_complete": { "type": "boolean" },
+        "release_coverage_complete": { "type": "boolean" },
+        "compiled_support_manifest_hash": { "$ref": "./defs/common.schema.json#/$defs/Hash" }
+      }
+    },
+    "Signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithm",
+        "key_identifier",
+        "signature_value",
+        "signed_at"
+      ],
+      "properties": {
+        "algorithm": {
+          "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+        },
+        "key_identifier": {
+          "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+        },
+        "signature_value": {
+          "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+        },
+        "signed_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "attestation_id",
+    "attestation_version",
+    "schema_version",
+    "report_id",
+    "report_version",
+    "scientific_payload_hash",
+    "payload_hash_basis",
+    "canonicalization",
+    "payload_byte_size",
+    "schema_set_hash",
+    "validator",
+    "ruleset_id",
+    "ruleset_version",
+    "ruleset_hash",
+    "severity_profile",
+    "disclosure_projection_binding",
+    "validation_scope",
+    "coverage",
+    "started_at",
+    "completed_at",
+    "overall_status",
+    "checks",
+    "summary",
+    "unresolved_blocking_check_ids",
+    "signature",
+    "extensions"
+  ],
+  "properties": {
+    "attestation_id": {
+      "$ref": "./defs/common.schema.json#/$defs/Identifier"
+    },
+    "attestation_version": {
+      "$ref": "./defs/common.schema.json#/$defs/Version"
+    },
+    "schema_version": {
+      "$ref": "./defs/common.schema.json#/$defs/Version"
+    },
+    "report_id": {
+      "$ref": "./defs/common.schema.json#/$defs/Identifier"
+    },
+    "report_version": {
+      "$ref": "./defs/common.schema.json#/$defs/Version"
+    },
+    "scientific_payload_hash": {
+      "$ref": "./defs/common.schema.json#/$defs/Hash"
+    },
+    "payload_hash_basis": {
+      "enum": [
+        "canonical-json-v1",
+        "exact-file-bytes"
+      ]
+    },
+    "canonicalization": {
+      "enum": [
+        "sorted-keys-utf8-v1",
+        "not_applicable_exact_bytes"
+      ]
+    },
+    "payload_byte_size": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "schema_set_hash": {
+      "$ref": "./defs/common.schema.json#/$defs/Hash"
+    },
+    "validator": {
+      "$ref": "#/$defs/ValidatorIdentity"
+    },
+    "ruleset_id": {
+      "$ref": "./defs/common.schema.json#/$defs/Identifier"
+    },
+    "ruleset_version": {
+      "$ref": "./defs/common.schema.json#/$defs/Version"
+    },
+    "ruleset_hash": {
+      "$ref": "./defs/common.schema.json#/$defs/Hash"
+    },
+    "severity_profile": {
+      "$ref": "./defs/common.schema.json#/$defs/Identifier"
+    },
+    "disclosure_projection_binding": {
+      "oneOf": [
+        { "$ref": "#/$defs/DisclosureProjectionBinding" },
+        { "type": "null" }
+      ]
+    },
+    "validation_scope": {
+      "enum": [
+        "full",
+        "incremental",
+        "selected_rules"
+      ]
+    },
+    "coverage": {
+      "$ref": "#/$defs/ValidationCoverage"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "oneOf": [
+        {
+          "type": "string",
+          "format": "date-time"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "overall_status": {
+      "enum": [
+        "valid",
+        "invalid",
+        "incomplete",
+        "error"
+      ]
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ValidationCheck"
+      }
+    },
+    "summary": {
+      "$ref": "#/$defs/ValidationSummary"
+    },
+    "unresolved_blocking_check_ids": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/common.schema.json#/$defs/Identifier"
+      },
+      "uniqueItems": true
+    },
+    "signature": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Signature"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "extensions": {
+      "$ref": "./defs/common.schema.json#/$defs/ExtensionMap"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "payload_hash_basis": {
+            "const": "canonical-json-v1"
+          }
+        },
+        "required": [
+          "payload_hash_basis"
+        ]
+      },
+      "then": {
+        "properties": {
+          "canonicalization": {
+            "const": "sorted-keys-utf8-v1"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "canonicalization": {
+            "const": "not_applicable_exact_bytes"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "overall_status": {
+            "const": "valid"
+          }
+        },
+        "required": [
+          "overall_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "completed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "checks": {
+            "not": {
+              "contains": {
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "fail",
+                      "not_run",
+                      "error"
+                    ]
+                  }
+                },
+                "required": [
+                  "status"
+                ]
+              }
+            }
+          },
+          "summary": {
+            "properties": {
+              "failed": {
+                "const": 0
+              },
+              "not_run": {
+                "const": 0
+              },
+              "errors": {
+                "const": 0
+              },
+              "blocking_findings": {
+                "const": 0
+              }
+            }
+          },
+          "coverage": {
+            "properties": {
+              "skipped_registry_rule_ids": { "maxItems": 0 },
+              "full_registry_coverage": { "const": true },
+              "full_domain_coverage": { "const": true },
+              "profile_prerequisites_complete": { "const": true },
+              "release_coverage_complete": { "const": true }
+            }
+          },
+          "unresolved_blocking_check_ids": {
+            "maxItems": 0
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "overall_status": {
+            "const": "invalid"
+          }
+        },
+        "required": [
+          "overall_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "checks": {
+            "contains": {
+              "properties": {
+                "status": {
+                  "const": "fail"
+                }
+              },
+              "required": [
+                "status"
+              ]
+            }
+          },
+          "summary": {
+            "properties": {
+              "failed": {
+                "minimum": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "overall_status": {
+            "const": "incomplete"
+          }
+        },
+        "required": [
+          "overall_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "checks": {
+            "contains": {
+              "properties": {
+                "status": {
+                  "const": "not_run"
+                }
+              },
+              "required": [
+                "status"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "overall_status": {
+            "const": "error"
+          }
+        },
+        "required": [
+          "overall_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "checks": {
+            "contains": {
+              "properties": {
+                "status": {
+                  "const": "error"
+                }
+              },
+              "required": [
+                "status"
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
+}

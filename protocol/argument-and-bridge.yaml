@@ -1,0 +1,278 @@
+protocol: argument-and-bridge
+version: 1.0.0
+status: normative
+
+purpose: Make direct evidence, intermediate reasoning, dependence, cross-domain translation, counterevidence, and invalidation explicit.
+
+graph_model:
+  node_types:
+    claim:
+      purpose: A versioned proposition with bounded subject, context, and strength.
+    evidence_item:
+      purpose: A citable observation, result, artifact view, or external statement used for or against a claim.
+    argument_step:
+      purpose: An explicit inference from premises to one or more conclusions.
+    cross_domain_bridge:
+      purpose: A validated correspondence that permits reasoning across domains, representations, entities, or scales.
+    conflict_set:
+      purpose: A set of materially incompatible assertions under matched context.
+  edge_types:
+    evidence_supports_claim:
+      from: evidence_item
+      to: claim
+    evidence_contradicts_claim:
+      from: evidence_item
+      to: claim
+    evidence_qualifies_claim:
+      from: evidence_item
+      to: claim
+    claim_dependency:
+      from: claim
+      to: claim
+      semantics: The target requires the source as a premise.
+    premise_to_argument:
+      from:
+        - claim
+        - evidence_item
+      to: argument_step
+    argument_to_claim:
+      from: argument_step
+      to: claim
+    bridge_enables_argument:
+      from: cross_domain_bridge
+      to: argument_step
+    member_of_conflict:
+      from:
+        - claim
+        - evidence_item
+      to: conflict_set
+  direction_rule: Edges point from prerequisite or evidence toward dependent conclusion, except membership edges.
+
+claim_record:
+  required_fields:
+    - claim_id
+    - object_version
+    - proposition
+    - claim_type
+    - subject_bindings
+    - context
+    - scope
+    - decision_timing
+    - support_status
+    - evidence_edge_ids
+    - dependency_edge_ids
+    - counterevidence_edge_ids
+  claim_types:
+    - background
+    - descriptive
+    - quantitative
+    - comparative
+    - associational
+    - predictive
+    - causal
+    - mechanistic
+    - methodological
+    - negative_or_absence
+    - resolution
+  support_status_values:
+    - supported
+    - qualified
+    - contested
+    - unsupported
+    - invalidated
+    - review_required
+    - unknown
+    - withheld
+  rules:
+    - Background claims require citations when they materially support project reasoning.
+    - Non-background claims require direct evidence or explicit premise and argument paths.
+    - Quantitative claims require derivation closure or an exact external-source locator.
+    - Causal and mechanistic claims require assumptions and alternative explanations in addition to association.
+    - A summary claim must depend on, not replace, the atomic claims it summarizes.
+
+argument_step_record:
+  required_fields:
+    - argument_step_id
+    - rule_or_rationale
+    - premise_edge_ids
+    - conclusion_edge_ids
+    - assumption_states
+    - alternative_explanations
+    - validity_status
+  validity_status_values:
+    - valid_for_scope
+    - qualified
+    - invalid
+    - review_required
+    - unknown
+    - withheld
+  invariants:
+    - An argument step must not introduce an unbound entity, number, condition, or premise.
+    - A premise may be unknown or contested, but the dependent conclusion cannot be stronger than that premise permits.
+    - Argument validity is scoped; validity in one context does not generalize automatically.
+
+acyclicity:
+  dag_nodes:
+    - claim
+    - argument_step
+  dag_edges:
+    - claim_dependency
+    - premise_to_argument where source is claim
+    - argument_to_claim
+  requirements:
+    - The directed claim-argument subgraph must be acyclic for every report version.
+    - Self-dependencies and version-alias cycles are prohibited.
+    - Evidence provenance graphs may contain bidirectional cross-references but must not be traversed as claim support cycles.
+  topological_use: Invalidation and support recomputation proceed from changed premises toward dependent claims in topological order.
+
+independence_and_weight:
+  evidence_dependency_record_requires:
+    - dependency_group_id
+    - dependency_basis
+    - shared_ancestor_ids
+    - assessment_state
+  assessment_state_values:
+    - independent
+    - partially_dependent
+    - dependent
+    - unknown
+    - not_applicable
+    - withheld
+  shared_dependency_examples:
+    - same biological donor, sample, aliquot, or pooled source
+    - same dataset rows, labels, split, or preprocessing fit
+    - same trajectory, checkpoint, initialization, or random-state lineage
+    - same analysis code or derivation artifact
+    - same external source quoted by multiple secondary sources
+  rules:
+    - Distinct files, runs, citations, models, seeds, frames, or visualizations do not establish independence.
+    - Evidence in the same dependency group must not be counted as independent corroboration.
+    - Unknown independence is reported as unknown and receives no independent-replication claim.
+    - Any displayed support count states whether it counts records, dependency groups, or independently established groups.
+
+cross_domain_bridge:
+  required_when:
+    - A claim transfers identity, state, effect, or mechanism across scientific domains or representations.
+    - A mechanistic conclusion combines evidence whose entities, constructs, conditions, or scales are not inherently identical.
+  required_fields:
+    - bridge_id
+    - source_domain
+    - target_domain
+    - source_entity_version_ids
+    - target_entity_version_ids
+    - mapping_type
+    - identity_alignment
+    - construct_alignment
+    - condition_alignment
+    - scale_alignment
+    - transformation_or_mapping_evidence
+    - assumptions
+    - limitations
+    - validity_status
+    - reviewer_state
+  mapping_type_values:
+    - identity
+    - sequence_or_structure
+    - construct
+    - material_lineage
+    - condition
+    - temporal_scale
+    - spatial_scale
+    - computational_to_experimental_observable
+    - model_to_target_population
+    - other_declared
+  alignment_state_values:
+    - matched
+    - partially_matched
+    - mismatched
+    - unknown
+    - not_applicable
+    - withheld
+  validity_status_values:
+    valid:
+      requirements:
+        - All applicable identity and construct alignments are matched.
+        - All material condition and scale alignments are matched or bounded by justified transformations.
+        - Mapping evidence and assumptions are known.
+        - No unresolved material mismatch exists.
+    qualified:
+      requirements:
+        - A partial match or bounded mismatch exists.
+        - Claim wording carries the qualification.
+    invalid:
+      requirements:
+        - A material mismatch breaks the proposed transfer.
+    unknown:
+      requirements:
+        - Required alignment information is unavailable.
+    not_applicable:
+      requirements:
+        - A bridge is proven unnecessary by an applicability rule.
+    withheld:
+      requirements:
+        - Internal validity is known but protected in this projection.
+  mechanism_gate:
+    pass_when:
+      - Every required bridge has validity_status valid.
+      - Every bridge is connected to the exact argument step it enables.
+      - Entity versions, construct or sequence, conditions, dose, and timescale are compatible for the claimed mechanism.
+    qualified_only_when:
+      - At least one bridge is qualified and no bridge is invalid or unknown.
+    fail_when:
+      - A required bridge is missing, invalid, unknown, or withheld such that public verification is impossible.
+
+conflict_sets:
+  required_fields:
+    - conflict_set_id
+    - matched_context
+    - member_edge_ids
+    - incompatibility_statement
+    - adjudication_status
+    - decision_event_id
+    - downstream_claim_ids
+  adjudication_status_values:
+    - unresolved
+    - resolved_with_rationale
+    - retained_as_heterogeneity
+    - review_required
+    - unknown
+    - withheld
+  context_match_dimensions:
+    - entity and version
+    - estimand or proposition
+    - population or system
+    - condition and intervention
+    - time or frame scope
+    - units and transformation
+    - analysis definition
+  rules:
+    - Context differences that explain opposing results are retained as heterogeneity, not overwritten as one value.
+    - Resolution requires a DecisionEvent and does not delete losing members.
+    - An unresolved conflict forces affected claims to contested, review_required, or unknown as appropriate.
+
+support_propagation:
+  invalidated_premise: Dependent claims become review_required unless a recorded alternative valid path independently supports them.
+  retracted_evidence: Remove its active support contribution while retaining the historical edge; recompute downstream status.
+  qualified_premise: Dependent wording and status must be no stronger than qualified unless the qualification is demonstrably immaterial.
+  unknown_bridge: Cross-domain dependent claims cannot be supported and must become review_required or unknown.
+  unresolved_conflict: Affected claims must expose the conflict and cannot be summarized as settled.
+
+conformance_rules:
+  CLM001:
+    condition: A non-background claim lacks evidence or explicit premise and argument paths.
+    outcome: blocker
+  CLM002:
+    condition: The claim-argument dependency subgraph contains a cycle.
+    outcome: blocker
+  BRG001:
+    condition: A cross-domain causal or mechanistic claim lacks every required valid bridge.
+    outcome: blocker
+  DEP001:
+    condition: Dependent evidence is counted or described as independent corroboration.
+    outcome: blocker
+  CNF001:
+    condition: A true conflict is omitted or incompatible values are silently reconciled.
+    outcome: blocker
+  REV001:
+    condition: Retraction, correction, or invalidation is not propagated through declared dependencies.
+    outcome: blocker

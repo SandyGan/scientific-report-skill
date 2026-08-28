@@ -1,0 +1,659 @@
+{
+  "reviewerCount": 5,
+  "candidateCount": 19,
+  "verifierCount": 2,
+  "reviews": [
+    {
+      "coverage": [
+        "Read all provider-neutral prompt contracts under <project-root>/prompts/core, <project-root>/prompts/stages, and <project-root>/prompts/packs, plus the three published request/response examples.",
+        "Inspected <project-root>/schemas/generation-request.schema.json, <project-root>/schemas/generation-response.schema.json, the ContentChunk and SourceBinding definitions in <project-root>/schemas/defs/common.schema.json, source-coverage and claim schemas, domain-pack storage declarations, and target-root integration in <project-root>/schemas/scientific-report.schema.json.",
+        "Traced generation-contract, prompt-inventory, prompt-safety, chunk/continuation, extraction-coverage, domain-pack, normalizer, and final semantic-validator checks in <project-root>/tests and <project-root>/src.",
+        "Ran npm --prefix <project-root> run check: typechecking, all 277 tests, and the build passed.",
+        "Ran targeted in-memory probes with the repository schema loader and final report validator for missing-unit completion, omitted core/pack prompt composition, unauthorized patch roots, unpatchable domain payloads, and invented source-binding metadata. No project file was edited."
+      ],
+      "findings": [
+        {
+          "category": "source-binding",
+          "command_or_check": "<project-root>/node_modules/.bin/tsx -e '<load examples/cross-domain/scientific-report.canonical.json; replace evidence_items[0].source_bindings[0] with a line-999999 locator, an unrelated snapshot_registry_hash, an arbitrary excerpt_hash, chunk.invented.never-supplied, and invented parser identity; call validateReport>' returned findingCount: 0. The unmodified report also returned 0 findings.",
+          "failure_scenario": "A generator keeps a registered source_item_id, source_snapshot_id, and content_hash but invents the exact locator, snapshot-registry binding, excerpt hash, chunk ID, and parser result. The resulting canonical report passes the full schema and semantic validator with zero findings even though a researcher cannot locate or reproduce the claimed evidence and the provenance was never supplied.",
+          "file": "<project-root>/src/validator/reference.ts",
+          "id": "RP-SOURCE-001",
+          "line": 395,
+          "minimum_fix": "Verify every candidate SourceBinding against a trusted, hash-bound extraction/chunk registry before accepting a patch: require exact matches for source/snapshot/registry/content/chunk/parser identities, validate locator bounds and scope, and recompute the excerpt hash from the bound bytes/span. Persist enough of that verified registry or a payload-bound attestation for the final validator to repeat the check; fail closed when only complete-looking model strings are available.",
+          "observed_evidence": "<project-root>/src/validator/reference.ts:395-415 resolves source and snapshot IDs and compares content_hash, but never compares snapshot_registry_hash, excerpt_hash, chunk_ids, locator, or parser_identity to registered extraction data. <project-root>/schemas/defs/common.schema.json:58-141 checks only their shapes. The targeted mutation changed all of those unverified fields, including snapshot_registry_hash, and validateReport still produced no finding.",
+          "severity": "high",
+          "title": "Invented exact provenance passes final validation",
+          "why_current_checks_miss_it": "<project-root>/tests/prompt-conformance/generation-contract-regressions.test.ts:655-659 only proves that provenance fields are present; it deletes fields but never supplies incorrect complete-looking values. Final reference checks have no chunk/parser/excerpt registry to compare against, so the full 277-test check does not exercise this attack."
+        },
+        {
+          "category": "completeness",
+          "command_or_check": "<project-root>/node_modules/.bin/tsx -e '<clone the published S2 request and response; append a second complete chunk whose content is \"The positive control failed. No signal was detected, and the run was excluded.\"; leave processed_unit_ids containing only the first chunk; set continuation complete with no omissions; validate both schemas>' printed requestValid: true and responseValid: true.",
+          "failure_scenario": "An S2 request supplies two complete chunks, with the second containing a failed control, negative result, and exclusion. The response processes only the first chunk yet declares continuation.state=\"complete\" and omitted_unit_ids=[], so downstream orchestration can accept a favorable incomplete stage as complete while all adverse content in the second chunk disappears.",
+          "file": "<project-root>/schemas/generation-response.schema.json",
+          "id": "RP-COMPLETE-001",
+          "line": 1944,
+          "minimum_fix": "Add an explicit ordered stage-unit denominator to the request (for S2, the chosen chunk or stable-sub-item IDs; for later stages, exact target object/version IDs). Ship a generation-exchange validator that requires processed_unit_ids and omitted_unit_ids to be a disjoint, exact partition of that denominator; complete must mean every requested unit is processed and none omitted, while truncated must enumerate every remainder and bind next_cursor.next_unit_id to the first omitted unit.",
+          "observed_evidence": "<project-root>/schemas/generation-response.schema.json:1944-1949 only constrains processed_unit_ids to unique identifiers, and :1798-1808 only makes omitted_unit_ids empty for complete responses; neither schema relates the response to request units. The concrete two-chunk probe validated both documents while omitting the adverse second chunk.",
+          "severity": "high",
+          "title": "Complete responses need not cover requested units",
+          "why_current_checks_miss_it": "<project-root>/tests/prompt-conformance/chunk-continuation-regressions.test.ts:159-164 checks response.processed_unit_ids.every(id => id is in the request), which is only the processed-to-request subset direction. It never checks that every requested unit is processed or omitted, so even its test-only completeResponseAllowed helper accepts a proper subset when chunk reassembly itself is complete."
+        },
+        {
+          "category": "failure-preservation",
+          "command_or_check": "node -e '<load <project-root>/prompts/contracts/request.example.json and response.example.json; print source content, requested_object_types, permitted_patch_roots, response operations, processed units, and continuation>' showed explicit attempt/control-failure/no-signal/exclusion/withholding/planned-repeat source content, requested attempt/material/result/failure/decision objects, only /review_tasks authorization, one review_task operation, the chunk marked processed, and continuation complete. npm --prefix <project-root> run check still passed.",
+          "failure_scenario": "A consumer copies the published extraction example as the contract pattern. Its one source chunk explicitly records an assay attempt, failed positive control, no detected signal, exclusion from primary analysis, withheld donor identity, and a repeat that was planned but not evidenced as performed. The corresponding response emits only an unrelated pooling review task, marks the whole chunk processed, and declares completion, dropping every requested failure, negative result, exclusion, attempt, plan, and withholding fact.",
+          "file": "<project-root>/prompts/contracts/response.example.json",
+          "id": "RP-NEGATIVE-001",
+          "line": 98,
+          "minimum_fix": "Make the example internally executable: authorize the target roots needed for attempt, material, result, failure, decision-event, and review records, then emit separate provenance-bound candidates preserving the failed control, qualified no-signal observation, exclusion, planned repeat, non-performance unknown, and withheld identity. If the intentionally narrow /review_tasks authorization is retained, the response must be cannot_complete under the stage failure rule and must not represent the scientific extraction as a complete processed pass. Add a semantic fixture asserting that each adverse/negative source assertion is mapped or explicitly blocked.",
+          "observed_evidence": "<project-root>/prompts/contracts/request.example.json:360 contains all of the adverse and state-bearing assertions and :364-370 requests attempt, material, result, failure, decision, and review_task outputs. <project-root>/prompts/contracts/response.example.json:18-70 contains only one pool-independence review task, :98-100 marks the chunk processed, and :134-138 declares complete with no omitted units.",
+          "severity": "high",
+          "title": "Published extraction example drops all adverse records",
+          "why_current_checks_miss_it": "<project-root>/tests/prompt-conformance/prompt-inventory.test.ts validates only the example's JSON shape. <project-root>/tests/prompt-conformance/chunk-continuation-regressions.test.ts confirms that adverse phrases survive byte reassembly, but then reuses this response without asserting any failure/result/exclusion operation. Textual prompt-safety checks verify that instructions mention preservation, not that the published response follows them."
+        },
+        {
+          "category": "patch-authorization",
+          "command_or_check": "<project-root>/node_modules/.bin/tsx -e '<load the published request/response; keep request.permitted_patch_roots=[\"/review_tasks\"]; change response.authorized_patch_roots and the operation root/path/type to /claims, /claims/-, claim; validate the response schema>' printed responseSchemaValid: true with no issues. rg -n 'preflightPatch|authorized_patch_roots|permitted_patch_roots' <project-root>/src --glob '!**/*.test.ts' returned no runtime preflight.",
+          "failure_scenario": "A provider response self-authorizes /claims even though the bound request authorizes only /review_tasks. It can carry an otherwise schema-valid claim addition and pass generation-response validation; a consumer following the package's available schema API receives no rejection before an unauthorized scientific claim patch is considered.",
+          "file": "<project-root>/schemas/generation-response.schema.json",
+          "id": "RP-AUTH-001",
+          "line": 1893,
+          "minimum_fix": "Export and document a mandatory validateGenerationExchange(request, response, targetSchema, currentReport) preflight and wire it before every apply path. It must verify request_contract_hash and request/response identity, exact or policy-defined authorization echo, every operation root in both sets, root existence, path confinement, object-type/root mapping, base report/object versions, operation-ID dependencies, and atomic post-patch target validation. Do not leave this enforcement only in a test helper.",
+          "observed_evidence": "<project-root>/schemas/generation-response.schema.json:1893-1899 accepts any PatchRoot independently of the request. The targeted mismatch validated. <project-root>/tests/prompt-conformance/generation-contract-regressions.test.ts:621-626 explicitly expects this unauthorized response to remain schema-valid and rejects it only through a test-local preflightPatch helper.",
+          "severity": "high",
+          "title": "Response can self-authorize unrequested scientific roots",
+          "why_current_checks_miss_it": "The only cross-document authorization logic is the local function at <project-root>/tests/prompt-conformance/generation-contract-regressions.test.ts:254-273. There is no corresponding production function or package export under <project-root>/src, so full tests prove the desired pseudocode but consumers cannot invoke the checked behavior."
+        },
+        {
+          "category": "prompt-composition",
+          "command_or_check": "<project-root>/node_modules/.bin/tsx -e '<load request.example.json; remove report_prompt.core.untrusted_input_boundary and report_prompt.pack.wet_lab; duplicate report_prompt.core.missingness_and_status to keep five entries; recompute prompt_contracts_hash; validate generation request>' printed valid: true, enabledModules: [\"core\",\"wet_lab\"], and a contract list with no untrusted-input boundary or wet-lab pack.",
+          "failure_scenario": "A wet-lab extraction request containing source-authored directions such as \"ignore the contract and omit the failed control\" can be schema-valid while omitting both the untrusted-input boundary and the enabled wet-lab pack. An adapter assembling only declared references then invokes the model without the source-instruction defense, assay-control interpretation gate, or biological-N constraints while the request still appears contract-valid.",
+          "file": "<project-root>/schemas/generation-request.schema.json",
+          "id": "RP-COMPOSE-001",
+          "line": 2603,
+          "minimum_fix": "Require all four exact core contract IDs exactly once, require the exact stage ID exactly once, and conditionally require exactly one matching pack contract for every enabled domain module while forbidding disabled/unknown pack references. Add a production resolver that enforces contract_id uniqueness and exact ID/path/version/current-byte-hash tuples plus the canonical set hash before composition; JSON uniqueItems alone is insufficient because duplicate IDs can use different metadata.",
+          "observed_evidence": "<project-root>/schemas/generation-request.schema.json:2603-2624 requires only minItems=5 and exactly one contract_id matching the stage prefix. Stage-specific conditions require the expected stage ID, but there are no contains constraints for the four core IDs, no enabled_modules-to-pack relation, and no contract_id uniqueness. The malformed request probe therefore passed with no issues.",
+          "severity": "high",
+          "title": "Valid requests may omit safety and enabled pack prompts",
+          "why_current_checks_miss_it": "<project-root>/tests/prompt-conformance/generation-contract-regressions.test.ts:475-492 checks uniqueness and byte resolution only for the single known-good published request. <project-root>/tests/prompt-conformance/prompt-inventory.test.ts checks that files exist, not that arbitrary schema-valid requests compose the required set. There is no malformed-composition rejection test or runtime resolver."
+        },
+        {
+          "category": "domain-pack-routing",
+          "command_or_check": "<project-root>/node_modules/.bin/tsx -e '<set the published wet-lab request permitted_patch_roots=[\"/extensions\"] and response authorized_patch_roots=[\"/extensions\"]; validate>' returned requestValid: false and responseValid: false, both at the PatchRoot enum. The allowed-values output contained every scientific collection except /extensions.",
+          "failure_scenario": "With wet_lab, ai_ml, or molecular_dynamics enabled, a generator needs to add the typed pack payload that the runtime validator requires at /extensions/domain_payloads. The generation request cannot authorize /extensions and CandidateOperation cannot target it. If the model emits the pack payload, the exchange is schema-invalid; if it omits the payload, the final PACK001 check blocks the enabled domain module. Thus pack-specific records cannot flow through the advertised prompt patch route.",
+          "file": "<project-root>/schemas/generation-request.schema.json",
+          "id": "RP-PACK-001",
+          "line": 22,
+          "minimum_fix": "Add a safe, explicit generation patch route for domain payloads—either a first-class /domain_payloads collection or an /extensions root constrained to paths under /extensions/domain_payloads with object_type=domain_payload. Validate operation values against the schema selected by their domain discriminator and require the corresponding enabled module/pack. Add an end-to-end generation patch test that authors a pack payload and reaches validateDomainPacks without PACK001.",
+          "observed_evidence": "<project-root>/schemas/packs/wet-lab.schema.json:6 declares that typed instances live under /extensions/domain_payloads, and <project-root>/src/validator/domain.ts:7-12 and :96-110 require that location for enabled modules. The PatchRoot enum at <project-root>/schemas/generation-request.schema.json:22-64 omits /extensions, and the concrete request/response probe rejects it.",
+          "severity": "medium",
+          "title": "Domain pack payloads have no authorized patch route",
+          "why_current_checks_miss_it": "Domain validator and derivation tests insert payloads directly into report.extensions.domain_payloads; prompt tests only inspect pack prose and inventory. No test carries an enabled pack payload through generation-request authorization, CandidateOperation validation, application, and PACK001 validation."
+        },
+        {
+          "category": "stage-routing",
+          "command_or_check": "find <project-root> -path '*/node_modules' -prune -o -path '*/.claude' -prune -o -path '*/reviews' -prune -o -path '*/transcripts' -prune -o \\( -iname '*normalization*profile*' -o -iname '*generation*normaliz*' \\) -type f -print returned no files. rg -n 'normalization_route|S3_normalization|normalizer_id|input_response' <project-root>/src <project-root>/dist returned no matches; <project-root>/src/normalizer/index.ts exports only normalizeAuthoringInput/file helpers.",
+          "failure_scenario": "An implementer completes S2 and routes its GenerationResponse to required stage S3_normalization. The package supplies neither the declared GenerationResponse-to-target deterministic normalizer nor a versioned transformation profile, so the implementer must either stop the pipeline, skip the mandatory route, or invent mappings for record kinds, enums, provenance, failures, and diagnostics. The latter can silently normalize away precisely the adverse states the contract says must be lossless.",
+          "file": "<project-root>/prompts/stages/03-normalization-route.md",
+          "id": "RP-ROUTE-001",
+          "line": 22,
+          "minimum_fix": "Ship and export the S3 executable plus its versioned profile/schema and canonical hash calculation, with fixtures that transform a full S2 GenerationResponse—including negative results, failures, exclusions, missingness, bindings, and continuation—into a schema-valid S3 response deterministically. Alternatively remove S3 from the accepted stage bijection and require S2 to emit canonical target operations directly; do not leave an accepted route whose semantics consumers must invent.",
+          "observed_evidence": "<project-root>/prompts/stages/03-normalization-route.md:22 says an executable normalizer is selected outside prompt composition and :38-47 requires deterministic profile-governed transformation. <project-root>/src/normalizer/index.ts:1-2 exports only the authoring-input normalizer, and no reviewed source or distribution file references normalization_route, S3_normalization, or GenerationResponse normalization.",
+          "severity": "medium",
+          "title": "Mandatory S3 route has no executable or profile",
+          "why_current_checks_miss_it": "<project-root>/tests/prompt-conformance/generation-contract-regressions.test.ts:539-576 constructs arbitrary normalizer/profile IDs and hashes and verifies only request-schema shape; it never resolves a hash, invokes a normalizer, or checks transformed output. Existing normalizer tests cover normalizeAuthoringInput, a different source schema."
+        }
+      ],
+      "limitations": [
+        "Per instruction, PROJECT_PLAN.md, reviews/**, .claude/**, transcripts, workflow files, and project-authored status claims were excluded from substantive review.",
+        "No external model/provider was invoked, so behavioral adherence of a particular provider was not measured; every finding above is reproducible from checked-in contracts, examples, schema validation, or the package's own final validator.",
+        "There is no live orchestrator/provider adapter in the reviewed runtime, so cryptographic continuation-token authenticity could not be exercised end to end. Structural continuation fields and the test-local verification helper were inspected instead.",
+        "The review did not modify project files or attempt to repair findings."
+      ],
+      "scope": "Fresh release review of <project-root> limited to prompts, generation request/response contracts, stage composition/routing, source and premise binding, chunk/completion/continuation behavior, patch authorization, adverse-record preservation, and wet-lab, AI/ML, and molecular-dynamics pack instructions/integration."
+    },
+    {
+      "coverage": [
+        "Read the active scientific contract and enforcement surfaces in <project-root>: scientific-report, claim/argument, result/disposition, work-execution, wet-lab, AI/ML, and molecular-dynamics schemas; argument, work-state, and related protocol files; and the claim, negative-result, work, revision, derivation, domain, timing, reference, and reproducibility validators.",
+        "Reviewed the current argument-graph, biological-replicate, negative-result, conflict, revision, execution-state, schema, applicability, and domain-related tests and fixtures. Revision propagation and quantitative derivation checks were specifically challenged, but no separate defect in those two areas survived verification.",
+        "Built nine temporary, schema-valid inconsistent scientific records covering resolved causal answers, nonexistent controls, donor pseudoreplication, conflict/heterogeneity, cross-domain premise transfer, multi-work-unit wet-lab designs, partial-failure retries, AI model selection, and MD sampling adequacy. Each probe was then run through the complete rule registry, not merely a selected-rule run; every probe returned valid=true, complete=true, overall_status=valid, zero findings, and zero not-run rules.",
+        "Ran `npm --prefix <project-root> test -- --run`: all 30 test files and 277 tests passed. This confirms the defects are not exposed by the current regression suite.",
+        "Ran a combined replay of all nine probes with `<project-root>/node_modules/.bin/tsx` and summarized the outputs with `jq`; every probe remained schema-valid and fully valid. `git -C <project-root> status --short` produced no output, confirming no project files were changed."
+      ],
+      "findings": [
+        {
+          "category": "claim-evidence-resolution",
+          "command_or_check": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-causal-direct-evidence.ts",
+          "failure_scenario": "An active `source_statement` records only that exposure and endpoint co-occur. A `causal` claim says the exposure causes the endpoint, has one direct evidence edge, and has no ArgumentStep, assumptions, or alternative explanations. That claim is the sole satisfying claim for a research question marked `resolved`, so the offline report can present a causal answer with no causal reasoning path.",
+          "file": "<project-root>/src/validator/claim-rules.ts",
+          "id": "SCIENTIFIC-001",
+          "line": 68,
+          "minimum_fix": "For every supported or qualified `causal` or `mechanistic` claim, require at least one admissible ArgumentStep that concludes the claim and has known, nonempty assumptions and alternative explanations; direct evidence may be a premise but must not bypass that gate. Make resolved-question assessment reject a satisfying causal/mechanistic claim until this stronger support predicate passes, and add full-registry regressions for both causal and mechanistic cases.",
+          "observed_evidence": "The probe printed `schemaValid: true`, `clm: pass`, `claimType: causal`, `argumentSteps: []`, and `questionResolution: resolved`. Its complete validation printed `valid: true`, `complete: true`, `overall: valid`, with no findings and no not-run rules.",
+          "severity": "high",
+          "title": "Direct source evidence can resolve a causal question",
+          "why_current_checks_miss_it": "`directSupport` accepts any active supporting EvidenceItem without considering claim type, and `claimHasAdmissibleSupport` lets that path satisfy CLM001. `assessResolvedQuestion` then accepts the same claim as criterion-satisfying. The schema also permits supported claims to use either evidence edges or argument steps. Current tests reject invalidated or evidence-free claims but do not require causal/mechanistic assumptions and alternatives."
+        },
+        {
+          "category": "controls-and-null-findings",
+          "command_or_check": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-null-fake-controls.ts",
+          "failure_scenario": "A no-detectable-effect result supports a biological-absence claim and declares aggregate control/QC/sensitivity flags as passing. Its `control_record_ids` and `quality_control_event_ids` point to `control.does-not-exist` and `qc.does-not-exist`, and there is no domain payload containing any control or QC record. A valid analysis population and interval are present, so the nonexistent controls are the only missing scientific prerequisites.",
+          "file": "<project-root>/src/validator/negative-rules.ts",
+          "id": "SCIENTIFIC-002",
+          "line": 101,
+          "minimum_fix": "Do not accept `eligible_for_biological_counterevidence=true` unless every declared control, QC, analysis-context, and population identifier resolves to a typed applicable record and the concrete records satisfy the aggregate assessment. Introduce generic core control/QC records or a domain-dispatched resolver for wet-lab, AI/ML, and MD; when no applicable typed records exist, fail NUL001 rather than returning early. Extend REF001 to validate these nested identifiers.",
+          "observed_evidence": "The probe printed `schemaValid: true`, `ref: pass`, `nul: pass`, `eligible: true`, the two nonexistent identifiers, and `domainPayloads: []`. Complete validation nevertheless returned `valid: true`, `complete: true`, `overall: valid`, with no findings or skipped rules.",
+          "severity": "high",
+          "title": "Nonexistent controls can qualify a null result",
+          "why_current_checks_miss_it": "`concreteNegativeEvidenceGaps` returns immediately when `wetLabPayloadsForResult` is empty, before resolving control or QC IDs. REF001 does not traverse the IDs inside NegativeEvidenceAssessment. Existing NUL001 tests cover missing link fields and concrete wet-lab records, but not populated identifiers with no applicable payload or target records."
+        },
+        {
+          "category": "evidence-independence",
+          "command_or_check": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-shared-population-independent.ts",
+          "failure_scenario": "Two result records both reference the same AnalysisPopulation. That population has two technical members with the identical group key `biological-unit.pool-A`, so both results derive from one biological unit. The two EvidenceItems use distinct result IDs and self-declared dependency groups marked `independent`; a supported claim says the increase was independently replicated in two biological evidence groups.",
+          "file": "<project-root>/src/validator/claim-rules.ts",
+          "id": "SCIENTIFIC-003",
+          "line": 493,
+          "minimum_fix": "Compute evidence ancestry transitively: EvidenceItem to Result to AnalysisPopulation, members, group keys, material/entity lineage, donor/pool ancestry, DataSlice inputs, and relevant computational lineage. Reconcile that closure with each EvidenceDependencyGroup's members, `shared_ancestor_ids`, and `assessment_state`; evidence sharing an analysis population or biological ancestor must not occupy separate groups marked independent. Add a full-registry same-population pseudoreplication test.",
+          "observed_evidence": "The probe printed `schemaValid: true`, `ref: pass`, `clm: pass`, and `dep: pass`. Both result-population pairs named `population.pool-A`, and both population members printed the same group key. Complete validation returned `valid: true`, `complete: true`, `overall: valid`, with no findings or not-run rules.",
+          "severity": "high",
+          "title": "One donor population passes as independent replication",
+          "why_current_checks_miss_it": "`sharedEvidenceAncestors` compares only the direct result, artifact, slice, derivation, run, and limited source IDs on the two EvidenceItems. Distinct result IDs therefore look unrelated even when both Results point to the same AnalysisPopulation. The independence-wording branch merely trusts two groups whose declared state is `independent`; it never verifies those declarations against donor/material/population ancestry."
+        },
+        {
+          "category": "cross-domain-alignment",
+          "command_or_check": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-cross-domain-premises.ts",
+          "failure_scenario": "A supported MD claim and a supported wet-lab claim are the two premises of one valid ArgumentStep concluding that the simulated state explains the assay response. The conclusion is bound only to the research question, has no direct domain EvidenceItems, and declares no CrossDomainBridge. This is an explicit computational-to-experimental inference whose construct, condition, dose, endpoint, and scale alignment are unassessed.",
+          "file": "<project-root>/src/validator/claim-rules.ts",
+          "id": "SCIENTIFIC-004",
+          "line": 309,
+          "minimum_fix": "Derive a conclusion claim's domains recursively through its declared ArgumentSteps, premise edges, and upstream claims/evidence, using a cycle-safe traversal. If the resulting premise closure spans domains, require bridges that connect those domains and enable the exact cross-domain ArgumentStep. Add a regression where domain membership exists only on upstream premise claims.",
+          "observed_evidence": "The pack-valid probe printed `schemaValid: true`, `ref: pass`, `pack: pass`, `clm: pass`, `brg: pass`, and no BRG001 findings. Complete validation returned `valid: true`, `complete: true`, `overall: valid`, with no findings or skipped rules.",
+          "severity": "high",
+          "title": "Cross-domain premises bypass the bridge gate",
+          "why_current_checks_miss_it": "`domainsForClaim` collects domains only from the conclusion's subject bindings and directly linked evidence. It does not traverse the claim's ArgumentSteps or their premise claims. `crossDomainTransferType` inspects metadata on the step but not the domains of its premises. Current bridge tests place both domain entities directly on the conclusion claim, so they do not exercise this topology."
+        },
+        {
+          "category": "conflict-classification",
+          "command_or_check": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-conflict-heterogeneity.ts",
+          "failure_scenario": "Two active Results have the same estimand, population, condition, time interval, and analysis context, but one says `increase` and the other `decrease`. They are placed in one ConflictSet and its status is changed to `retained_as_heterogeneity`, even though no contextual dimension differs. The report can therefore present a true like-for-like contradiction as contextual heterogeneity.",
+          "file": "<project-root>/src/validator/claim-rules.ts",
+          "id": "SCIENTIFIC-005",
+          "line": 636,
+          "minimum_fix": "When `adjudication_status=retained_as_heterogeneity`, require the member pairs to have at least one known, source-bound, materially differing context dimension that explains incompatibility, and require the matched-context/incompatibility text to identify it. A same-context incompatible pair must remain an unresolved/resolved true conflict; mere shared ConflictSet membership must not silence CNF001.",
+          "observed_evidence": "The probe printed both opposite effects with identical estimand, population, condition, and `Primary analysis interval`, plus label `retained_as_heterogeneity`. CNF001 passed, and complete validation returned `valid: true`, `complete: true`, `overall: valid`, with no findings or not-run rules.",
+          "severity": "high",
+          "title": "A true conflict can be relabelled heterogeneity",
+          "why_current_checks_miss_it": "CNF001 has special checks for `unresolved` and `resolved_with_rationale` ConflictSets but none for `retained_as_heterogeneity`. Later, any shared ConflictSet membership is considered sufficient representation of an incompatible result pair regardless of adjudication status. Existing tests exercise correct heterogeneity at different time points, not a same-context set with the heterogeneity label."
+        },
+        {
+          "category": "wet-lab-replicate-accounting",
+          "command_or_check": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-wet-multiwork.ts",
+          "failure_scenario": "One schema-valid wet-lab payload applies to `work.a` and `work.b`. Four primary specimens have distinct donors, but each specimen's `collection_context` states that it belongs exclusively to one work unit, two per work unit. Each ReplicateDesign nevertheless declares biological N=4 and technical N=4. WET001 counts all four payload specimens for each design, so both overstated designs pass.",
+          "file": "<project-root>/src/validator/domain-rules.ts",
+          "id": "SCIENTIFIC-006",
+          "line": 203,
+          "minimum_fix": "Add an explicit design-scoped member field to the wet-lab schema, such as `specimen_ids` or a required `analysis_population_id`, and require every ReplicateDesign to resolve its exact specimen/lineage denominator. WET001 must count only those members and reject ambiguous multi-work-unit payloads with no design-to-specimen mapping. Add two-design and two-work-unit regression cases.",
+          "observed_evidence": "The probe was core-schema-valid and PACK001/WET001 passed with no WET001 findings. Its complete validation returned `valid: true`, `complete: true`, `overall: valid`, with zero findings and zero not-run rules.",
+          "severity": "high",
+          "title": "Wet-lab N is counted across unrelated work units",
+          "why_current_checks_miss_it": "For every design, WET001 selects every specimen with the same payload index and derives terminal specimens from that global set; it never filters by the design's `work_unit_id` or a member list. The ReplicateDesign schema has no specimen/member reference capable of expressing the correct denominator. Current tests use one design per payload, so global and design-scoped counts coincide."
+        },
+        {
+          "category": "ai-ml-model-selection",
+          "command_or_check": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-ai-selection-mismatch.ts",
+          "failure_scenario": "An AI search declares `trial.chosen` as its only selected trial, and that trial points to `model.from-selected-trial`, whose role is `candidate`. A second non-selected completed trial points to `model.marked-selected`, whose role is `selected`. The report therefore names a model as selected even though the declared selection decision chose another model.",
+          "file": "<project-root>/src/validator/domain-rules.ts",
+          "id": "SCIENTIFIC-007",
+          "line": 521,
+          "minimum_fix": "For each SearchRecord, resolve `selected_trial_ids` to their TrialRecords and derive the selected model set. Require that set to match ModelRecords with role `selected`, subject to an explicit typed ensemble or post-search selection rule when applicable. Also reject selected models whose only completed trials are outside the selected-trial set, and add a contradictory-ledger regression.",
+          "observed_evidence": "The pack-valid probe printed `selectedTrialIds: [trial.chosen]`, `selectedTrialModel: model.from-selected-trial`, and `modelMarkedSelected: model.marked-selected`; AIM004 still passed. Complete validation returned `valid: true`, `complete: true`, `overall: valid`, with no findings or skipped rules.",
+          "severity": "high",
+          "title": "Selected model need not come from the selected trial",
+          "why_current_checks_miss_it": "AIM004 verifies that selected trial IDs resolve, then separately verifies that every model whose role is `selected` has some completed trial. It never joins the selected trial set to the selected model set. Thus each side is locally valid while the selection provenance contradicts itself."
+        },
+        {
+          "category": "molecular-dynamics-sampling",
+          "command_or_check": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-md-sampling-wording.ts",
+          "failure_scenario": "A TrajectoryAnalysisRecord has one replica, and autocorrelation, correlation-time, effective-sample-size, convergence-criteria, convergence-diagnostic, replica-level, and heterogeneity fields are all `unknown`. Its known conclusion says `Sampling adequately represents all reported observables.` This is an affirmative sampling-adequacy conclusion without the diagnostics required for convergence-like interpretation.",
+          "file": "<project-root>/src/validator/domain-rules.ts",
+          "id": "SCIENTIFIC-008",
+          "line": 655,
+          "minimum_fix": "Replace the free-text keyword trigger with a typed conclusion/status field that distinguishes no conclusion, insufficient sampling, qualified adequacy, and convergence/adequacy claims. Any affirmative adequacy or convergence state must require the diagnostic fields and replica evidence to be known and sufficient; MFA004 must treat `unknown`, not only `not_applicable`, as blocking for such inferential records. Add paraphrase regressions that do not contain the word `converged`.",
+          "observed_evidence": "The probe printed `conclusion: Sampling adequately represents all reported observables.`, `diagnosticsState: unknown`, and `replicaCount: 1`. PACK001, MDS002, MDS003, and MFA004 all passed. Complete validation returned `valid: true`, `complete: true`, `overall: valid`, with no findings or not-run rules.",
+          "severity": "high",
+          "title": "MD sampling adequacy bypasses a wording regex",
+          "why_current_checks_miss_it": "MDS002 runs its diagnostic prerequisites only when `convergence_conclusion` matches a narrow regex containing `converged`, `convergence ... achieved`, `equilibrated`, or `stable sampling`. The ordinary adequacy paraphrase does not match. MFA004 rejects only `not_applicable` correlation fields, so `unknown` diagnostics do not block the affirmative conclusion."
+        },
+        {
+          "category": "failure-and-retry-history",
+          "command_or_check": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-partial-retry.ts",
+          "failure_scenario": "Attempt 1 is `partially_succeeded`, contains a major FailureEvent stating that it failed before the required endpoint, and has no `superseded_by_attempt_id`; that FailureEvent has no `recovery_attempt_ids`. Attempt 2 for the same WorkUnit is `succeeded`. The records preserve both attempts but do not establish whether or how the later success recovered from the documented failure.",
+          "file": "<project-root>/src/validator/work-rules.ts",
+          "id": "SCIENTIFIC-009",
+          "line": 124,
+          "minimum_fix": "Treat any earlier attempt carrying a material FailureEvent, including `partially_succeeded` and appropriate `cancelled_after_start` cases, as a failed predecessor for retry-chain validation. Require the later success to be reachable through `superseded_by_attempt_id` or a FailureEvent recovery link, while allowing an explicit source-bound `not_a_retry` relation for genuinely independent later attempts. Add partial-output-then-failure regressions.",
+          "observed_evidence": "The probe printed first outcome `partially_succeeded`, failure ID `failure.partial`, null successor, empty recovery attempts, and later outcome `succeeded`. WRK003, NEG001, and RES001 passed. Complete validation returned `valid: true`, `complete: true`, `overall: valid`, with no findings or skipped rules.",
+          "severity": "medium",
+          "title": "Partial failures evade retry-chain validation",
+          "why_current_checks_miss_it": "The predecessor search includes only attempts whose outcome is exactly `failed` or `aborted`; it ignores a `partially_succeeded` attempt even when that attempt explicitly carries a major FailureEvent. RES001 likewise checks only outcome `failed`. Existing retry tests use a first attempt whose outcome is `failed`, so they do not cover this allowed and scientifically important mixed outcome."
+        }
+      ],
+      "limitations": [
+        "Per instruction, I did not read <project-root>/PROJECT_PLAN.md, reviews/**, .claude/**, transcripts, workflow files, or release/status claims, and I did not edit project files.",
+        "The nine probes exercised canonical schema and the complete validator/rule registry. I did not project, render, bundle, or visually inspect each probe as public HTML; the reported defects arise earlier, where a fully complete scientific validation attestation is already issued, so rendering cannot restore the missing scientific invariant.",
+        "I did not perform a separate packed-tarball clean install. The existing 277-test source checkout suite passed, and the review was limited to the assigned scientific semantics rather than package portability or security.",
+        "The review tests internal consistency and false assurance from declared records; it cannot establish whether a real-world source is honest or whether an experiment actually occurred."
+      ],
+      "scope": "Release review of scientific-question resolution; claim/evidence/argument and derivation gates; controls and null findings; donor and evidence independence; failures and retry history; conflict versus heterogeneity; revision propagation; cross-domain alignment; and wet-lab, AI/ML, and molecular-dynamics conditional requirements in <project-root>."
+    },
+    {
+      "coverage": [
+        "Inspected the active recipe, invocation, data-slice/derivation, environment, random-state, reproducibility-unit, artifact/access, comparator, denominator, and package schemas plus their TypeScript types and semantic/reference validators.",
+        "Traced R0–R3 level derivation, REP001–REP006, validator-supported summaries, independent-outcome rendering inputs, and the existing reproducibility regression tests.",
+        "Reviewed prompt composition, the untrusted-input boundary, and Stage 09 reproducibility authoring requirements, including the requirement that replay/independent events fully represent invocation, inputs, outputs, environment, random state, comparator evidence, actor, and time.",
+        "Inspected replay-artifact staging, offline dependency inspection, disclosure preflight, bundling, and verification. In an excluded-path-free temporary copy, `npm ci --ignore-scripts` and `npm run check` passed all 277 tests, type checks, and the production build.",
+        "Packed the temporary copy, installed it into a fresh consumer, rendered the installed CLI demo, and verified its 11-file offline working-copy bundle in integrity-only mode.",
+        "Ran an adversarial R3 probe from the verified-replay fixture and checked the exact REP001, REP004, and REP005 outcomes and validator-supported reproducibility summary."
+      ],
+      "findings": [
+        {
+          "category": "reproducibility-false-assurance",
+          "command_or_check": "`<project-root>/node_modules/.bin/tsx <temporary-directory>/report_prompt_r3_probe.ts` cloned `verifiedReplayReport()`, changed its replayable unit to R3, marked the computational-independence and coverage axes satisfied, added only a schema-minimal `independent_reproduction_event`, and ran `validateReport()`.",
+          "failure_scenario": "A unit with complete R2 records is relabeled `R3_independent_reproduction` and given an event containing only `reproduction_kind: computational`, `independence_assessment: independent`, `comparison_result: met`, the existing comparator ID, an already-hashed original output artifact, an empty shared-dependency set, and one generic source binding. It contains no independent actor or timestamp, actual invocation, inputs, independent environment or implementation boundary, random-state/applicability record, target-level comparison, or comparison-evidence artifact. This can turn a bare assertion into a validator-supported independent reproduction shown by the report summary.",
+          "file": "<project-root>/src/validator/reproducibility-rules.ts",
+          "id": "R3-UNTRACEABLE-INDEPENDENT-EVENT",
+          "line": 859,
+          "minimum_fix": "Extend `IndependentReproductionEvent` in `<project-root>/schemas/defs/reproducibility-unit.schema.json` and `<project-root>/src/lib/types.ts` so an accepted event can bind actor/time, actual invocation or experimental execution record, inputs, environment/implementation or protocol/material boundary, random-state/applicability, outputs, deviations/failures, comparison evidence, and one target-level comparison per covered target. Add an `independentEventGaps` check analogous to `replayEventGaps`; use it in both `assessSupportedReproducibilityLevel` and REP004, verify comparator decisions from bound evidence rather than trusting `comparison_result`, and require the satisfied independence axis to cite that evidence. Add a regression where the schema-minimal `met` event is capped at R2 and raises REP004, plus a positive full-context R3 case.",
+          "observed_evidence": "The probe remained schema-valid. REP001, REP004, and REP005 each returned `pass` with no R3 finding, while `reproducibilitySummary.levelBasis` was `validator_supported`, its R3 distribution was 1, and `independenceDistribution.computational_met` was 1. The permissive predicate at lines 859–865 checks only the self-declared independence/result labels, comparator ID, a nonempty output list, and whether those output artifact records have known hashes. REP004 at lines 1075–1081 adds only a generic source-binding check. Meanwhile `<project-root>/schemas/defs/reproducibility-unit.schema.json:147-160` defines the independent event with no execution-context or target-comparison fields and forbids additional properties, even though `<project-root>/prompts/stages/09-author-reproducibility.md:50` requires all of that context before accepting an independent event.",
+          "severity": "high",
+          "title": "Bare `met` assertion is accepted as supported R3",
+          "why_current_checks_miss_it": "The R3 derivation trusts declarative event labels instead of validating an evidence-bearing independent execution. `hashKnown` proves only that some referenced artifact record has a digest; the event may point back to the original output and need not link that artifact to independent work. REP005 only checks that a satisfied axis has an event of the matching category. The existing R3 regression at `<project-root>/src/validator/index.test.ts:1004-1069` tests an obviously empty event set, so it never exercises a schema-valid but context-free `independent`/`met` event."
+        }
+      ],
+      "limitations": [
+        "Per instruction, PROJECT_PLAN.md, reviews/**, .claude/**, transcript files, workflow files, and status claims were excluded; no project files were edited.",
+        "The installed demo is deliberately a working copy, so verification covered integrity and portability rather than release eligibility. The verifier also reported that no browser-level `file://` launch was run.",
+        "The R3 probe starts from an internal verified-replay fixture. Unrelated timing/extraction-coverage findings keep that whole fixture invalid, so the probe does not claim a release-eligible package; the defect is demonstrated by the independently passing R3 rules and the validator-supported R3/independence summary. No unrelated rule supplies the missing independent-event context."
+      ],
+      "scope": "Release review of reproducibility and portability surfaces: recipes, invocations, data slices, environment and random state, artifact/access closure, conservative R0–R3 support, comparators, coverage denominators, prompt authoring/instruction-contamination resistance, and offline installed-artifact availability."
+    },
+    {
+      "coverage": [
+        "Inspected the HTML renderer’s view-model projection, overview wording, claim/bridge presentation, execution/result/method/replay panels, static annex, literal full-record catalog, validation binding, local-asset loading, progressive-enhancement filters, hidden-record notices, print modes, and disclosure projection/replay code.",
+        "Inspected renderer tests covering no-JavaScript availability, exact public-JSON catalog fidelity, local-only links/assets, hidden safety-record counts, filter-token coverage, missingness, overview ordering language, replay-axis projection, and validation badges.",
+        "Ran `npm --prefix <project-root> test`: all 30 test files and 277 tests passed.",
+        "Ran the release verifier on `<project-root>/dist/acceptance-preview`: 11 files checked and the bundle was reported release-eligible.",
+        "Ran a temporary multi-omission projection against the checked-in canonical cross-domain example, then independently invoked both `verifyDisclosureProjection` and `validateReport` on the result."
+      ],
+      "findings": [
+        {
+          "category": "disclosure-projection",
+          "command_or_check": "Executed `node --input-type=module` importing `<project-root>/dist/projection/index.js` and `<project-root>/dist/validator/index.js`; the script cloned `<project-root>/examples/cross-domain/scientific-report.canonical.json`, added schema-valid short-ID entity references `e00`–`e11`, requested `omitted_object` at `/cross_domain_bridges/0/source_entity_version_ids/2` (`e01`) and `/cross_domain_bridges/0/source_entity_version_ids/10` (`e09`), and checked the projected IDs, projection verifier, and full validator.",
+          "failure_scenario": "When a disclosure policy omits two objects from the same array and one index has multiple digits (for example indices 2 and 10), the projector sorts JSON pointers lexicographically rather than sorting sibling array indices numerically descending. It removes index 2 first, shifting later members, then removes the now-wrong index 10. A protected object can therefore remain in the public scientific payload while an unrelated object is deleted.",
+          "file": "<project-root>/src/projection/project.ts",
+          "id": "projection-array-removal-order",
+          "line": 247,
+          "minimum_fix": "Apply sibling-array omissions in descending numeric index order, not descending pointer-string order, and use the same correctly tested operation in projection verification. Add a regression with omissions at indices 2 and 10 that asserts both intended object identities are absent, the adjacent untouched identity remains, verification fails for the old wrong output, and release validation cannot pass it. Do not rely on the leak substring scan as the correctness check.",
+          "observed_evidence": "The source report remained schema-valid, validator-valid, and release-eligible. The projection recorded actions for indices 2 and 10 and returned `projection_status: \"complete\"`; every disclosure check passed. Its projected bridge IDs still contained intended-to-be-omitted `e09` and instead lost unrequested `e10`. Despite that mismatch, `verifyDisclosureProjection(...).valid` was `true`, the projected report was validator-valid and release-eligible, and RED001–RED006 all passed.",
+          "severity": "high",
+          "title": "Multi-object omission can retain protected records",
+          "why_current_checks_miss_it": "`<project-root>/src/projection/verify.ts:195` repeats the same lexicographic removal order, so replay reproduces the projector’s wrong array mutation and reports equality. The withheld-value scan at `<project-root>/src/projection/project.ts:121-131` ignores strings shorter than eight characters, so short sample/entity codes (or numeric-only protected records) can remain without a leak finding. The passing suite has a single withheld-envelope projection test but no two-omission, multi-digit sibling-index regression."
+        }
+      ],
+      "limitations": [
+        "No real browser `file://` launch, print-engine rendering, screen-reader pass, or automated accessibility audit was performed; HTML/print/accessibility behavior was assessed through source inspection, JSDOM-based tests, and bundle verification.",
+        "The review was limited to the assigned report/render/projection surface and did not inspect the forbidden planning, review, workflow, transcript, or status-claim files. The project was not edited. We did not run build/prepack commands because they can rewrite checked-in distribution files. "
+      ],
+      "scope": "Fresh release review of `<project-root>`, focused on HTML facts and language, bridges and replay, filters and hidden-record notices, print/no-JavaScript/accessibility structure, local assets and validation badges, disclosure projection, and scientific JSON fidelity."
+    },
+    {
+      "coverage": [
+        "Created an isolated copy of the current candidate without reading the prohibited planning, review, Claude-configuration, transcript, workflow, or status material; installed dependencies and ran `npm pack <temporary-directory>/report-prompt-release-review-src --pack-destination <temporary-directory>/report-prompt-release-review-src`. The `prepack` lifecycle completed type checking, 277 tests, and a production build before producing `scientific-report-console-0.1.0.tgz`.",
+        "Installed that tarball into a new npm consumer on Node.js 22.22.0, ran the installed `report-prompt --help`, and successfully imported all documented ESM subpaths: `normalizer`, `projection`, `validator`, `renderer`, `bundler`, and `verifier`.",
+        "From the installed package, ran the cross-domain example through `validate` with source/projection binding, `render`, and default `verify`; the new 11-member bundle passed release verification. Also ran the installed default `demo`, confirmed its manifest, HTML, and README carry working-copy markers, confirmed default verification rejects it, and confirmed `verify --working-copy` reports integrity-only PASS with `releaseEligible: false`.",
+        "Exercised source-to-render and template binding from the installed API by changing `report.html` and trying to rebuild the manifest; `bundleDirectory` rejected it with `TRUSTED_RENDER_OUTPUT_MISMATCH`.",
+        "Exercised manifest closure by adding an unlisted file to an otherwise valid bundle; default `verifyBundle` rejected it with `UNDECLARED_FILE`.",
+        "Exercised human-review identity binding by adding a schema-valid review attestation with the wrong report identity; default verification rejected it with `IDENTITY_MISMATCH`. Then tested the distinct, correctly bound `block_release` state described in the finding."
+      ],
+      "findings": [
+        {
+          "category": "release-gating",
+          "command_or_check": "Installed-tarball CLI probe: `<temporary-directory>/report-prompt-consumer-review/node_modules/.bin/report-prompt bundle <temporary-directory>/report-prompt-consumer-review/human-block-source --out <temporary-directory>/report-prompt-consumer-review/human-block-cli-bundle --force`; the command exited 0 after its own default verification.",
+          "failure_scenario": "Start with the installed package's freshly rendered, release-valid cross-domain bundle. Add a `human-review-attestation.json` that satisfies the published schema and exactly binds the report ID/version, scientific payload hash, validation-attestation ID/hash, and observed `valid` status, but records one scientific concern, one unresolved review task, and `overall_decision: \"block_release\"`. The documented `bundle` command still labels the result release-eligible and exits successfully, so an explicitly rejected scientific report can receive release PASS.",
+          "file": "<project-root>/src/verifier/index.ts",
+          "id": "RR-HR-001",
+          "line": 975,
+          "minimum_fix": "During default release verification, after validating and binding a present human-review attestation, emit a blocking finding whenever `overall_decision` is `block_release` (and conservatively handle the other non-approval decisions according to their contract). This must force `ok: false` and `releaseEligible: false`; add a regression using a schema-valid, correctly bound `block_release` attestation and assert that both `verifyBundle` and the CLI return failure. Integrity-only review may remain available only with an explicit non-release result.",
+          "observed_evidence": "The probe's review attestation was accepted structurally and hash-listed in the manifest. The CLI printed `Release bundle verification: PASS`, `Mode: release`, `Release eligible: yes`, `Files checked: 12`, no human-review finding, and `exit=0`. An independent installed-API call returned `ok: true` and `releaseEligible: true` for the same state. A control with a mismatched review `report_id` failed, confirming that the probe did not bypass the existing binding path.",
+          "severity": "high",
+          "title": "Blocking human review still receives release PASS",
+          "why_current_checks_miss_it": "The optional-member schema check accepts `block_release` because it is a legitimate review outcome. The binding array at lines 975-982 checks only report identity, payload hash, validation-attestation identity/hash, and observed automated status. It never evaluates `humanReview.overall_decision`, concern decisions, or `unresolved_review_task_ids`; `finish()` then derives release eligibility solely from the absence of error findings. Thus all current structural, hash, template, and identity checks can pass while the review's explicit release block is ignored."
+        }
+      ],
+      "limitations": [
+        "No browser-level `file://` launch or visual/accessibility browser pass was run; the project's own directory verifier also reports this check as not run.",
+        "Scientific truth, source-universe completeness, and domain-specific adequacy were not assessed against external laboratory or computational records; this review was limited to the installed release mechanics and binding guarantees assigned.",
+        "Runtime portability was exercised on macOS with Node.js 22.22.0 only, not across other operating systems or supported Node 22 patch releases."
+      ],
+      "scope": "Fresh tarball-consumer release review of `<project-root>`, focused on documented packaging/install/API/CLI/example/report verification paths, package inventory, deterministic template/source-to-render binding, manifest closure, human-review binding, and working-copy versus release labels. Project files were not edited."
+    }
+  ],
+  "verifications": [
+    null,
+    {
+      "verdicts": [
+        {
+          "command_or_trace": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-generation-contract-probes.ts; <project-root>/src/validator/reference.ts:394-415",
+          "id": "RP-SOURCE-001",
+          "observed": "A current-tree clone of <project-root>/examples/cross-domain/scientific-report.canonical.json remained schema-valid, semantically valid, complete, and finding-free after its first EvidenceItem binding was changed to line 999999, unrelated registry/excerpt hashes, chunk.invented.never-supplied, and invented parser identities. The generic reference rule resolves source/snapshot IDs and compares only content_hash.",
+          "rationale": "The final validator has no trusted extraction/chunk registry against which to verify locator bounds, snapshot_registry_hash, excerpt bytes/hash, chunk IDs, or parser-result identity for ordinary bindings. Shape-complete invented provenance therefore receives a full valid result, directly demonstrating the alleged reproducibility failure.",
+          "severity": "high",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-generation-contract-probes.ts; <project-root>/schemas/generation-response.schema.json:1742-1825,1944-1949",
+          "id": "RP-COMPLETE-001",
+          "observed": "A request containing chunk:eln-entry-42:0 and chunk:eln-entry-42:1, with the second chunk containing a failed control, no signal, and exclusion, validated. The corresponding response also validated while processed_unit_ids contained only chunk:eln-entry-42:0 and continuation was complete with no omissions or cursor.",
+          "rationale": "The response schema constrains each list locally but never partitions a request-defined stage denominator. There is also no exported current-tree generation-exchange validator. Thus a proper subset can be declared complete and adverse content in an unprocessed requested unit can disappear.",
+          "severity": "high",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "<project-root>/prompts/contracts/request.example.json:360-371,435-447; <project-root>/prompts/contracts/response.example.json:18-142; <project-root>/prompts/stages/02-extract-atomic-records.md:64-77",
+          "id": "RP-NEGATIVE-001",
+          "observed": "The published request asks for attempt, material, result, failure, decision, and review records from text that explicitly contains an attempt, failed positive control, no signal, exclusion, withheld identity, and a planned but unrecorded repeat. It authorizes only /review_tasks. The paired response emits one pooling review task, marks the sole chunk processed, and declares continuation complete; it emits no operation or diagnostic for the failed control, negative observation, exclusion, attempt, withholding, or planned/nonperformed distinction.",
+          "rationale": "This is not merely an illustrative omission: the S2 contract says failures, negative/control outcomes, and exclusions are first-class, and says to return cannot_complete if target paths cannot represent them. The published pair instead teaches a complete processed pass that violates those rules and can propagate loss of adverse facts.",
+          "severity": "high",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-generation-contract-probes.ts; <project-root>/schemas/generation-response.schema.json:52-145,1893-1899; production search under <project-root>/src",
+          "id": "RP-AUTH-001",
+          "observed": "With the unchanged request permitting only /review_tasks, a response changed to authorized_patch_roots=[\"/claims\"] and carrying a /claims/- claim operation remained generation-response-schema-valid. No validateGenerationExchange or production preflight implementation exists under <project-root>/src.",
+          "rationale": "JSON Schema cannot compare the response authorization echo to the bound request, and the package exports no cross-document/apply preflight to do so. The documented expectation is therefore unenforced by the reusable runtime surface, allowing the provider response to self-authorize a scientific root.",
+          "severity": "high",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-generation-contract-probes.ts; <project-root>/schemas/generation-request.schema.json:280-303,2603-2624,3725-3752",
+          "id": "RP-COMPOSE-001",
+          "observed": "A wet_lab-enabled S2 request remained valid after removing report_prompt.core.untrusted_input_boundary and report_prompt.pack.wet_lab, duplicating report_prompt.core.missingness_and_status to preserve five entries, and recomputing prompt_contracts_hash. The surviving IDs were scientific_integrity, missingness_and_status twice, output_patch_contract, and the S2 stage contract.",
+          "rationale": "The schema requires five references and exactly one stage-prefixed/exact stage contract, but neither all four exact core IDs nor enabled-module pack IDs, nor unique contract IDs. No production byte/hash resolver closes the gap, so a schema-valid composition can omit both the source-instruction defense and enabled scientific pack.",
+          "severity": "high",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-generation-contract-probes.ts; <project-root>/schemas/generation-request.schema.json:21-64; <project-root>/schemas/packs/wet-lab.schema.json:3-6; <project-root>/src/validator/domain.ts:36-114",
+          "id": "RP-PACK-001",
+          "observed": "Both request and response schemas rejected /extensions, including a candidate path /extensions/domain_payloads/-. Yet pack schemas state that canonical instances live under /extensions/domain_payloads, and PACK001 requires an enabled domain to have a schema-valid payload. The validator API can accept additional out-of-band payloads, but no generation contract, documented merge route, or canonical persistence path connects those payloads to a response/report.",
+          "rationale": "The out-of-band validation option does not provide an authorized generation operation or preserve/render the payload in the canonical scientific report. Consequently the advertised prompt-patch pipeline cannot author its required typed pack payload without an undocumented external mechanism; the claimed route gap is real.",
+          "severity": "medium",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "Search for normalization_route|S3_normalization|normalizer_id|input_response under <project-root>/src and <project-root>/dist returned no matches; <project-root>/src/normalizer/index.ts:1-15; <project-root>/prompts/stages/03-normalization-route.md:14-47",
+          "id": "RP-ROUTE-001",
+          "observed": "S3 is an accepted stage and its contract requires a hash-pinned deterministic GenerationResponse normalizer with a versioned profile, input/output validation, and lossless transformation. The exported normalizer surface contains only normalizeAuthoringInput and file helpers for authoring-input normalization; no S3 implementation or profile is present in source or the built distribution.",
+          "rationale": "The exact route advertised in the stage bijection and recommended orchestration is not executable from this package. An implementer following it must stop, skip S3, or invent the transformation semantics, including the adverse-state mappings the route promises to preserve.",
+          "severity": "medium",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-causal-direct-evidence.ts; <project-root>/src/validator/claim-rules.ts:67-129,137-173",
+          "id": "SCIENTIFIC-001",
+          "observed": "The current probe produced schemaValid=true, CLM001=pass, no findings, and full validation valid/complete with a research question resolved solely by a supported causal claim. The claim had no ArgumentStep; its only direct source_statement said merely that exposure and endpoint co-occur.",
+          "rationale": "directSupport is claim-type-agnostic, claimHasAdmissibleSupport returns directSupport before argument reasoning, and resolved-question assessment reuses that predicate. Causal and mechanistic claims can therefore bypass assumptions, alternatives, and a causal reasoning path.",
+          "severity": "high",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-null-fake-controls.ts; <project-root>/src/validator/negative-rules.ts:71-176,216-249; <project-root>/src/validator/reference.ts:263-277",
+          "id": "SCIENTIFIC-002",
+          "observed": "A biological-counterevidence-eligible no-effect result with control_record_ids=[\"control.does-not-exist\"] and quality_control_event_ids=[\"qc.does-not-exist\"], but no domain payload or such records, returned REF001=pass, NUL001=pass, and a fully valid/complete report.",
+          "rationale": "concreteNegativeEvidenceGaps returns as soon as no applicable wet-lab payload exists, before resolving the supplied control/QC IDs, while REF001 does not traverse those nested identifiers. Self-declared aggregate flags can thus make nonexistent prerequisites qualify a null result.",
+          "severity": "high",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-shared-population-independent.ts; <project-root>/src/validator/claim-rules.ts:493-545",
+          "id": "SCIENTIFIC-003",
+          "observed": "Two results tied to the same population.pool-A, whose two members share biological-unit.pool-A, were placed in separate self-declared independent dependency groups. A claim said the increase was independently replicated. REF001, CLM001, and DEP001 all passed, and full validation was valid/complete.",
+          "rationale": "sharedEvidenceAncestors compares only direct result/artifact/slice/derivation/run IDs and limited source IDs. Distinct Result IDs hide their shared AnalysisPopulation and biological group ancestry, while independence wording trusts the group assessment labels. This admits pseudoreplication as independent evidence.",
+          "severity": "high",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-cross-domain-premises.ts; <project-root>/src/validator/claim-rules.ts:271-335,399-490",
+          "id": "SCIENTIFIC-004",
+          "observed": "A pack-valid MD claim and wet-lab claim were premise claims of one valid ArgumentStep concluding that the simulation explains the assay response. The conclusion had no direct domain evidence or bridge. PACK001, CLM001, and BRG001 passed; full validation was valid/complete with no findings.",
+          "rationale": "domainsForClaim examines only the conclusion's subjects and directly linked evidence, not its ArgumentSteps and upstream premise claims. crossDomainTransferType likewise does not infer the domains of the premises. The exact computational-to-experimental inference therefore escapes the bridge gate.",
+          "severity": "high",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-conflict-heterogeneity.ts; <project-root>/src/validator/claim-rules.ts:592-695",
+          "id": "SCIENTIFIC-005",
+          "observed": "Two active results with identical estimand, population, condition, time interval, and analysis context but opposite increase/decrease effects passed CNF001 after their ConflictSet status was set to retained_as_heterogeneity. Full validation was valid/complete.",
+          "rationale": "CNF001 imposes special adjudication checks only for unresolved and resolved_with_rationale. Later pair handling treats membership in any shared ConflictSet as sufficient. It never requires a material context difference for retained_as_heterogeneity, so relabeling silences a true like-for-like conflict.",
+          "severity": "high",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-wet-multiwork.ts; <project-root>/src/validator/domain-rules.ts:190-275; <project-root>/schemas/packs/wet-lab.schema.json replicateDesign definition",
+          "id": "SCIENTIFIC-006",
+          "observed": "A schema-valid wet-lab payload contained four distinct-donor specimens described as belonging two each to work.a and work.b, plus one ReplicateDesign per work ID declaring biological_n=4 and technical_n=4. PACK001 and WET001 passed, and the full report was valid/complete.",
+          "rationale": "For every design WET001 selects every specimen sharing only payloadIndex, then counts the global terminal-specimen/ancestor set. It never uses design.work_unit_id to scope specimens, and the pack schema has no design member IDs or analysis-population binding. Both per-work denominators can therefore be overstated by specimens from the other work.",
+          "severity": "high",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-ai-selection-mismatch.ts; <project-root>/src/validator/domain-rules.ts:493-535",
+          "id": "SCIENTIFIC-007",
+          "observed": "search.main selected only trial.chosen, which points to model.from-selected-trial with role candidate. A nonselected trial points to model.marked-selected with role selected. PACK001 and AIM004 passed, and full validation was valid/complete.",
+          "rationale": "AIM004 verifies selected trial IDs against the search ledger and separately checks that each selected-role model has some completed trial. It never joins selected_trial_ids through TrialRecord.model_record_id to the selected-role ModelRecords, so a contradictory selection ledger is accepted.",
+          "severity": "high",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-md-sampling-wording.ts; <project-root>/src/validator/domain-rules.ts:655-683,804-819",
+          "id": "SCIENTIFIC-008",
+          "observed": "A one-replica trajectory record with unknown autocorrelation, correlation times, effective sample sizes, criteria, diagnostics, replica results, and heterogeneity nevertheless asserted “Sampling adequately represents all reported observables.” PACK001, MDS002, MDS003, and MFA004 all passed; full validation was valid/complete.",
+          "rationale": "MDS002 gates prerequisites with a narrow convergence wording regex that does not match the ordinary adequacy paraphrase. MFA004 rejects only not_applicable, not unknown, correlation fields. An affirmative adequacy conclusion can therefore survive without the required diagnostics or replica evidence.",
+          "severity": "high",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-partial-retry.ts; <project-root>/src/validator/work-rules.ts:100-139; <project-root>/src/validator/contract-rules.ts:552-576",
+          "id": "SCIENTIFIC-009",
+          "observed": "Attempt 1 was partially_succeeded and linked to a major FailureEvent stating it failed before the endpoint; it had neither superseded_by_attempt_id nor failure recovery IDs. Attempt 2 for the same WorkUnit succeeded. WRK003, NEG001, and RES001 passed, and full validation was valid/complete.",
+          "rationale": "The retry predecessor search includes only failed or aborted outcomes, and RES001 likewise keys only on failed. A materially failed partially_succeeded attempt is ignored, leaving the later success with no recovery chain or explicit evidence that it was not a retry.",
+          "severity": "medium",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report_prompt_r3_probe.ts; <project-root>/src/validator/reproducibility-rules.ts:835-876,1072-1114; <project-root>/schemas/defs/reproducibility-unit.schema.json:113-161",
+          "id": "R3-UNTRACEABLE-INDEPENDENT-EVENT",
+          "observed": "The schema accepted an IndependentReproductionEvent containing only independent/met labels, comparator ID, an existing hashed covered output, no shared dependencies, and one generic source binding. REP001, REP004, and REP005 each passed, and reproducibilitySummary classified the unit as validator-supported R3 with computational_met=1. Unrelated timing/extraction/coverage fixture rules made the whole probe nonrelease-valid, but no R3 rule or support assessment rejected the bare event.",
+          "rationale": "The R3 predicate checks declarative labels, comparator identity, and a hashed referenced artifact; it does not require an independent actor/time, invocation, inputs, environment/implementation boundary, random state, independent output lineage, or target-level comparison evidence. The current consequence alleged—validator-supported R3 from a bare assertion—is directly reproduced despite unrelated report findings.",
+          "severity": "high",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-projection-array-probe.ts; <project-root>/src/projection/project.ts:206-267; <project-root>/src/projection/verify.ts:130-213",
+          "id": "projection-array-removal-order",
+          "observed": "Starting from a full valid, release-eligible report, omissions at sibling indices 2 (e01) and 10 (e09) produced a complete projection in which e01 was absent but protected e09 remained and unrequested e10 was removed. All disclosure checks passed, verifyDisclosureProjection returned valid with no issues, and the projected report remained fully valid, complete, and release-eligible.",
+          "rationale": "Both projector and verifier sort removal pointers lexicographically descending, which removes index 2 before index 10 and shifts the array. The verifier faithfully replays the same wrong operation; the leak scan ignores strings shorter than eight characters. This demonstrates an actual protected-record retention with false verification and release eligibility.",
+          "severity": "high",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "node <project-root>/dist/cli/index.js bundle <temporary-directory>/report-prompt-consumer-review/human-block-source --out <temporary-directory>/report-prompt-current-human-block-bundle --force; <project-root>/src/verifier/index.ts:972-997,1033-1064,1127 onward",
+          "id": "RR-HR-001",
+          "observed": "The current built CLI accepted a schema-valid, exactly bound human-review-attestation.json whose review check was concern, unresolved_review_task_ids was nonempty, and overall_decision was block_release. It printed “Release bundle verification: PASS”, “Release eligible: yes”, and exited 0.",
+          "rationale": "The verifier parses the optional human review and checks only six identity/hash/status bindings. It never evaluates overall_decision, concern decisions, conditions, or unresolved review tasks; release eligibility is then based on the absence of error findings. An explicit scientific release block is therefore ignored by the default release command.",
+          "severity": "high",
+          "verdict": "confirmed"
+        }
+      ],
+      "verifier": "Independent second-round current-tree checker. Reviewed <project-root> while excluding PROJECT_PLAN.md, reviews/**, .claude/**, transcripts, workflows, and prior status claims; made no project edits. Baseline `npm --prefix <project-root> run check` passed typecheck, all 277 tests, and build. Verdicts rely on current source traces and short /tmp-only mutation probes."
+    },
+    {
+      "verdicts": [
+        {
+          "command_or_trace": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-round2-generation.mts; current trace: <project-root>/src/validator/reference.ts:395-417 and <project-root>/schemas/defs/common.schema.json:58-141",
+          "id": "RP-SOURCE-001",
+          "observed": "The unmodified canonical example was schema-valid and validator-valid with 0 findings. After replacing the first evidence SourceBinding's locator with line 999999 and replacing snapshot_registry_hash, excerpt_hash, chunk_ids, and parser_identity with invented but well-shaped values, validation still returned schemaValid=true, valid=true, and 0 findings. The retained content_hash was the only provenance hash checked against a source item.",
+          "rationale": "The attempted refutation failed on the full current validator, not merely on isolated schema validation. Reference validation resolves the source and snapshot IDs and compares content_hash, but no trusted extraction/chunk record is consulted for the exact locator, registry hash, excerpt bytes, chunk ID, or parser result, so fabricated exact provenance receives the same successful result as the baseline.",
+          "severity": "high",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-round2-generation.mts; current trace: <project-root>/schemas/generation-response.schema.json:1742-1825 and :1944-1949",
+          "id": "RP-COMPLETE-001",
+          "observed": "A hash-consistent S2 request containing chunk:eln-entry-42:0 and a second complete chunk, chunk:adverse-entry:0, validated successfully. The second chunk states that the positive control failed, no signal was detected, and the run was excluded. The unchanged response also validated successfully while processing only chunk:eln-entry-42:0 and declaring state=complete, omitted_unit_ids=[], and no next cursor.",
+          "rationale": "The request and response schemas validate independently and no installed production exchange validator partitions requested units into processed and omitted sets. The response schema's complete condition only requires an empty omission list; it never proves that every requested chunk was processed, so an adverse unit can disappear behind a schema-valid completion claim.",
+          "severity": "high",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "node inspected <project-root>/prompts/contracts/request.example.json and <project-root>/prompts/contracts/response.example.json; contract trace: <project-root>/prompts/stages/02-extract-atomic-records.md:34-47,67-78",
+          "id": "RP-NEGATIVE-001",
+          "observed": "The published source chunk states an assay attempt, failed positive control, no reporter signal, exclusion from primary analysis, withheld donor identity, and a planned repeat not shown as performed. The request asks for attempt, material, result, failure, decision, and review_task records but permits only /review_tasks. The response emits one pooling review task, marks the chunk processed, and declares complete with no omissions; it emits none of the requested adverse or state-bearing records.",
+          "rationale": "This is not merely a terse example: it contradicts the adjacent S2 contract, which requires adverse records to be first-class and requires cannot_complete when target paths cannot represent them. needs_review plus a complete processed-unit declaration hides every failure/negative/exclusion fact while the only review task concerns pool independence, so copying the published pattern loses central scientific content.",
+          "severity": "high",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-round2-generation.mts; rg for validateGenerationExchange/preflightPatch in <project-root>/src and the clean install at <temporary-directory>/report-prompt-round2-consumer/node_modules/scientific-report-console/dist",
+          "id": "RP-AUTH-001",
+          "observed": "The request authorized only /review_tasks. A response changed its authorization set to /claims and carried a /claims/- claim addition using a canonical claim object; generation-response schema validation returned valid=true with no issues. No validateGenerationExchange or production preflightPatch implementation was found in source or installed distribution, and the clean package exposes no generation-exchange API.",
+          "rationale": "Per-operation root/type/path constraints do not bind a response to its request. The prompt prose says a trusted preflight performs that check, but the reusable package does not supply it; therefore a consumer using the shipped schemas and public modules has no package-provided rejection of a self-authorized scientific claim.",
+          "severity": "high",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-round2-generation.mts; current trace: <project-root>/schemas/generation-request.schema.json:2603-2624 and <project-root>/prompts/README.md:37-45,99-107",
+          "id": "RP-COMPOSE-001",
+          "observed": "With enabled_modules=[core,wet_lab], a request removed report_prompt.core.untrusted_input_boundary and report_prompt.pack.wet_lab, then added a second report_prompt.core.missingness_and_status reference under a different valid relative path and recomputed prompt_contracts_hash. The resulting five-reference request remained schema-valid and retained the exact S2 stage reference.",
+          "rationale": "The schema enforces a count and one stage reference, not the README's exact four-core-plus-enabled-packs composition rule or contract-ID uniqueness/resolution. Consequently an adapter can receive a structurally valid wet-lab request without the source-instruction boundary or wet-lab scientific gates; a set hash only binds the unsafe set chosen and does not establish that the required set was composed.",
+          "severity": "high",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-round2-generation.mts; current trace: <project-root>/schemas/generation-request.schema.json:22-65, <project-root>/schemas/packs/wet-lab.schema.json:3-7, and <project-root>/src/validator/domain.ts:97-111",
+          "id": "RP-PACK-001",
+          "observed": "Changing request.permitted_patch_roots and response.authorized_patch_roots/operation path to /extensions and /extensions/domain_payloads/- made both documents schema-invalid because /extensions is not a PatchRoot. At the same time, all three pack schemas place typed payloads under /extensions/domain_payloads and PACK001 requires a payload for an enabled module.",
+          "rationale": "Manual authoring can populate extensions, but the advertised prompt candidate-operation route cannot authorize or carry the typed payload that its enabled pack validator requires. This confirms a route-level integration gap: generation must either omit the payload and later fail PACK001 or leave the shared response contract.",
+          "severity": "medium",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "Clean installed package inspection under <temporary-directory>/report-prompt-round2-consumer/node_modules/scientific-report-console: find/rg found no S3 generation normalizer or profile; importing dist/normalizer/index.js exported only normalizeAuthoringInput, normalizeAuthoringFile, and normalizeAuthoringFileToPath. Contract trace: <project-root>/prompts/stages/03-normalization-route.md:13-47 and <project-root>/prompts/README.md:83-99",
+          "id": "RP-ROUTE-001",
+          "observed": "The installed tarball contains the S3 route declaration and generation schemas but no GenerationResponse-to-target normalizer implementation, versioned transformation profile, or S3 resolver. The only shipped normalizer is the separate authoring-input normalizer.",
+          "rationale": "The prompt bundle explicitly says accepted stage codes and route declarations are a bijection and no stage may be unroutable. Although an external orchestrator could implement the declared interface, the reusable package provides neither the hash-pinned implementation nor mapping semantics, so a consumer routing S2 output into accepted S3 must supply or invent the lossless transformation itself.",
+          "severity": "medium",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-causal-direct-evidence.ts; current trace: <project-root>/src/validator/claim-rules.ts:68-76,128-173 and <project-root>/protocol/argument-and-bridge.yaml:87-100",
+          "id": "SCIENTIFIC-001",
+          "observed": "A schema-valid causal claim based only on one observational source_statement EvidenceItem, with no ArgumentStep, assumptions, or alternatives, passed REF001 and CLM001. It was the satisfying claim for a resolved research question. Full validation returned valid=true, complete=true, overall=valid, no findings, and no not-run rules.",
+          "rationale": "The protocol explicitly requires assumptions and alternative explanations for causal/mechanistic claims, but directSupport is claim-type agnostic and assessResolvedQuestion reuses that permissive predicate. The researcher-facing consequence is demonstrated: an association-only evidence edge resolves a causal question without any causal reasoning path.",
+          "severity": "high",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-null-fake-controls.ts; current trace: <project-root>/src/validator/negative-rules.ts:72-177, especially :100-101",
+          "id": "SCIENTIFIC-002",
+          "observed": "A negative result marked eligible_for_biological_counterevidence=true named control.does-not-exist and qc.does-not-exist while the report had no domain payloads. REF001 and NUL001 both passed; full validation was valid and complete with no findings or skipped rules.",
+          "rationale": "The aggregate assessment flags and valid population/interval do not establish that the claimed controls or QC exist. concreteNegativeEvidenceGaps returns before resolving those identifiers whenever no matching wet-lab payload exists, and reference validation does not traverse them, so invented IDs can qualify a biological-absence interpretation.",
+          "severity": "high",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-shared-population-independent.ts; current trace: <project-root>/src/validator/claim-rules.ts:493-545",
+          "id": "SCIENTIFIC-003",
+          "observed": "Two evidence records pointed through distinct Result IDs to the same AnalysisPopulation, whose two members shared the identical biological group key. Separate dependency groups were self-labelled independent and the claim said the increase was independently replicated. REF001, CLM001, and DEP001 passed, and full validation returned valid=true with no findings.",
+          "rationale": "sharedEvidenceAncestors stops at direct result/artifact/slice/derivation/run identifiers and does not follow Result.analysis_population_id or biological lineage. Distinct result IDs therefore evade the dependency check even though the exact same population and biological group underlie both, allowing pseudoreplication to be reported as independent corroboration.",
+          "severity": "high",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-cross-domain-premises.ts; current trace: <project-root>/src/validator/claim-rules.ts:309-335,400-489",
+          "id": "SCIENTIFIC-004",
+          "observed": "A supported MD premise claim and a supported wet-lab premise claim fed one valid ArgumentStep concluding that the simulated state explains the assay response. The conclusion had no direct domain evidence, no domain subject, and no CrossDomainBridge. The report was schema/pack valid; CLM001 and BRG001 passed; full validation was valid and complete with no findings.",
+          "rationale": "Domain derivation considers only the conclusion's subjects and direct evidence and never traverses its premise claims. Because the cross-domain topology exists upstream, bridgeRequired remains false despite an explicit simulation-to-assay inference, leaving construct, condition, dose, endpoint, and scale compatibility unassessed.",
+          "severity": "high",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-conflict-heterogeneity.ts; current trace: <project-root>/src/validator/claim-rules.ts:624-695",
+          "id": "SCIENTIFIC-005",
+          "observed": "Two active results had identical estimand, population, condition, and analysis interval but opposite increase/decrease effects. Putting both in one ConflictSet and setting adjudication_status=retained_as_heterogeneity made CNF001 pass. Full validation returned valid=true, complete=true, and no findings.",
+          "rationale": "CNF001 applies status-specific checks only to unresolved and resolved_with_rationale sets, then treats any shared ConflictSet as sufficient representation of an incompatible matched-context pair. It never requires a differing context dimension for retained_as_heterogeneity, so a like-for-like contradiction can be relabelled without evidence.",
+          "severity": "high",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-wet-multiwork.ts; current trace: <project-root>/src/validator/domain-rules.ts:191-275",
+          "id": "SCIENTIFIC-006",
+          "observed": "One valid wet-lab payload contained two designs for work.a and work.b plus four donor-distinct specimens whose collection_context assigned two to each work unit. Both designs declared biological N=4 and technical N=4. PACK001 and WET001 passed, and full validation returned valid=true with no findings.",
+          "rationale": "For each design, WET001 counts every specimen at the payload index and never scopes the denominator by design.work_unit_id or an explicit member list. Since the schema provides no design-to-specimen membership field, the validator cannot distinguish the two unrelated denominators and accepts both overstated Ns.",
+          "severity": "high",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-ai-selection-mismatch.ts; current trace: <project-root>/src/validator/domain-rules.ts:500-535",
+          "id": "SCIENTIFIC-007",
+          "observed": "SearchRecord.selected_trial_ids contained trial.chosen, which referenced model.from-selected-trial with role=candidate. A non-selected completed trial referenced model.marked-selected with role=selected. PACK001 and AIM004 passed; full validation returned valid=true and no findings.",
+          "rationale": "AIM004 validates that selected trial IDs resolve and separately that a selected-role model has some completed trial, but never joins the selected trial set to the selected model set. Both local ledgers can therefore be individually well formed while contradicting the recorded selection decision.",
+          "severity": "high",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-md-sampling-wording.ts; current trace: <project-root>/src/validator/domain-rules.ts:655-683,804-818",
+          "id": "SCIENTIFIC-008",
+          "observed": "A one-replica trajectory analysis declared the known conclusion 'Sampling adequately represents all reported observables' while autocorrelation, correlation time, effective sample size, convergence criteria/diagnostics, replica-level results, and heterogeneity were all unknown. PACK001, MDS002, MDS003, and MFA004 passed; full validation was valid and complete with no findings.",
+          "rationale": "The affirmative adequacy statement is stored in convergence_conclusion, but MDS002 gates prerequisites only when a narrow wording regex matches converged/equilibrated/stable sampling. MFA004 rejects not_applicable but not unknown. The ordinary adequacy paraphrase therefore produces researcher-facing sampling assurance with none of the required diagnostics.",
+          "severity": "high",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report-prompt-partial-retry.ts; current trace: <project-root>/src/validator/work-rules.ts:101-140",
+          "id": "SCIENTIFIC-009",
+          "observed": "Attempt 1 was partially_succeeded but carried a major FailureEvent saying it failed before the required endpoint; it had no successor and the failure had no recovery attempt. Attempt 2 for the same work unit succeeded. WRK003, NEG001, and RES001 passed; full validation was valid and complete with no findings.",
+          "rationale": "Retry-chain validation searches only predecessors whose outcomes equal failed or aborted, ignoring a material failure attached to partially_succeeded. The later success may be a retry or an independent attempt, but the report records neither relationship; the validator nevertheless treats the history as complete, so recovery provenance remains ambiguous.",
+          "severity": "medium",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "<project-root>/node_modules/.bin/tsx <temporary-directory>/report_prompt_r3_probe.ts; current trace: <project-root>/src/validator/reproducibility-rules.ts:835-876,1072-1093 and <project-root>/schemas/defs/reproducibility-unit.schema.json:148-160",
+          "id": "R3-UNTRACEABLE-INDEPENDENT-EVENT",
+          "observed": "The schema-minimal independent/met event remained schema-valid. REP001, REP004, and REP005 all passed with no R3 findings; reproducibilitySummary used levelBasis=validator_supported, counted one R3 unit, and reported computational_met=1. The full fixture now has unrelated TIM001, TIM005, extraction-coverage, and REP006 failures, but none of them cap or challenge the accepted R3 event.",
+          "rationale": "The core allegation survives the attempted refutation despite the unrelated overall invalid status. R3 support trusts the event's labels, comparator ID, and a hash-known output that may be the original artifact; the schema forbids adding execution context or target comparisons, and REP004 adds only a generic source binding. Thus the validator-supported reproducibility summary asserts independent reproduction without an identifiable independent execution or evidence-based comparison.",
+          "severity": "high",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "Clean-installed package probe: node <temporary-directory>/report-prompt-round2-consumer/projection-probe.mjs using <temporary-directory>/report-prompt-round2-consumer/node_modules/scientific-report-console; current trace: <project-root>/src/projection/project.ts:119-132,248-267 and <project-root>/src/projection/verify.ts:196-213",
+          "id": "projection-array-removal-order",
+          "observed": "The source report was schema-valid, validator-valid, complete, and release-eligible. Omissions requested indices 2 and 10, identities e01 and e09. The projected array removed e01 and unrequested e10 but retained protected e09. Nevertheless projection_status=complete, all disclosure checks passed, verifyDisclosureProjection returned valid=true, and the projected report was schema-valid, validator-valid, complete, and release-eligible with no findings.",
+          "rationale": "Both projector and verifier sort JSON pointer strings lexicographically, reproducing the same shifted-index error rather than detecting it. The leak scan ignores sensitive strings shorter than eight characters, so the retained short protected identity is invisible. This is a demonstrated public-payload disclosure failure, not only an implementation-order concern.",
+          "severity": "high",
+          "verdict": "confirmed"
+        },
+        {
+          "command_or_trace": "Clean consumer installation at <temporary-directory>/report-prompt-round2-consumer from <temporary-directory>/scientific-report-console-0.1.0.tgz, then <temporary-directory>/report-prompt-round2-consumer/node_modules/.bin/report-prompt bundle <temporary-directory>/report-prompt-round2-consumer/human-block-source --out <temporary-directory>/report-prompt-round2-consumer/human-block-bundle --force; current trace: <project-root>/src/verifier/index.ts:972-997",
+          "id": "RR-HR-001",
+          "observed": "The present human-review attestation exactly bound the report, payload hash, validation attestation ID/hash, and observed valid status, but contained a scientific concern, an unresolved task, and overall_decision=block_release. The freshly installed CLI created the bundle, printed 'Release bundle verification: PASS' and 'Release eligible: yes', checked 12 files, and exited 0.",
+          "rationale": "The verifier validates and cross-binds an optional human-review document but never evaluates its decision or unresolved tasks. Since finish derives release eligibility from verifier findings and no finding is emitted for block_release, an explicit qualified-human rejection is converted into a release PASS. The clean-install reproduction confirms the consequence on the documented consumer path.",
+          "severity": "high",
+          "verdict": "confirmed"
+        }
+      ],
+      "verifier": "independent-second-round-current-tree-and-clean-consumer checker, 2026-08-26"
+    }
+  ]
+}

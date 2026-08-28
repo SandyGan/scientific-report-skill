@@ -1,0 +1,2249 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.report-prompt.org/v1/generation-response.schema.json",
+  "title": "Generation stage response",
+  "description": "Provider-neutral candidate patch response with one canonical vocabulary, schema-valid target roots, integrity-bound provenance, structured item dispositions, reproducibility coverage, and orchestrator-verifiable continuation lineage.",
+  "$defs": {
+    "PremiseBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accepted_state_snapshot_id",
+        "accepted_state_hash",
+        "object_type",
+        "object_id",
+        "object_version",
+        "object_hash",
+        "field_pointer",
+        "premise_role"
+      ],
+      "properties": {
+        "accepted_state_snapshot_id": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "accepted_state_hash": {
+          "$ref": "./defs/common.schema.json#/$defs/Hash"
+        },
+        "object_type": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "object_id": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "object_version": {
+          "$ref": "./defs/common.schema.json#/$defs/Version"
+        },
+        "object_hash": {
+          "$ref": "./defs/common.schema.json#/$defs/Hash"
+        },
+        "field_pointer": {
+          "$ref": "./defs/common.schema.json#/$defs/JsonPointer"
+        },
+        "premise_role": {
+          "enum": [
+            "premise",
+            "context",
+            "counterevidence",
+            "constraint",
+            "revision_basis"
+          ]
+        }
+      }
+    },
+    "CandidateOperation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation_id",
+        "op",
+        "object_type",
+        "object_id",
+        "base_object_version",
+        "authorized_root",
+        "path",
+        "value",
+        "proposed_object_version",
+        "provenance_kind",
+        "source_bindings",
+        "premise_bindings",
+        "rationale",
+        "requires_human_confirmation"
+      ],
+      "properties": {
+        "operation_id": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "op": {
+          "enum": [
+            "add",
+            "replace",
+            "remove",
+            "test"
+          ]
+        },
+        "object_type": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "object_id": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "base_object_version": {
+          "oneOf": [
+            {
+              "$ref": "./defs/common.schema.json#/$defs/Version"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "authorized_root": {
+          "$ref": "./generation-request.schema.json#/$defs/PatchRoot"
+        },
+        "path": {
+          "$ref": "./defs/common.schema.json#/$defs/JsonPointer"
+        },
+        "value": true,
+        "proposed_object_version": {
+          "oneOf": [
+            {
+              "$ref": "./defs/common.schema.json#/$defs/Version"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "provenance_kind": {
+          "enum": [
+            "source_derived",
+            "accepted_state_derived",
+            "mixed",
+            "operator_authorized"
+          ]
+        },
+        "source_bindings": {
+          "type": "array",
+          "items": {
+            "$ref": "./defs/common.schema.json#/$defs/SourceBinding"
+          },
+          "uniqueItems": true
+        },
+        "premise_bindings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PremiseBinding"
+          },
+          "uniqueItems": true
+        },
+        "rationale": {
+          "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+        },
+        "requires_human_confirmation": {
+          "type": "boolean"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/scope"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "scope"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/scope(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/cutoff"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "cutoff"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/cutoff(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/applicability_decisions"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "applicability_decision"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/applicability_decisions(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/module_manifest"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "module_manifest_item"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/module_manifest(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/section_coverage"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "section_coverage"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/section_coverage(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/source_coverage"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "source_coverage"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/source_coverage(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/research_questions"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "research_question"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/research_questions(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/entities"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "entity"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/entities(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/campaigns"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "campaign"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/campaigns(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/work_units"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "work_unit"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/work_units(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/attempts"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "attempt"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/attempts(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/segments"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "segment"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/segments(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/methods"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "method"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/methods(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/decision_events"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "decision_event"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/decision_events(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/materials"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "material"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/materials(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/material_relationships"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "material_relationship"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/material_relationships(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/analysis_populations"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "analysis_population"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/analysis_populations(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/data_slices"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "data_slice"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/data_slices(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/derivations"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "derivation"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/derivations(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/invocations"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "invocation"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/invocations(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/environments"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "environment"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/environments(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/random_states"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "random_state"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/random_states(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/analysis_runs"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "analysis_run"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/analysis_runs(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/results"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "result"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/results(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/failures"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "failure"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/failures(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/evidence_items"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "evidence_item"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/evidence_items(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/evidence_edges"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "evidence_edge"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/evidence_edges(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/evidence_dependency_groups"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "evidence_dependency_group"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/evidence_dependency_groups(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/claims"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "claim"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/claims(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/argument_steps"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "argument_step"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/argument_steps(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/argument_edges"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "argument_edge"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/argument_edges(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/claim_dependencies"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "claim_dependency"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/claim_dependencies(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/cross_domain_bridges"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "cross_domain_bridge"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/cross_domain_bridges(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/conflict_sets"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "conflict_set"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/conflict_sets(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/conflict_member_edges"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "conflict_member_edge"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/conflict_member_edges(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/artifacts"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "artifact"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/artifacts(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/reproducibility_units"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "reproducibility_unit"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/reproducibility_units(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/limitations"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "limitation"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/limitations(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/revision_events"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "revision_event"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/revision_events(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/review_tasks"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "review_task"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/review_tasks(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/disclosure_state"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "disclosure_state"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/disclosure_state(?:$|/)"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorized_root": {
+                "const": "/extensions/domain_payloads"
+              }
+            },
+            "required": [
+              "authorized_root"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "const": "domain_payload"
+              },
+              "op": {
+                "const": "add"
+              },
+              "path": {
+                "const": "/extensions/domain_payloads/-"
+              },
+              "value": {
+                "oneOf": [
+                  {
+                    "$ref": "./packs/wet-lab.schema.json"
+                  },
+                  {
+                    "$ref": "./packs/ai-ml.schema.json"
+                  },
+                  {
+                    "$ref": "./packs/molecular-dynamics.schema.json"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "remove"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "null"
+              },
+              "base_object_version": {
+                "$ref": "./defs/common.schema.json#/$defs/Version"
+              },
+              "proposed_object_version": {
+                "$ref": "./defs/common.schema.json#/$defs/Version"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "add"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "proposed_object_version": {
+                "$ref": "./defs/common.schema.json#/$defs/Version"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "enum": [
+                  "replace",
+                  "test"
+                ]
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "base_object_version": {
+                "$ref": "./defs/common.schema.json#/$defs/Version"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "provenance_kind": {
+                "const": "source_derived"
+              }
+            },
+            "required": [
+              "provenance_kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "source_bindings": {
+                "minItems": 1
+              },
+              "premise_bindings": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "provenance_kind": {
+                "const": "accepted_state_derived"
+              }
+            },
+            "required": [
+              "provenance_kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "source_bindings": {
+                "maxItems": 0
+              },
+              "premise_bindings": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "provenance_kind": {
+                "const": "mixed"
+              }
+            },
+            "required": [
+              "provenance_kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "source_bindings": {
+                "minItems": 1
+              },
+              "premise_bindings": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "provenance_kind": {
+                "const": "operator_authorized"
+              }
+            },
+            "required": [
+              "provenance_kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "object_type": {
+                "enum": [
+                  "applicability_decision",
+                  "module_manifest_item",
+                  "section_coverage",
+                  "source_coverage",
+                  "limitation",
+                  "review_task",
+                  "disclosure_state"
+                ]
+              },
+              "source_bindings": {
+                "maxItems": 0
+              },
+              "premise_bindings": {
+                "maxItems": 0
+              },
+              "requires_human_confirmation": {
+                "const": true
+              }
+            }
+          }
+        }
+      ]
+    },
+    "DetectedConflict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "conflict_id",
+        "subject",
+        "object_ids",
+        "field_pointers",
+        "classification",
+        "description",
+        "source_bindings",
+        "premise_bindings"
+      ],
+      "properties": {
+        "conflict_id": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "subject": {
+          "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+        },
+        "object_ids": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "$ref": "./defs/common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "field_pointers": {
+          "type": "array",
+          "items": {
+            "$ref": "./defs/common.schema.json#/$defs/JsonPointer"
+          }
+        },
+        "classification": {
+          "enum": [
+            "true_conflict",
+            "heterogeneity",
+            "apparent_conflict",
+            "duplicate_representation",
+            "unknown"
+          ]
+        },
+        "description": {
+          "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+        },
+        "source_bindings": {
+          "type": "array",
+          "items": {
+            "$ref": "./defs/common.schema.json#/$defs/SourceBinding"
+          }
+        },
+        "premise_bindings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PremiseBinding"
+          }
+        }
+      },
+      "anyOf": [
+        {
+          "properties": {
+            "source_bindings": {
+              "minItems": 2
+            }
+          }
+        },
+        {
+          "properties": {
+            "premise_bindings": {
+              "minItems": 2
+            }
+          }
+        }
+      ]
+    },
+    "ForbiddenInference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "detection_id",
+        "inference_kind",
+        "description",
+        "affected_operation_ids",
+        "source_item_ids",
+        "disposition"
+      ],
+      "properties": {
+        "detection_id": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "inference_kind": {
+          "enum": [
+            "invented_value",
+            "unknown_promoted_to_known",
+            "planned_promoted_to_performed",
+            "external_promoted_to_project_work",
+            "failure_or_exclusion_omitted",
+            "unsupported_completion",
+            "unsupported_decision_timing",
+            "unsupported_claim",
+            "withheld_value_exposure",
+            "instruction_from_untrusted_input",
+            "other"
+          ]
+        },
+        "description": {
+          "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+        },
+        "affected_operation_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./defs/common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "source_item_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./defs/common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "disposition": {
+          "enum": [
+            "rejected",
+            "converted_to_unknown",
+            "converted_to_review_task",
+            "response_blocked"
+          ]
+        }
+      }
+    },
+    "DispositionSourceReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_item_id",
+        "source_snapshot_id",
+        "snapshot_registry_hash",
+        "content_identity_status",
+        "content_hash",
+        "chunk_ids",
+        "locator",
+        "parser_result_id"
+      ],
+      "properties": {
+        "source_item_id": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "source_snapshot_id": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "snapshot_registry_hash": {
+          "$ref": "./defs/common.schema.json#/$defs/Hash"
+        },
+        "content_identity_status": {
+          "enum": [
+            "known",
+            "unavailable"
+          ]
+        },
+        "content_hash": {
+          "oneOf": [
+            {
+              "$ref": "./defs/common.schema.json#/$defs/Hash"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "chunk_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./defs/common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "locator": {
+          "$ref": "./defs/common.schema.json#/$defs/Locator"
+        },
+        "parser_result_id": {
+          "oneOf": [
+            {
+              "$ref": "./defs/common.schema.json#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "content_identity_status": {
+                "const": "known"
+              }
+            },
+            "required": [
+              "content_identity_status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "content_hash": {
+                "$ref": "./defs/common.schema.json#/$defs/Hash"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "content_hash": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ItemDisposition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "item_id",
+        "disposition",
+        "cause",
+        "explanation",
+        "parser_status",
+        "access_status",
+        "source_reference",
+        "retryable",
+        "stage_disposition",
+        "applicable_rule_id"
+      ],
+      "properties": {
+        "item_id": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "disposition": {
+          "enum": [
+            "excluded",
+            "unreadable"
+          ]
+        },
+        "cause": {
+          "enum": [
+            "scope_rule",
+            "disclosure_rule",
+            "unsupported_media_type",
+            "parser_failure",
+            "parser_partial_or_degraded",
+            "content_integrity_mismatch",
+            "access_failure",
+            "unsafe_active_content",
+            "duplicate_canonicalized",
+            "other"
+          ]
+        },
+        "explanation": {
+          "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+        },
+        "parser_status": {
+          "enum": [
+            "success",
+            "partial",
+            "failure",
+            "not_run",
+            "unknown"
+          ]
+        },
+        "access_status": {
+          "enum": [
+            "available",
+            "inaccessible",
+            "withheld",
+            "unknown"
+          ]
+        },
+        "source_reference": {
+          "$ref": "#/$defs/DispositionSourceReference"
+        },
+        "retryable": {
+          "type": "boolean"
+        },
+        "stage_disposition": {
+          "enum": [
+            "continue_with_limitation",
+            "defer_for_review",
+            "omit_from_stage",
+            "block_stage"
+          ]
+        },
+        "applicable_rule_id": {
+          "oneOf": [
+            {
+              "$ref": "./defs/common.schema.json#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "ReproducibilityDisposition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "computation_id",
+        "disposition",
+        "reproducibility_unit_id",
+        "candidate_operation_ids",
+        "justification",
+        "applicability_decision_id"
+      ],
+      "properties": {
+        "computation_id": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "disposition": {
+          "enum": [
+            "unit_authored",
+            "gap_recorded",
+            "not_applicable"
+          ]
+        },
+        "reproducibility_unit_id": {
+          "oneOf": [
+            {
+              "$ref": "./defs/common.schema.json#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "candidate_operation_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./defs/common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "justification": {
+          "oneOf": [
+            {
+              "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "applicability_decision_id": {
+          "oneOf": [
+            {
+              "$ref": "./defs/common.schema.json#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "disposition": {
+                "const": "unit_authored"
+              }
+            },
+            "required": [
+              "disposition"
+            ]
+          },
+          "then": {
+            "properties": {
+              "reproducibility_unit_id": {
+                "$ref": "./defs/common.schema.json#/$defs/Identifier"
+              },
+              "candidate_operation_ids": {
+                "minItems": 1
+              },
+              "justification": {
+                "type": "null"
+              },
+              "applicability_decision_id": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "disposition": {
+                "const": "gap_recorded"
+              }
+            },
+            "required": [
+              "disposition"
+            ]
+          },
+          "then": {
+            "properties": {
+              "reproducibility_unit_id": {
+                "type": "null"
+              },
+              "candidate_operation_ids": {
+                "minItems": 1
+              },
+              "justification": {
+                "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+              },
+              "applicability_decision_id": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "disposition": {
+                "const": "not_applicable"
+              }
+            },
+            "required": [
+              "disposition"
+            ]
+          },
+          "then": {
+            "properties": {
+              "reproducibility_unit_id": {
+                "type": "null"
+              },
+              "justification": {
+                "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+              },
+              "applicability_decision_id": {
+                "$ref": "./defs/common.schema.json#/$defs/Identifier"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ReproducibilityCoverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "inventory_id",
+        "inventory_hash",
+        "dispositions",
+        "uncovered_computation_ids"
+      ],
+      "properties": {
+        "inventory_id": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "inventory_hash": {
+          "$ref": "./defs/common.schema.json#/$defs/Hash"
+        },
+        "dispositions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ReproducibilityDisposition"
+          }
+        },
+        "uncovered_computation_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./defs/common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "Continuation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "omitted_unit_ids",
+        "next_cursor",
+        "orchestrator_verification"
+      ],
+      "properties": {
+        "state": {
+          "enum": [
+            "complete",
+            "truncated"
+          ]
+        },
+        "omitted_unit_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./defs/common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "next_cursor": {
+          "oneOf": [
+            {
+              "$ref": "./generation-request.schema.json#/$defs/ContinuationCursor"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "orchestrator_verification": {
+          "oneOf": [
+            {
+              "$ref": "./generation-request.schema.json#/$defs/OrchestratorCursorVerification"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "complete"
+              }
+            },
+            "required": [
+              "state"
+            ]
+          },
+          "then": {
+            "properties": {
+              "omitted_unit_ids": {
+                "maxItems": 0
+              },
+              "next_cursor": {
+                "type": "null"
+              },
+              "orchestrator_verification": {
+                "type": "null"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "omitted_unit_ids": {
+                "minItems": 1
+              },
+              "next_cursor": {
+                "$ref": "./generation-request.schema.json#/$defs/ContinuationCursor"
+              },
+              "orchestrator_verification": {
+                "$ref": "./generation-request.schema.json#/$defs/OrchestratorCursorVerification"
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "response_id",
+    "response_version",
+    "schema_version",
+    "request_id",
+    "request_contract_hash",
+    "prompt_id",
+    "prompt_version",
+    "prompt_contracts_hash",
+    "target_schema_id",
+    "target_schema_version",
+    "authorized_patch_roots",
+    "accepted_state_hash",
+    "stage",
+    "status",
+    "cannot_complete_reason",
+    "candidate_operations",
+    "source_bindings",
+    "processed_unit_ids",
+    "excluded_items",
+    "unreadable_items",
+    "conflicts",
+    "missingness",
+    "review_tasks",
+    "forbidden_inferences_detected",
+    "reproducibility_coverage",
+    "continuation",
+    "created_at",
+    "extensions"
+  ],
+  "properties": {
+    "response_id": {
+      "$ref": "./defs/common.schema.json#/$defs/Identifier"
+    },
+    "response_version": {
+      "$ref": "./defs/common.schema.json#/$defs/Version"
+    },
+    "schema_version": {
+      "$ref": "./defs/common.schema.json#/$defs/Version"
+    },
+    "request_id": {
+      "$ref": "./defs/common.schema.json#/$defs/Identifier"
+    },
+    "request_contract_hash": {
+      "$ref": "./defs/common.schema.json#/$defs/Hash"
+    },
+    "prompt_id": {
+      "const": "report_prompt.bundle"
+    },
+    "prompt_version": {
+      "const": "0.3.0"
+    },
+    "prompt_contracts_hash": {
+      "$ref": "./defs/common.schema.json#/$defs/Hash"
+    },
+    "target_schema_id": {
+      "type": "string",
+      "format": "uri",
+      "const": "https://schemas.report-prompt.org/v1/scientific-report.schema.json"
+    },
+    "target_schema_version": {
+      "$ref": "./defs/common.schema.json#/$defs/Version"
+    },
+    "authorized_patch_roots": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "./generation-request.schema.json#/$defs/PatchRoot"
+      },
+      "uniqueItems": true
+    },
+    "accepted_state_hash": {
+      "oneOf": [
+        {
+          "$ref": "./defs/common.schema.json#/$defs/Hash"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "stage": {
+      "$ref": "./generation-request.schema.json#/$defs/StageCode"
+    },
+    "status": {
+      "enum": [
+        "ok",
+        "needs_review",
+        "cannot_complete"
+      ]
+    },
+    "cannot_complete_reason": {
+      "oneOf": [
+        {
+          "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "candidate_operations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/CandidateOperation"
+      }
+    },
+    "source_bindings": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/common.schema.json#/$defs/SourceBinding"
+      },
+      "uniqueItems": true
+    },
+    "processed_unit_ids": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/common.schema.json#/$defs/Identifier"
+      },
+      "uniqueItems": true
+    },
+    "excluded_items": {
+      "type": "array",
+      "items": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/ItemDisposition"
+          },
+          {
+            "properties": {
+              "disposition": {
+                "const": "excluded"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "unreadable_items": {
+      "type": "array",
+      "items": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/ItemDisposition"
+          },
+          {
+            "properties": {
+              "disposition": {
+                "const": "unreadable"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "conflicts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/DetectedConflict"
+      }
+    },
+    "missingness": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/common.schema.json#/$defs/MissingnessRecord"
+      }
+    },
+    "review_tasks": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/common.schema.json#/$defs/ReviewTask"
+      }
+    },
+    "forbidden_inferences_detected": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ForbiddenInference"
+      }
+    },
+    "reproducibility_coverage": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/ReproducibilityCoverage"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "continuation": {
+      "$ref": "#/$defs/Continuation"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "extensions": {
+      "$ref": "./defs/common.schema.json#/$defs/ExtensionMap"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "cannot_complete"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "cannot_complete_reason": {
+            "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+          },
+          "candidate_operations": {
+            "maxItems": 0
+          },
+          "review_tasks": {
+            "minItems": 1
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "cannot_complete_reason": {
+            "type": "null"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "needs_review"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "anyOf": [
+          {
+            "properties": {
+              "review_tasks": {
+                "minItems": 1
+              }
+            }
+          },
+          {
+            "properties": {
+              "conflicts": {
+                "minItems": 1
+              }
+            }
+          },
+          {
+            "properties": {
+              "missingness": {
+                "minItems": 1
+              }
+            }
+          },
+          {
+            "properties": {
+              "forbidden_inferences_detected": {
+                "minItems": 1
+              }
+            }
+          },
+          {
+            "properties": {
+              "excluded_items": {
+                "minItems": 1
+              }
+            }
+          },
+          {
+            "properties": {
+              "unreadable_items": {
+                "minItems": 1
+              }
+            }
+          },
+          {
+            "properties": {
+              "reproducibility_coverage": {
+                "properties": {
+                  "uncovered_computation_ids": {
+                    "minItems": 1
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "stage": {
+            "const": "S9_reproducibility_authoring"
+          }
+        },
+        "required": [
+          "stage"
+        ]
+      },
+      "then": {
+        "properties": {
+          "reproducibility_coverage": {
+            "$ref": "#/$defs/ReproducibilityCoverage"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "reproducibility_coverage": {
+            "type": "null"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "reproducibility_coverage": {
+            "type": "object",
+            "properties": {
+              "uncovered_computation_ids": {
+                "minItems": 1
+              }
+            },
+            "required": [
+              "uncovered_computation_ids"
+            ]
+          }
+        },
+        "required": [
+          "reproducibility_coverage"
+        ]
+      },
+      "then": {
+        "properties": {
+          "status": {
+            "enum": [
+              "needs_review",
+              "cannot_complete"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "ok",
+              "needs_review"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "accepted_state_hash": {
+            "$ref": "./defs/common.schema.json#/$defs/Hash"
+          }
+        }
+      }
+    }
+  ]
+}

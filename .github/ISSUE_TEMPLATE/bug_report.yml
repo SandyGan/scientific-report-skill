@@ -1,0 +1,75 @@
+name: Bug report
+description: Report reproducible incorrect behavior using synthetic or public data.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include restricted scientific data, credentials, personal data, or unpublished source material. Report security issues through the private process in SECURITY.md.
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Package version or commit identifier.
+      placeholder: 0.1.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Affected surface
+      options:
+        - CLI
+        - Normalizer
+        - Disclosure projection
+        - Validator or rules
+        - Renderer
+        - Bundler or verifier
+        - Generation contract
+        - Schema or protocol
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Provide commands and a minimal synthetic fixture.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: observed
+    attributes:
+      label: Observed behavior
+      description: Include sanitized output and exit status.
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system, Node.js version, npm version, and installation method.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Data-safety confirmation
+      options:
+        - label: I used only synthetic or public data and removed credentials, personal data, local absolute paths, and restricted material.
+          required: true

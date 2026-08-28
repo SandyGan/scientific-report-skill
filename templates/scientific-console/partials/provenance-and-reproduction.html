@@ -1,0 +1,157 @@
+<section id="provenance" class="report-section" aria-labelledby="provenance-title" data-print-summary="true">
+  <header class="section-heading">
+    <div>
+      <p class="section-code">L3–L4 / provenance and replay</p>
+      <h2 id="provenance-title">Source coverage, artifacts, environments, and reproduction</h2>
+    </div>
+    <p class="section-purpose">Coverage is shown against its declared denominator. Replay levels are per unit and do not collapse into an opaque score.</p>
+  </header>
+
+  <div class="coverage-banner" data-status="{{source_coverage.completeness_state}}" data-safety-record="true">
+    <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-source"></use></svg>
+    <span><strong>Source-universe verdict:</strong> <span class="empty-fallback">{{source_coverage.completeness_state}}</span></span>
+    <span class="coverage-banner__reason empty-fallback">{{source_coverage.statement}}</span>
+  </div>
+
+  <div class="provenance-overview">
+    <section class="disposition-matrix" aria-labelledby="source-disposition-title">
+      <h3 id="source-disposition-title">Registered source disposition</h3>
+      <div class="disposition-matrix__grid">
+        <div data-disposition="included"><span>Included</span><strong class="empty-fallback">{{source_coverage.counts.included}}</strong></div>
+        <div data-disposition="excluded"><span>Excluded with reason</span><strong class="empty-fallback">{{source_coverage.counts.excluded_with_reason}}</strong></div>
+        <div data-disposition="unreadable"><span>Unreadable</span><strong class="empty-fallback">{{source_coverage.counts.unreadable}}</strong></div>
+        <div data-disposition="inaccessible"><span>Inaccessible</span><strong class="empty-fallback">{{source_coverage.counts.inaccessible}}</strong></div>
+        <div data-disposition="duplicate"><span>Duplicate</span><strong class="empty-fallback">{{source_coverage.counts.duplicate}}</strong></div>
+        <div data-disposition="unmapped"><span>Unmapped</span><strong class="empty-fallback">{{source_coverage.counts.unmapped}}</strong></div>
+      </div>
+      <p class="matrix-denominator"><span class="meta-label">Denominator</span> <strong class="empty-fallback">{{source_coverage.counts.registered}}</strong> registered sources · authority <strong class="empty-fallback">{{source_coverage.universe_authority_state}}</strong></p>
+    </section>
+
+    <section class="replay-floor" aria-labelledby="replay-floor-title">
+      <h3 id="replay-floor-title">Critical-unit conservative floor</h3>
+      <p class="replay-floor__value empty-fallback">{{reproducibility_overview.conservative_floor}}</p>
+      <p class="empty-fallback">{{reproducibility_overview.statement}}</p>
+      <dl class="key-value-list key-value-list--compact">
+        <div><dt>Critical-unit denominator</dt><dd class="empty-fallback">{{reproducibility_overview.critical_unit_count}}</dd></div>
+        <div><dt>Claim coverage</dt><dd class="empty-fallback">{{reproducibility_overview.claim_coverage}}</dd></div>
+        <div><dt>Access condition</dt><dd class="empty-fallback">{{reproducibility_overview.access_condition}}</dd></div>
+        <div><dt>Verified rerun scope</dt><dd class="empty-fallback">{{reproducibility_overview.verified_rerun_scope}}</dd></div>
+      </dl>
+    </section>
+  </div>
+
+  <details class="disclosure provenance-disclosure" data-disclosure>
+    <summary>
+      <span>Inspect source inventory</span>
+      <span class="summary-meta"><span class="empty-fallback">{{source_coverage.counts.disposed}}</span> disposed · <span class="empty-fallback">{{source_coverage.counts.registered}}</span> registered</span>
+    </summary>
+    <div class="disclosure__body table-scroll">
+      <table class="data-table source-table">
+        <caption>Registered sources and exact disposition. Locators are inert text, not active remote links.</caption>
+        <thead><tr><th scope="col">Source</th><th scope="col">Type</th><th scope="col">Disposition</th><th scope="col">Reason</th><th scope="col">Snapshot / content ID</th><th scope="col">Locator / parser</th></tr></thead>
+        <tbody>
+          {{#each sources}}
+          <tr data-record data-kind="source {{disposition}}" data-domain="{{domain}}" data-state="{{disposition}}" data-safety-record="{{safety_relevance}}">
+            <th scope="row" data-label="Source"><code>{{source_id}}</code><span class="cell-secondary empty-fallback">{{label}}</span></th>
+            <td data-label="Type" class="empty-fallback">{{source_type}}</td>
+            <td data-label="Disposition"><span class="status-chip status-chip--small" data-status="{{disposition}}"><span class="empty-fallback">{{disposition}}</span></span></td>
+            <td data-label="Reason" class="empty-fallback">{{disposition_reason}}</td>
+            <td data-label="Snapshot / content ID"><code class="wrap-code empty-fallback">{{snapshot_or_content_id}}</code></td>
+            <td data-label="Locator / parser"><code class="wrap-code empty-fallback">{{locator}}</code><span class="cell-secondary empty-fallback">{{parser_version}}</span></td>
+          </tr>
+          {{else}}
+          <tr><td colspan="6" class="missing-entry">No source inventory rows supplied. The coverage verdict above remains authoritative.</td></tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <div class="reproduction-list" aria-labelledby="reproduction-units-title">
+    <div class="subsection-heading">
+      <div><p class="section-code">Unit-level assessment</p><h3 id="reproduction-units-title">Reproducibility units</h3></div>
+    </div>
+    {{#each reproducibility_units}}
+    <article class="reproduction-unit" data-record data-kind="reproducibility-unit" data-domain="{{domain}}" data-state="{{level}} {{status}}" data-safety-record="{{safety_relevance}}">
+      <header>
+        <div>
+          <div class="record-id-block"><span class="record-type">Reproducibility unit</span><code>{{unit_id}}</code></div>
+          <h4 class="empty-fallback">{{title}}</h4>
+        </div>
+        <div class="record-statuses"><span class="replay-level empty-fallback">{{level}}</span><span class="status-chip" data-status="{{status}}"><span class="empty-fallback">{{status}}</span></span></div>
+      </header>
+      <p class="empty-fallback">{{scope_statement}}</p>
+
+      <div class="reproduction-matrix" role="group" aria-label="Canonical reproducibility axis assessments for {{unit_id}}">
+        <div data-axis="provenance_closure" data-status="{{axes.source_closure.status}}"><span>Source &amp; derivation closure</span><strong class="empty-fallback">{{axes.source_closure.status}}</strong><small class="empty-fallback">{{axes.source_closure.note}}</small></div>
+        <div data-axis="recipe_fidelity" data-status="{{axes.recipe_fidelity.status}}"><span>Recipe ↔ history fidelity</span><strong class="empty-fallback">{{axes.recipe_fidelity.status}}</strong><small class="empty-fallback">{{axes.recipe_fidelity.note}}</small></div>
+        <div data-axis="data_and_artifact_access" data-status="{{axes.artifact_access.status}}"><span>Data / artifact access</span><strong class="empty-fallback">{{axes.artifact_access.status}}</strong><small class="empty-fallback">{{axes.artifact_access.note}}</small></div>
+        <div data-axis="environment_and_random_state_capture" data-status="{{axes.environment.status}}"><span>Environment &amp; random state</span><strong class="empty-fallback">{{axes.environment.status}}</strong><small class="empty-fallback">{{axes.environment.note}}</small></div>
+        <div data-axis="replay_verification" data-status="{{axes.verified_rerun.status}}"><span>Verified rerun</span><strong class="empty-fallback">{{axes.verified_rerun.status}}</strong><small class="empty-fallback">{{axes.verified_rerun.note}}</small></div>
+        <div data-axis="independent_reproduction" data-status="{{axes.independence.status}}"><span>Independent reproduction</span><strong class="empty-fallback">{{axes.independence.status}}</strong><small class="empty-fallback">{{axes.independence.note}}</small></div>
+        <div data-axis="claim_and_output_coverage" data-status="{{axes.claim_coverage.status}}"><span>Critical claim / output coverage</span><strong class="empty-fallback">{{axes.claim_coverage.status}}</strong><small class="empty-fallback">{{axes.claim_coverage.note}}</small></div>
+      </div>
+
+      <details class="nested-disclosure" data-disclosure>
+        <summary>Replay inputs, environment, and access</summary>
+        <div class="nested-disclosure__body replay-detail-grid">
+          <dl class="key-value-list">
+            <div><dt>Recipe</dt><dd><code class="wrap-code empty-fallback">{{recipe_id}}</code></dd></div>
+            <div><dt>Historical invocation</dt><dd><code class="wrap-code empty-fallback">{{historical_invocation_id}}</code></dd></div>
+            <div><dt>Environment</dt><dd><code class="wrap-code empty-fallback">{{environment_id}}</code></dd></div>
+            <div><dt>Random state</dt><dd><code class="wrap-code empty-fallback">{{random_state_id}}</code></dd></div>
+          </dl>
+          <dl class="key-value-list">
+            <div><dt>Input artifacts</dt><dd class="empty-fallback">{{input_artifact_ids}}</dd></div>
+            <div><dt>Output artifacts</dt><dd class="empty-fallback">{{output_artifact_ids}}</dd></div>
+            <div><dt>Access conditions</dt><dd class="empty-fallback">{{access_conditions}}</dd></div>
+            <div><dt>Last verification evidence</dt><dd class="empty-fallback">{{verification_evidence}}</dd></div>
+          </dl>
+          <dl class="key-value-list" aria-label="Bound-record diagnostics separate from canonical axis assessments">
+            <div><dt>Input-closure record diagnostic</dt><dd><strong class="empty-fallback">{{diagnostics.input_closure.status}}</strong><span class="cell-secondary empty-fallback">{{diagnostics.input_closure.note}}</span></dd></div>
+            <div><dt>Artifact-closure record diagnostic</dt><dd><strong class="empty-fallback">{{diagnostics.artifact_closure.status}}</strong><span class="cell-secondary empty-fallback">{{diagnostics.artifact_closure.note}}</span></dd></div>
+            <div><dt>Access-record diagnostic</dt><dd><strong class="empty-fallback">{{diagnostics.access.status}}</strong><span class="cell-secondary empty-fallback">{{diagnostics.access.note}}</span></dd></div>
+            <div><dt>Environment-record diagnostic</dt><dd><strong class="empty-fallback">{{diagnostics.environment_record.status}}</strong><span class="cell-secondary empty-fallback">{{diagnostics.environment_record.note}}</span></dd></div>
+            <div><dt>Random-state-record diagnostic</dt><dd><strong class="empty-fallback">{{diagnostics.random_state_record.status}}</strong><span class="cell-secondary empty-fallback">{{diagnostics.random_state_record.note}}</span></dd></div>
+          </dl>
+          {{#if gaps}}
+          <div class="replay-gaps"><h5>Blocking and qualifying gaps</h5><ul class="compact-list">{{#each gaps}}<li data-safety-record="true"><code>{{gap_id}}</code> {{summary}} <span class="status-chip status-chip--small" data-status="{{status}}">{{status}}</span></li>{{/each}}</ul></div>
+          {{/if}}
+        </div>
+      </details>
+    </article>
+    {{else}}
+    <div class="section-empty section-empty--compact" data-state="{{section_coverage.reproducibility.state}}">
+      <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-unknown"></use></svg>
+      <div><h4>No reproducibility-unit records rendered</h4><p>Do not infer that replay is impossible or unnecessary; consult section coverage and artifacts.</p></div>
+    </div>
+    {{/each}}
+  </div>
+
+  <details class="disclosure provenance-disclosure" data-disclosure>
+    <summary>
+      <span>Inspect artifact catalog</span>
+      <span class="summary-meta"><span class="empty-fallback">{{artifact_count}}</span> artifacts</span>
+    </summary>
+    <div class="disclosure__body table-scroll">
+      <table class="data-table artifact-table">
+        <caption>Disclosure-safe artifact references. Paths and identifiers are displayed as inert text.</caption>
+        <thead><tr><th scope="col">Artifact</th><th scope="col">Role</th><th scope="col">Access</th><th scope="col">Integrity</th><th scope="col">Reference</th><th scope="col">Revision</th></tr></thead>
+        <tbody>
+          {{#each artifacts}}
+          <tr data-record data-kind="artifact" data-domain="{{domain}}" data-state="{{access_state}} {{integrity_state}}" data-safety-record="{{safety_relevance}}">
+            <th scope="row" data-label="Artifact"><code>{{artifact_id}}</code><span class="cell-secondary empty-fallback">{{label}}</span></th>
+            <td data-label="Role" class="empty-fallback">{{role}}</td>
+            <td data-label="Access"><span class="state-chip" data-state="{{access_state}}"><span class="empty-fallback">{{access_state}}</span></span><span class="cell-secondary empty-fallback">{{access_conditions}}</span></td>
+            <td data-label="Integrity"><span class="empty-fallback">{{integrity_algorithm}}</span><code class="wrap-code hash empty-fallback">{{integrity_display}}</code></td>
+            <td data-label="Reference"><code class="wrap-code empty-fallback">{{reference_display}}</code></td>
+            <td data-label="Revision" class="empty-fallback">{{revision_state}}</td>
+          </tr>
+          {{else}}
+          <tr><td colspan="6" class="missing-entry">No artifact rows supplied.</td></tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  </details>
+</section>

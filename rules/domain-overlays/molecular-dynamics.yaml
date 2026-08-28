@@ -1,0 +1,319 @@
+overlay_version: 1.0.0
+schema_version: report-domain-overlay/v1
+overlay_id: molecular-dynamics-1
+registry: ../registry.yaml
+domain: molecular_dynamics
+payload_schema: ../../schemas/packs/molecular-dynamics.schema.json
+payload_schema_id: https://schemas.report-prompt.org/v1/packs/molecular-dynamics.schema.json
+description: Activates molecular-dynamics semantic checks for chemical-system identity, simulation parameters,
+  append-only restart history, precise trajectory slices, replica independence, and observable-specific
+  convergence evidence.
+applicability:
+  module_manifest_token: molecular_dynamics
+  payload_collection_pointer: /extensions/domain_payloads
+  payload_discriminator_pointer: /domain
+  payload_discriminator_value: molecular_dynamics
+  behavior:
+    enabled_without_payload: finding
+    payload_without_manifest_entry: finding
+    multiple_payloads: allowed_if_payload_id_unique
+missingness_contract:
+  state_pointer_suffix: /state
+  value_pointer_suffix: /value
+  source_bindings_pointer_suffix: /source_bindings
+  missing_reason_pointer_suffix: /missing_reason
+  provenance_status_pointer_suffix: /provenance_status
+  states:
+    - known
+    - unknown
+    - not_applicable
+    - withheld
+  forbid_implicit_sentinels:
+    - ""
+    - TBD
+    - N/A
+    - NA
+    - unknown_string
+  withheld_value_must_be_null: true
+  unknown_value_must_be_null: true
+  not_applicable_requires_basis: true
+required_sections:
+  - source_structure_and_mapping
+  - system_composition
+  - protonation_and_chemistry
+  - force_field_and_parameters
+  - solvation_ions_and_boundary
+  - simulation_protocol
+  - replicas_and_randomness
+  - segments_checkpoints_and_restarts
+  - trajectory_slicing_and_processing
+  - equilibration_correlation_and_effective_samples
+  - convergence_and_replica_heterogeneity
+enabled_rule_ids:
+  - COV001
+  - COV002
+  - WRK001
+  - WRK002
+  - WRK003
+  - TIM001
+  - MAT001
+  - DER001
+  - CLM001
+  - BRG001
+  - DEP001
+  - CNF001
+  - NEG001
+  - REV001
+  - REP001
+  - ATT001
+  - RED001
+  - SEC001
+  - A11Y001
+  - APP001
+  - APP002
+  - APP003
+  - APP004
+  - APP005
+  - MNF001
+  - MNF002
+  - MNF003
+  - MNF004
+  - MNF005
+  - MFA001
+  - MFA002
+  - MFA003
+  - MFA004
+  - MFA005
+  - AIM002
+  - MDS001
+  - MDS002
+  - MDS003
+  - MDS004
+  - MDS005
+evaluation_bindings:
+  APP004:
+    module_manifest: /module_manifest
+    domain_trigger_sources:
+      - /entities/*/entity_kind
+      - /work_units/*/domain
+      - /extensions/domain_payloads/*/domain
+    expected_module_token: molecular_dynamics
+  MNF001:
+    section_manifest: $overlay.required_sections
+    section_coverage: /extensions/domain_payloads/*[domain=molecular_dynamics]/section_coverage
+  MNF002:
+    section_coverage: /extensions/domain_payloads/*[domain=molecular_dynamics]/section_coverage
+  MNF003:
+    source_accounting: /extensions/domain_payloads/*[domain=molecular_dynamics]/section_coverage/*/source_item_ids
+  MNF004:
+    static_section_output: /render_validation/sections/*[domain=molecular_dynamics]
+  MNF005:
+    domain_trigger_sources:
+      - /entities/*/entity_kind
+      - /work_units/*/domain
+    expected_sections: $overlay.required_sections
+  MFA001:
+    target: /extensions/domain_payloads/*[domain=molecular_dynamics]/protonation_records
+  MFA002:
+    target: /extensions/domain_payloads/*[domain=molecular_dynamics]/solvation_records/*/periodic_boundary_conditions
+  MFA003:
+    target: /extensions/domain_payloads/*[domain=molecular_dynamics]/replica_records/*/root_seed
+  MFA004:
+    target: /extensions/domain_payloads/*[domain=molecular_dynamics]/trajectory_analysis_records/*/correlation_time_estimates
+  MFA005:
+    target: /extensions/domain_payloads/*[domain=molecular_dynamics]/restart_records
+  MAT001:
+    payload_pointer: /extensions/domain_payloads/*[domain=molecular_dynamics]
+    source_nodes: /structure_records
+    system_nodes: /system_records
+    component_nodes: /system_records/*/components
+    mapping_artifacts: /structure_records/*/residue_and_atom_mapping_artifact_id
+    build_artifacts: /system_records/*/build_artifact_ids
+    preparation_edges:
+      - /protonation_records/*/system_id
+      - /force_field_records/*/system_id
+      - /solvation_records/*/system_id
+    simulation_edges:
+      - /phase_records/*/system_id
+      - /replica_records/*/system_id
+      - /segment_records/*/replica_id
+  DER001:
+    quantitative_fields:
+      - /system_records/*/atom_count
+      - /system_records/*/net_charge
+      - /solvation_records/*/target_concentration
+      - /solvation_records/*/box_dimensions
+      - /phase_records/*/duration_or_steps
+      - /phase_records/*/time_step
+      - /phase_records/*/nonbonded_cutoff
+      - /trajectory_analysis_records/*/correlation_time_estimates
+      - /trajectory_analysis_records/*/effective_sample_sizes
+      - /trajectory_analysis_records/*/replica_level_results
+    data_slice_links: /trajectory_analysis_records/*/data_slice_id
+    analysis_run_links: /trajectory_analysis_records/*/analysis_run_id
+    result_links: /trajectory_analysis_records/*/result_ids
+  DEP001:
+    replica_identity: /replica_records/*/replica_id
+    independence_basis: /replica_records/*/independence_basis
+    seed_lineage:
+      - /replica_records/*/root_seed
+      - /replica_records/*/seed_derivation
+    continuation_edges:
+      - /segment_records/*/parent_segment_record_id
+      - /restart_records/*/prior_segment_record_id
+      - /restart_records/*/new_segment_record_id
+    shared_initial_conditions: /replica_records/*/initial_condition_artifact_ids
+  NEG001:
+    adverse_record_collections:
+      - /segment_records/*[status=failed]
+      - /segment_records/*/failure_event_ids
+      - /segment_records/*/partial_output_disposition
+      - /restart_records
+    source_reconciliation_keys:
+      - work_unit_id
+      - replica_id
+      - segment_record_id
+      - core_segment_id
+      - trajectory_analysis_id
+  REP001:
+    actual_invocations:
+      - /phase_records/*/invocation_id
+      - /segment_records/*/invocation_id
+    input_artifacts:
+      - /phase_records/*/input_artifact_ids
+      - /segment_records/*/input_checkpoint_artifact_id
+    output_artifacts:
+      - /phase_records/*/output_artifact_ids
+      - /segment_records/*/output_checkpoint_artifact_ids
+      - /segment_records/*/trajectory_artifact_ids
+    random_state:
+      - /replica_records/*/root_seed
+      - /replica_records/*/seed_derivation
+    parameter_identity:
+      - /segment_records/*/parameter_snapshot_hash
+      - /force_field_records/*/parameter_hashes
+      - /force_field_records/*/parameter_file_artifact_ids
+  AIM002:
+    frame_source: /trajectory_analysis_records/*/trajectory_artifact_ids
+    replica_identity: /trajectory_analysis_records/*/replica_ids
+    segment_identity: /trajectory_analysis_records/*/segment_record_ids
+    frame_slice:
+      - /trajectory_analysis_records/*/frame_range
+      - /trajectory_analysis_records/*/stride
+      - /trajectory_analysis_records/*/data_slice_id
+    ai_split_boundary: /extensions/domain_payloads/*[domain=ai_ml]/split_records/*/trajectory_boundary
+  MDS001:
+    segments: /segment_records
+    restart_records: /restart_records
+    prior_segment: /restart_records/*/prior_segment_record_id
+    new_segment: /restart_records/*/new_segment_record_id
+    trigger: /restart_records/*/trigger
+    checkpoint: /restart_records/*/checkpoint_artifact_id
+    parameter_changes: /restart_records/*/changed_parameters
+    history_preserved: /restart_records/*/history_preserved
+    partial_outputs:
+      - /segment_records/*/trajectory_artifact_ids
+      - /segment_records/*/partial_outputs_usable
+      - /segment_records/*/partial_output_disposition
+    failure_links: /segment_records/*/failure_event_ids
+  MDS002:
+    analyses: /trajectory_analysis_records
+    criteria: /trajectory_analysis_records/*/convergence_criteria
+    decision_timing: /trajectory_analysis_records/*/burn_in_decision_timing
+    burn_in: /trajectory_analysis_records/*/burn_in_definition
+    correlation:
+      - /trajectory_analysis_records/*/autocorrelation_method
+      - /trajectory_analysis_records/*/correlation_time_estimates
+      - /trajectory_analysis_records/*/effective_sample_sizes
+    replica_evidence:
+      - /trajectory_analysis_records/*/replica_ids
+      - /trajectory_analysis_records/*/replica_level_results
+      - /trajectory_analysis_records/*/replica_heterogeneity
+    diagnostics: /trajectory_analysis_records/*/convergence_diagnostics
+    conclusion_text: /trajectory_analysis_records/*/convergence_conclusion
+    adequacy_assessment: /trajectory_analysis_records/*/sampling_adequacy_assessment
+    conclusion_status: /trajectory_analysis_records/*/sampling_adequacy_assessment/conclusion_status
+    assessment_support:
+      - /trajectory_analysis_records/*/sampling_adequacy_assessment/criteria_met
+      - /trajectory_analysis_records/*/sampling_adequacy_assessment/diagnostics_support_conclusion
+      - /trajectory_analysis_records/*/sampling_adequacy_assessment/effective_sample_sizes_support_conclusion
+      - /trajectory_analysis_records/*/sampling_adequacy_assessment/replica_assessment_supports_conclusion
+    insufficient_single_diagnostic_tokens:
+      - RMSD_plateau
+      - elapsed_time_only
+      - pooled_trace_only
+  MDS003:
+    analyses: /trajectory_analysis_records
+    identity_fields:
+      - /trajectory_analysis_records/*/trajectory_artifact_ids
+      - /trajectory_analysis_records/*/segment_record_ids
+      - /trajectory_analysis_records/*/periodic_boundary_processing
+      - /trajectory_analysis_records/*/fit_selection
+      - /trajectory_analysis_records/*/measurement_selection
+      - /trajectory_analysis_records/*/frame_range
+      - /trajectory_analysis_records/*/stride
+      - /trajectory_analysis_records/*/burn_in_definition
+      - /trajectory_analysis_records/*/data_slice_id
+      - /trajectory_analysis_records/*/analysis_run_id
+  MDS004:
+    structure_records: /structure_records
+    system_records: /system_records
+    protonation_records: /protonation_records
+    force_field_records: /force_field_records
+    solvation_records: /solvation_records
+    phase_records: /phase_records
+    critical_identity_fields:
+      - /structure_records/*/accession
+      - /structure_records/*/source_version
+      - /structure_records/*/source_hash
+      - /structure_records/*/residue_and_atom_mapping_artifact_id
+      - /system_records/*/components
+      - /protonation_records/*/target_ph
+      - /protonation_records/*/histidine_states
+      - /force_field_records/*/version
+      - /force_field_records/*/parameter_hashes
+      - /solvation_records/*/water_model
+      - /solvation_records/*/periodic_boundary_conditions
+      - /phase_records/*/integrator
+      - /phase_records/*/time_step
+      - /phase_records/*/thermostat
+      - /phase_records/*/barostat
+      - /phase_records/*/constraints
+      - /phase_records/*/nonbonded_cutoff
+      - /phase_records/*/long_range_electrostatics
+  MDS005:
+    replicas: /replica_records
+    replica_id: /replica_records/*/replica_id
+    independence_basis: /replica_records/*/independence_basis
+    root_seed: /replica_records/*/root_seed
+    seed_derivation: /replica_records/*/seed_derivation
+    initial_conditions: /replica_records/*/initial_condition_artifact_ids
+    segments: /replica_records/*/segment_ids
+    restarts: /restart_records
+cross_domain_exports:
+  construct_identity:
+    - /structure_records/*/accession
+    - /structure_records/*/assembly
+    - /structure_records/*/model
+    - /structure_records/*/chains
+    - /structure_records/*/source_version
+    - /structure_records/*/source_hash
+    - /system_records/*/construct_definition
+  chemical_context:
+    - /system_records/*/components
+    - /protonation_records/*/target_ph
+    - /protonation_records/*/histidine_states
+    - /protonation_records/*/uncertain_sites
+  trajectory_identity:
+    - /replica_records/*/replica_id
+    - /segment_records/*/segment_record_id
+    - /segment_records/*/trajectory_artifact_ids
+    - /trajectory_analysis_records/*/data_slice_id
+  compatibility_targets:
+    - construct_identity
+    - sequence_and_residue_mapping
+    - protonation_or_ph
+    - ligand_and_cofactor_state
+    - intervention_context
+    - time_scale
+    - analysis_population_or_frame_slice

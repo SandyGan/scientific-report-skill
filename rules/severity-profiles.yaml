@@ -1,0 +1,133 @@
+profiles_version: 1.0.0
+schema_version: report-severity-profiles/v1
+registry: ./registry.yaml
+description: >-
+  Operational severity profiles for the rule catalog. Profiles change triage and
+  release gating only; they do not change rule conditions, messages, scientific
+  semantics, or waiver policies. An override may only maintain or increase the
+  catalog severity.
+severity_order: [information, warning, error, blocker]
+invariants:
+  no_downgrade: true
+  unknown_profile_is_error: true
+  unknown_rule_reference_is_error: true
+  catalog_severity_is_floor: true
+  non_waivable_finding_remains_open: true
+  waiver_does_not_change_predicate_result: true
+  required_non_waivable_rules:
+    - COV001
+    - COV002
+    - WRK001
+    - WRK002
+    - WRK003
+    - TIM001
+    - CLM001
+    - BRG001
+    - NUL001
+    - NEG001
+    - REV001
+    - REP001
+    - ATT001
+    - RED001
+    - SEC001
+    - WET001
+    - AIM001
+    - AIM002
+    - AIM003
+    - AIM005
+    - MDS001
+    - MDS002
+profiles:
+  standard:
+    description: Default scientific review profile for internal or shared reports.
+    includes: "*"
+    severity_overrides: {}
+    release_gate:
+      fail_on: [error, blocker]
+      allow_open_waived_findings: true
+      require_waiver_contract: true
+      require_zero_non_waivable_failures: true
+    output:
+      include_passes: false
+      include_waived: true
+      include_not_applicable: true
+      group_by: [severity, rule_id, scope_pointer]
+
+  publication:
+    description: Public-release profile; provenance and interpretation gaps are release blockers.
+    includes: "*"
+    severity_overrides:
+      MAT001: blocker
+      DER001: blocker
+      DEP001: blocker
+      CNF001: blocker
+      A11Y001: blocker
+      WET002: blocker
+      WET003: blocker
+      WET004: blocker
+      AIM004: blocker
+      MDS003: blocker
+      MDS004: blocker
+      MDS005: blocker
+    release_gate:
+      fail_on: [error, blocker]
+      allow_open_waived_findings: true
+      require_waiver_contract: true
+      require_zero_non_waivable_failures: true
+      require_attestation_rule: ATT001
+      require_disclosure_rules: [RED001, SEC001]
+      require_accessibility_rule: A11Y001
+    output:
+      include_passes: true
+      include_waived: true
+      include_not_applicable: true
+      group_by: [severity, domain, rule_id, scope_pointer]
+
+  high_assurance:
+    description: Pre-freeze, archival, or independent-review profile with all errors blocking.
+    includes: "*"
+    severity_overrides:
+      MAT001: blocker
+      DER001: blocker
+      DEP001: blocker
+      CNF001: blocker
+      A11Y001: blocker
+      WET002: blocker
+      WET003: blocker
+      WET004: blocker
+      AIM004: blocker
+      MDS003: blocker
+      MDS004: blocker
+      MDS005: blocker
+    release_gate:
+      fail_on: [warning, error, blocker]
+      allow_open_waived_findings: false
+      require_waiver_contract: true
+      require_zero_non_waivable_failures: true
+      require_external_attestation: true
+      require_fresh_rerun_evidence_for_claimed_reruns: true
+    output:
+      include_passes: true
+      include_waived: true
+      include_not_applicable: true
+      include_evaluation_trace: true
+      group_by: [severity, phase, domain, rule_id, scope_pointer]
+
+  exploratory_review:
+    description: >-
+      Diagnostic profile for incomplete draft payloads. It reports every catalog
+      finding at its normal severity but is never a publication authorization.
+    includes: "*"
+    severity_overrides: {}
+    release_gate:
+      publishable: false
+      fail_on: [blocker]
+      allow_open_waived_findings: true
+      require_waiver_contract: true
+      require_zero_non_waivable_failures: false
+    output:
+      include_passes: false
+      include_waived: true
+      include_not_applicable: true
+      include_evaluation_trace: true
+      group_by: [phase, rule_id, scope_pointer]

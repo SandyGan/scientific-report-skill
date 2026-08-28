@@ -1,0 +1,132 @@
+<section id="overview" class="report-section report-section--overview" aria-labelledby="overview-title" data-print-summary="true">
+  <header class="section-heading">
+    <div>
+      <p class="section-code">L0 / global situation</p>
+      <h2 id="overview-title">Question, boundary, qualified answer</h2>
+    </div>
+    <p class="section-purpose">Read this first: what was asked, what this report can support, and what still blocks resolution.</p>
+  </header>
+
+  <div class="thesis-panel" data-state="{{overview.resolution_status}}">
+    <div class="thesis-panel__question">
+      <span class="field-label">First research question in declared order</span>
+      <p class="thesis-question empty-fallback">{{overview.primary_question}}</p>
+      <div class="boundary-line">
+        <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-boundary"></use></svg>
+        <span><strong>Boundary:</strong> <span class="empty-fallback">{{scope.boundary_statement}}</span></span>
+      </div>
+    </div>
+    <div class="thesis-panel__answer">
+      <div class="answer-header">
+        <span class="field-label">Qualified answer</span>
+        <span class="status-chip" data-status="{{overview.resolution_status}}">
+          <span class="status-marker" aria-hidden="true"></span>
+          <span class="empty-fallback">{{overview.resolution_status}}</span>
+        </span>
+      </div>
+      <p class="qualified-answer empty-fallback">{{overview.qualified_answer}}</p>
+      <dl class="state-envelope state-envelope--inline">
+        <div><dt>Field state</dt><dd class="empty-fallback">{{overview.answer_state}}</dd></div>
+        <div><dt>Provenance</dt><dd class="empty-fallback">{{overview.answer_provenance_status}}</dd></div>
+        {{#if overview.answer_missing_reason}}
+        <div><dt>Missing reason</dt><dd>{{overview.answer_missing_reason}}</dd></div>
+        {{/if}}
+      </dl>
+    </div>
+  </div>
+
+  <div class="overview-grid">
+    <article class="signal-card signal-card--support" data-record data-kind="claim" data-domain="{{overview.key_claim.domain}}" data-state="{{overview.key_claim.status}}">
+      <header>
+        <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-evidence"></use></svg>
+        <span class="field-label">First question-linked claim</span>
+      </header>
+      <p class="signal-card__statement empty-fallback">{{overview.key_claim.statement}}</p>
+      <p class="record-reference"><span class="meta-label">Claim</span> <code>{{overview.key_claim.claim_id}}</code></p>
+    </article>
+
+    <article class="signal-card signal-card--challenge" data-record data-kind="counterevidence" data-domain="{{overview.strongest_counterevidence.domain}}" data-state="{{overview.strongest_counterevidence.status}}" data-safety-record="true">
+      <header>
+        <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-counterevidence"></use></svg>
+        <span class="field-label">First recorded counterevidence</span>
+      </header>
+      <p class="signal-card__statement empty-fallback">{{overview.strongest_counterevidence.statement}}</p>
+      <p class="record-reference"><span class="meta-label">Evidence</span> <code>{{overview.strongest_counterevidence.evidence_id}}</code></p>
+    </article>
+
+    <article class="signal-card signal-card--blocker" data-record data-kind="blocker" data-domain="{{overview.primary_blocker.domain}}" data-state="{{overview.primary_blocker.status}}" data-safety-record="true">
+      <header>
+        <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-blocked"></use></svg>
+        <span class="field-label">First recorded blocker or open gap</span>
+      </header>
+      <p class="signal-card__statement empty-fallback">{{overview.primary_blocker.statement}}</p>
+      <p class="record-reference"><span class="meta-label">Record</span> <code>{{overview.primary_blocker.record_id}}</code></p>
+    </article>
+  </div>
+
+  <div class="instrument-strip" aria-label="Conservative report counts">
+    <div class="instrument-cell">
+      <span class="instrument-cell__label">This-project work units</span>
+      <span class="instrument-cell__reading"><strong class="empty-fallback">{{overview.counts.completed_work_units}}</strong><span aria-hidden="true"> / </span><span class="empty-fallback">{{overview.counts.total_work_units}}</span></span>
+      <span class="instrument-cell__note">completed / registered</span>
+    </div>
+    <div class="instrument-cell" data-status="warning">
+      <span class="instrument-cell__label">Failed attempts</span>
+      <span class="instrument-cell__reading"><strong class="empty-fallback">{{overview.counts.failed_attempts}}</strong><span aria-hidden="true"> / </span><span class="empty-fallback">{{overview.counts.total_attempts}}</span></span>
+      <span class="instrument-cell__note">retained / all attempts</span>
+    </div>
+    <div class="instrument-cell">
+      <span class="instrument-cell__label">Registered sources</span>
+      <span class="instrument-cell__reading"><strong class="empty-fallback">{{source_coverage.counts.disposed}}</strong><span aria-hidden="true"> / </span><span class="empty-fallback">{{source_coverage.counts.registered}}</span></span>
+      <span class="instrument-cell__note">disposed / registered</span>
+    </div>
+    <div class="instrument-cell">
+      <span class="instrument-cell__label">Critical replay units</span>
+      <span class="instrument-cell__reading"><strong class="empty-fallback">{{overview.counts.replay_covered}}</strong><span aria-hidden="true"> / </span><span class="empty-fallback">{{overview.counts.replay_total}}</span></span>
+      <span class="instrument-cell__note">covered / critical units</span>
+    </div>
+  </div>
+
+  <div class="overview-lower">
+    <article class="boundary-card">
+      <h3>Scope declaration</h3>
+      <p class="empty-fallback">{{scope.summary}}</p>
+      <div class="boundary-columns">
+        <div>
+          <h4>Included</h4>
+          <ul class="compact-list">
+            {{#each scope.inclusions}}
+            <li>{{display_text}}</li>
+            {{else}}
+            <li class="missing-entry">No inclusion entries supplied; inspect section coverage.</li>
+            {{/each}}
+          </ul>
+        </div>
+        <div>
+          <h4>Excluded</h4>
+          <ul class="compact-list">
+            {{#each scope.exclusions}}
+            <li>{{display_text}} {{#if reason}}<span class="muted">— {{reason}}</span>{{/if}}</li>
+            {{else}}
+            <li class="missing-entry">No exclusion entries supplied; absence is not interpreted as none.</li>
+            {{/each}}
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <article class="coverage-verdict" data-status="{{source_coverage.completeness_state}}" data-safety-record="true">
+      <header>
+        <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-source"></use></svg>
+        <h3>Coverage verdict</h3>
+      </header>
+      <p class="coverage-verdict__statement empty-fallback">{{source_coverage.statement}}</p>
+      <dl class="key-value-list">
+        <div><dt>Universe authority</dt><dd class="empty-fallback">{{source_coverage.universe_authority_state}}</dd></div>
+        <div><dt>Completeness state</dt><dd class="empty-fallback">{{source_coverage.completeness_state}}</dd></div>
+        <div><dt>Unmapped</dt><dd class="empty-fallback">{{source_coverage.counts.unmapped}}</dd></div>
+        <div><dt>Unreadable / inaccessible</dt><dd><span class="empty-fallback">{{source_coverage.counts.unreadable}}</span> / <span class="empty-fallback">{{source_coverage.counts.inaccessible}}</span></dd></div>
+      </dl>
+    </article>
+  </div>
+</section>

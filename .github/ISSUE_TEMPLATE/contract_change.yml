@@ -1,0 +1,35 @@
+name: Contract change proposal
+description: Propose a versioned change to schemas, protocol semantics, rules, IDs, or serialized output.
+title: "[Contract]: "
+labels: [contract-change]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: Explain the scientific or interoperability problem without prescribing a silent alias.
+    validations:
+      required: true
+
+  - type: textarea
+    id: surfaces
+    attributes:
+      label: Affected contract surfaces
+      description: List protocol, schemas, types, rules, prompts, examples, renderers, APIs, and documentation affected.
+    validations:
+      required: true
+
+  - type: textarea
+    id: migration
+    attributes:
+      label: Migration and compatibility plan
+      description: State versioning, old-payload behavior, hash implications, and whether an explicit migration is required.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Positive and adversarial acceptance cases
+    validations:
+      required: true

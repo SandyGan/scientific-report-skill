@@ -1,0 +1,495 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.report-prompt.org/v1/defs/material-lineage.schema.json",
+  "title": "Material and analysis-population lineage",
+  "description": "Tracks physical, biological, synthetic, and dataset materials through transformations, pooling, splitting, and analysis-population decisions.",
+  "$defs": {
+    "Material": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "material_id",
+        "material_version",
+        "entity_id",
+        "material_kind",
+        "label",
+        "batch_or_lot",
+        "quantity",
+        "unit",
+        "material_status",
+        "disclosure_class",
+        "source_bindings",
+        "extensions"
+      ],
+      "properties": {
+        "material_id": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "material_version": {
+          "$ref": "./common.schema.json#/$defs/Version"
+        },
+        "entity_id": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "material_kind": {
+          "enum": [
+            "biological_source",
+            "sample",
+            "aliquot",
+            "pool",
+            "well_or_container",
+            "construct",
+            "reagent",
+            "specimen",
+            "molecular_system",
+            "dataset_record",
+            "synthetic_material",
+            "other"
+          ]
+        },
+        "label": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "batch_or_lot": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "quantity": {
+          "$ref": "./common.schema.json#/$defs/NumberField"
+        },
+        "unit": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "material_status": {
+          "enum": [
+            "available",
+            "consumed",
+            "discarded",
+            "lost",
+            "contaminated",
+            "restricted",
+            "unknown"
+          ]
+        },
+        "disclosure_class": {
+          "$ref": "./common.schema.json#/$defs/DisclosureClass"
+        },
+        "source_bindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "./common.schema.json#/$defs/SourceBinding"
+          }
+        },
+        "extensions": {
+          "$ref": "./common.schema.json#/$defs/ExtensionMap"
+        }
+      }
+    },
+    "MaterialRelationship": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "relationship_id",
+        "relationship_version",
+        "relationship_kind",
+        "input_material_ids",
+        "output_material_ids",
+        "work_unit_id",
+        "attempt_id",
+        "segment_id",
+        "method_id",
+        "transformation_description",
+        "input_quantity",
+        "output_quantity",
+        "loss_or_gain_explanation",
+        "decision_event_ids",
+        "source_bindings",
+        "extensions"
+      ],
+      "properties": {
+        "relationship_id": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "relationship_version": {
+          "$ref": "./common.schema.json#/$defs/Version"
+        },
+        "relationship_kind": {
+          "enum": [
+            "derived_from",
+            "aliquoted_from",
+            "split_from",
+            "pooled_from",
+            "combined_with",
+            "transformed_from",
+            "measured_from",
+            "filtered_from",
+            "mapped_to_dataset_record",
+            "identity_assertion",
+            "other"
+          ]
+        },
+        "input_material_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "output_material_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "work_unit_id": {
+          "oneOf": [
+            {
+              "$ref": "./common.schema.json#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "attempt_id": {
+          "oneOf": [
+            {
+              "$ref": "./common.schema.json#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "segment_id": {
+          "oneOf": [
+            {
+              "$ref": "./common.schema.json#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "method_id": {
+          "oneOf": [
+            {
+              "$ref": "./common.schema.json#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "transformation_description": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "input_quantity": {
+          "$ref": "./common.schema.json#/$defs/NumberField"
+        },
+        "output_quantity": {
+          "$ref": "./common.schema.json#/$defs/NumberField"
+        },
+        "loss_or_gain_explanation": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "decision_event_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "source_bindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "./common.schema.json#/$defs/SourceBinding"
+          }
+        },
+        "extensions": {
+          "$ref": "./common.schema.json#/$defs/ExtensionMap"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "relationship_kind": {
+                "const": "pooled_from"
+              }
+            },
+            "required": [
+              "relationship_kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "input_material_ids": {
+                "minItems": 2
+              }
+            }
+          }
+        }
+      ]
+    },
+    "PopulationMember": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "member_id",
+        "material_id",
+        "entity_id",
+        "group_key",
+        "inclusion_status",
+        "inclusion_reason",
+        "decision_event_ids",
+        "source_bindings"
+      ],
+      "properties": {
+        "member_id": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "material_id": {
+          "oneOf": [
+            {
+              "$ref": "./common.schema.json#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "entity_id": {
+          "oneOf": [
+            {
+              "$ref": "./common.schema.json#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "group_key": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "inclusion_status": {
+          "enum": [
+            "included",
+            "excluded",
+            "withdrawn",
+            "unknown"
+          ]
+        },
+        "inclusion_reason": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "decision_event_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "source_bindings": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/SourceBinding"
+          }
+        }
+      },
+      "anyOf": [
+        {
+          "properties": {
+            "material_id": {
+              "$ref": "./common.schema.json#/$defs/Identifier"
+            }
+          }
+        },
+        {
+          "properties": {
+            "entity_id": {
+              "$ref": "./common.schema.json#/$defs/Identifier"
+            }
+          }
+        }
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "inclusion_status": {
+                "const": "included"
+              }
+            },
+            "required": [
+              "inclusion_status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "inclusion_reason": {
+                "properties": {
+                  "state": {
+                    "enum": [
+                      "known",
+                      "not_applicable"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "inclusion_reason": {
+                "properties": {
+                  "state": {
+                    "enum": [
+                      "known",
+                      "withheld",
+                      "unknown"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ReplicateStructure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "biological_unit_definition",
+        "technical_unit_definition",
+        "experimental_unit_definition",
+        "observational_unit_definition",
+        "analysis_unit_definition",
+        "biological_unit_count",
+        "technical_unit_count",
+        "independence_basis",
+        "pool_counting_policy"
+      ],
+      "properties": {
+        "biological_unit_definition": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "technical_unit_definition": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "experimental_unit_definition": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "observational_unit_definition": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "analysis_unit_definition": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "biological_unit_count": {
+          "$ref": "./common.schema.json#/$defs/IntegerField"
+        },
+        "technical_unit_count": {
+          "$ref": "./common.schema.json#/$defs/IntegerField"
+        },
+        "independence_basis": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "pool_counting_policy": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        }
+      }
+    },
+    "AnalysisPopulation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "analysis_population_id",
+        "analysis_population_version",
+        "name",
+        "population_kind",
+        "estimand",
+        "inclusion_criteria",
+        "exclusion_criteria",
+        "members",
+        "replicate_structure",
+        "decision_event_ids",
+        "lineage_status",
+        "source_bindings",
+        "extensions"
+      ],
+      "properties": {
+        "analysis_population_id": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "analysis_population_version": {
+          "$ref": "./common.schema.json#/$defs/Version"
+        },
+        "name": {
+          "$ref": "./common.schema.json#/$defs/NonEmptyString"
+        },
+        "population_kind": {
+          "enum": [
+            "intention_to_treat",
+            "per_protocol",
+            "complete_case",
+            "quality_control_passed",
+            "training",
+            "validation",
+            "test",
+            "simulation_frames",
+            "other"
+          ]
+        },
+        "estimand": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "inclusion_criteria": {
+          "$ref": "./common.schema.json#/$defs/StringArrayField"
+        },
+        "exclusion_criteria": {
+          "$ref": "./common.schema.json#/$defs/StringArrayField"
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PopulationMember"
+          }
+        },
+        "replicate_structure": {
+          "$ref": "#/$defs/ReplicateStructure"
+        },
+        "decision_event_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "lineage_status": {
+          "enum": [
+            "closed",
+            "partial",
+            "broken",
+            "unknown"
+          ]
+        },
+        "source_bindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "./common.schema.json#/$defs/SourceBinding"
+          }
+        },
+        "extensions": {
+          "$ref": "./common.schema.json#/$defs/ExtensionMap"
+        }
+      }
+    }
+  }
+}

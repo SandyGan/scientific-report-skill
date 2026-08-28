@@ -1,0 +1,365 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.report-prompt.org/v1/package-manifest.schema.json",
+  "title": "Offline report package manifest",
+  "description": "Integrity and portability manifest for all package members other than the self-referential manifest file itself.",
+  "$defs": {
+    "PackageFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "role",
+        "media_type",
+        "content_hash",
+        "byte_size",
+        "required",
+        "disclosure_class",
+        "source_artifact_id"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "./defs/common.schema.json#/$defs/RelativePath"
+        },
+        "role": {
+          "enum": [
+            "report_html",
+            "annex_html",
+            "style",
+            "script",
+            "icon",
+            "scientific_report_public",
+            "validation_attestation",
+            "human_review_attestation",
+            "disclosure_projection",
+            "generation_audit",
+            "search_index",
+            "package_readme",
+            "data_artifact",
+            "other"
+          ]
+        },
+        "media_type": {
+          "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+        },
+        "content_hash": {
+          "$ref": "./defs/common.schema.json#/$defs/Hash"
+        },
+        "byte_size": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "disclosure_class": {
+          "enum": [
+            "public",
+            "internal",
+            "restricted"
+          ]
+        },
+        "source_artifact_id": {
+          "oneOf": [
+            {
+              "$ref": "./defs/common.schema.json#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "Entrypoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "path",
+        "purpose"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "path": {
+          "$ref": "./defs/common.schema.json#/$defs/RelativePath"
+        },
+        "purpose": {
+          "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+        }
+      }
+    },
+    "PackageCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "check_id",
+        "check_kind",
+        "status",
+        "checked_at",
+        "finding_count",
+        "details"
+      ],
+      "properties": {
+        "check_id": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "check_kind": {
+          "enum": [
+            "hash_integrity",
+            "relative_paths",
+            "offline_dependencies",
+            "file_url_open",
+            "disclosure",
+            "other"
+          ]
+        },
+        "status": {
+          "enum": [
+            "pass",
+            "fail",
+            "not_run",
+            "error",
+            "not_applicable"
+          ]
+        },
+        "checked_at": {
+          "oneOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "finding_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "details": {
+          "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "not_run"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "checked_at": {
+                "type": "null"
+              },
+              "finding_count": {
+                "const": 0
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "checked_at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "package_id",
+    "package_version",
+    "schema_version",
+    "manifest_file_name",
+    "report_id",
+    "report_version",
+    "scientific_payload_hash",
+    "validation_attestation_hash",
+    "human_review_attestation_hash",
+    "disclosure_projection_hash",
+    "created_at",
+    "bundle_format",
+    "files",
+    "entrypoints",
+    "remote_dependencies",
+    "absolute_paths_present",
+    "active_external_content_present",
+    "package_checks",
+    "extensions"
+  ],
+  "properties": {
+    "package_id": {
+      "$ref": "./defs/common.schema.json#/$defs/Identifier"
+    },
+    "package_version": {
+      "$ref": "./defs/common.schema.json#/$defs/Version"
+    },
+    "schema_version": {
+      "$ref": "./defs/common.schema.json#/$defs/Version"
+    },
+    "manifest_file_name": {
+      "const": "package-manifest.json"
+    },
+    "report_id": {
+      "$ref": "./defs/common.schema.json#/$defs/Identifier"
+    },
+    "report_version": {
+      "$ref": "./defs/common.schema.json#/$defs/Version"
+    },
+    "scientific_payload_hash": {
+      "$ref": "./defs/common.schema.json#/$defs/Hash"
+    },
+    "validation_attestation_hash": {
+      "$ref": "./defs/common.schema.json#/$defs/Hash"
+    },
+    "human_review_attestation_hash": {
+      "oneOf": [
+        {
+          "$ref": "./defs/common.schema.json#/$defs/Hash"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "disclosure_projection_hash": {
+      "$ref": "./defs/common.schema.json#/$defs/Hash"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "bundle_format": {
+      "const": "portable_offline_directory"
+    },
+    "files": {
+      "type": "array",
+      "minItems": 5,
+      "items": {
+        "$ref": "#/$defs/PackageFile"
+      },
+      "allOf": [
+        {
+          "contains": {
+            "properties": {
+              "role": {
+                "const": "report_html"
+              },
+              "required": {
+                "const": true
+              }
+            },
+            "required": [
+              "role",
+              "required"
+            ]
+          }
+        },
+        {
+          "contains": {
+            "properties": {
+              "role": {
+                "const": "scientific_report_public"
+              },
+              "required": {
+                "const": true
+              }
+            },
+            "required": [
+              "role",
+              "required"
+            ]
+          }
+        },
+        {
+          "contains": {
+            "properties": {
+              "role": {
+                "const": "validation_attestation"
+              },
+              "required": {
+                "const": true
+              }
+            },
+            "required": [
+              "role",
+              "required"
+            ]
+          }
+        },
+        {
+          "contains": {
+            "properties": {
+              "role": {
+                "const": "disclosure_projection"
+              },
+              "required": {
+                "const": true
+              }
+            },
+            "required": [
+              "role",
+              "required"
+            ]
+          }
+        },
+        {
+          "contains": {
+            "properties": {
+              "role": {
+                "const": "package_readme"
+              },
+              "required": {
+                "const": true
+              }
+            },
+            "required": [
+              "role",
+              "required"
+            ]
+          }
+        }
+      ]
+    },
+    "entrypoints": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/Entrypoint"
+      }
+    },
+    "remote_dependencies": {
+      "type": "array",
+      "maxItems": 0
+    },
+    "absolute_paths_present": {
+      "const": false
+    },
+    "active_external_content_present": {
+      "const": false
+    },
+    "package_checks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/PackageCheck"
+      }
+    },
+    "extensions": {
+      "$ref": "./defs/common.schema.json#/$defs/ExtensionMap"
+    }
+  }
+}

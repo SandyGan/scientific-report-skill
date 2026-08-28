@@ -1,0 +1,1201 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.report-prompt.org/v1/packs/ai-ml.schema.json",
+  "title": "AI/ML domain payload",
+  "description": "A provider-neutral extension payload for data, training, evaluation, and inference facts. It contains no provider API or invocation shape.",
+  "$comment": "Instances are identifiable domain payload objects stored under the core /extensions/domain_payloads collection; the domain discriminator selects this schema.",
+  "type": "object",
+  "required": [
+    "payload_id",
+    "domain",
+    "pack_version",
+    "applies_to",
+    "section_coverage",
+    "dataset_records",
+    "split_records",
+    "label_records",
+    "lineage_records",
+    "leakage_assessments",
+    "preprocessing_records",
+    "model_records",
+    "search_records",
+    "trial_records",
+    "test_access_events",
+    "evaluation_records",
+    "randomness_records",
+    "inference_recipes"
+  ],
+  "properties": {
+    "payload_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "domain": {
+      "const": "ai_ml"
+    },
+    "pack_version": {
+      "$ref": "../defs/common.schema.json#/$defs/Version"
+    },
+    "applies_to": {
+      "$ref": "#/$defs/appliesTo"
+    },
+    "section_coverage": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/sectionCoverage"
+      },
+      "minItems": 12,
+      "allOf": [
+        {
+          "contains": {
+            "properties": {
+              "section_id": {
+                "const": "datasets_and_licenses"
+              }
+            },
+            "required": [
+              "section_id"
+            ]
+          },
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "section_id": {
+                "const": "splits_and_grouping"
+              }
+            },
+            "required": [
+              "section_id"
+            ]
+          },
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "section_id": {
+                "const": "row_lineage"
+              }
+            },
+            "required": [
+              "section_id"
+            ]
+          },
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "section_id": {
+                "const": "labels_and_raters"
+              }
+            },
+            "required": [
+              "section_id"
+            ]
+          },
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "section_id": {
+                "const": "leakage_assessment"
+              }
+            },
+            "required": [
+              "section_id"
+            ]
+          },
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "section_id": {
+                "const": "preprocessing_fit_scope"
+              }
+            },
+            "required": [
+              "section_id"
+            ]
+          },
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "section_id": {
+                "const": "implementation_and_weights"
+              }
+            },
+            "required": [
+              "section_id"
+            ]
+          },
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "section_id": {
+                "const": "search_trials_and_selection"
+              }
+            },
+            "required": [
+              "section_id"
+            ]
+          },
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "section_id": {
+                "const": "randomness_and_nondeterminism"
+              }
+            },
+            "required": [
+              "section_id"
+            ]
+          },
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "section_id": {
+                "const": "evaluation_and_uncertainty"
+              }
+            },
+            "required": [
+              "section_id"
+            ]
+          },
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "section_id": {
+                "const": "test_access"
+              }
+            },
+            "required": [
+              "section_id"
+            ]
+          },
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "section_id": {
+                "const": "inference_and_smoke_test"
+              }
+            },
+            "required": [
+              "section_id"
+            ]
+          },
+          "minContains": 1
+        }
+      ]
+    },
+    "dataset_records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/datasetRecord"
+      }
+    },
+    "split_records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/splitRecord"
+      }
+    },
+    "label_records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/labelRecord"
+      }
+    },
+    "lineage_records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/lineageRecord"
+      }
+    },
+    "leakage_assessments": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/leakageAssessment"
+      }
+    },
+    "preprocessing_records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/preprocessingRecord"
+      }
+    },
+    "model_records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/modelRecord"
+      }
+    },
+    "search_records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/searchRecord"
+      }
+    },
+    "trial_records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/trialRecord"
+      }
+    },
+    "test_access_events": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/testAccessEvent"
+      }
+    },
+    "evaluation_records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/evaluationRecord"
+      }
+    },
+    "randomness_records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/randomnessRecord"
+      }
+    },
+    "inference_recipes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/inferenceRecipe"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "identifier": {
+      "$ref": "../defs/common.schema.json#/$defs/Identifier"
+    },
+    "identifierList": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/identifier"
+      },
+      "uniqueItems": true
+    },
+    "sourceBindings": {
+      "type": "array",
+      "items": {
+        "$ref": "../defs/common.schema.json#/$defs/SourceBinding"
+      },
+      "uniqueItems": true
+    },
+    "scientificValue": {
+      "description": "Core explicit-missingness and provenance envelope; domain packs do not weaken it.",
+      "$ref": "../defs/common.schema.json#/$defs/KnownValue"
+    },
+    "appliesTo": {
+      "type": "object",
+      "required": [
+        "work_unit_ids",
+        "attempt_ids",
+        "result_ids",
+        "entity_ids"
+      ],
+      "properties": {
+        "work_unit_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "attempt_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "result_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "entity_ids": {
+          "$ref": "#/$defs/identifierList"
+        }
+      },
+      "additionalProperties": false
+    },
+    "sectionCoverage": {
+      "allOf": [
+        {
+          "$ref": "../defs/common.schema.json#/$defs/SectionCoverage"
+        },
+        {
+          "properties": {
+            "section_id": {
+              "enum": [
+                "datasets_and_licenses",
+                "splits_and_grouping",
+                "row_lineage",
+                "labels_and_raters",
+                "leakage_assessment",
+                "preprocessing_fit_scope",
+                "implementation_and_weights",
+                "search_trials_and_selection",
+                "randomness_and_nondeterminism",
+                "evaluation_and_uncertainty",
+                "test_access",
+                "inference_and_smoke_test"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "datasetRecord": {
+      "type": "object",
+      "required": [
+        "dataset_id",
+        "source_bindings",
+        "name",
+        "snapshot_version",
+        "snapshot_hash",
+        "license",
+        "access_conditions",
+        "population",
+        "row_count",
+        "independent_unit",
+        "group_keys",
+        "upstream_artifact_ids"
+      ],
+      "properties": {
+        "dataset_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "name": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "snapshot_version": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "snapshot_hash": {
+          "$ref": "#/$defs/scientificHash"
+        },
+        "license": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "access_conditions": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "population": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "row_count": {
+          "$ref": "#/$defs/scientificInteger"
+        },
+        "independent_unit": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "group_keys": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "upstream_artifact_ids": {
+          "$ref": "#/$defs/identifierList"
+        }
+      },
+      "additionalProperties": false
+    },
+    "splitRecord": {
+      "type": "object",
+      "required": [
+        "split_id",
+        "dataset_id",
+        "source_bindings",
+        "manifest_artifact_id",
+        "manifest_hash",
+        "strategy",
+        "group_key",
+        "time_boundary",
+        "cluster_boundary",
+        "trajectory_boundary",
+        "partition_counts",
+        "frozen_before_training"
+      ],
+      "properties": {
+        "split_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "dataset_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "manifest_artifact_id": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "manifest_hash": {
+          "$ref": "#/$defs/scientificHash"
+        },
+        "strategy": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "group_key": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "time_boundary": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "cluster_boundary": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "trajectory_boundary": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "partition_counts": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "frozen_before_training": {
+          "$ref": "#/$defs/scientificBoolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "labelRecord": {
+      "type": "object",
+      "required": [
+        "label_record_id",
+        "dataset_id",
+        "source_bindings",
+        "target_definition",
+        "label_source",
+        "rater_ids",
+        "rater_blinding",
+        "agreement_method",
+        "agreement_result",
+        "adjudication",
+        "uncertainty_representation"
+      ],
+      "properties": {
+        "label_record_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "dataset_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "target_definition": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "label_source": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "rater_ids": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "rater_blinding": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "agreement_method": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "agreement_result": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "adjudication": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "uncertainty_representation": {
+          "$ref": "#/$defs/scientificValue"
+        }
+      },
+      "additionalProperties": false
+    },
+    "lineageRecord": {
+      "type": "object",
+      "required": [
+        "lineage_id",
+        "dataset_id",
+        "source_bindings",
+        "upstream_entity_ids",
+        "row_selector",
+        "transformation_ids",
+        "derived_row_ids",
+        "lineage_hash"
+      ],
+      "properties": {
+        "lineage_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "dataset_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "upstream_entity_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "row_selector": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "transformation_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "derived_row_ids": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "lineage_hash": {
+          "$ref": "#/$defs/scientificHash"
+        }
+      },
+      "additionalProperties": false
+    },
+    "leakageAssessment": {
+      "type": "object",
+      "required": [
+        "assessment_id",
+        "split_id",
+        "source_bindings",
+        "leakage_kind",
+        "group_key_checked",
+        "method",
+        "result",
+        "affected_partition_pairs",
+        "affected_row_or_group_ids",
+        "disposition"
+      ],
+      "properties": {
+        "assessment_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "split_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "leakage_kind": {
+          "enum": [
+            "donor",
+            "patient",
+            "sequence_cluster",
+            "homology",
+            "structure_template",
+            "batch",
+            "time",
+            "pretraining",
+            "trajectory",
+            "label",
+            "checkpoint",
+            "other",
+            "unknown"
+          ]
+        },
+        "group_key_checked": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "method": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "result": {
+          "enum": [
+            "not_detected",
+            "detected",
+            "inconclusive",
+            "not_assessed"
+          ]
+        },
+        "affected_partition_pairs": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "affected_row_or_group_ids": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "disposition": {
+          "$ref": "#/$defs/scientificValue"
+        }
+      },
+      "additionalProperties": false
+    },
+    "preprocessingRecord": {
+      "type": "object",
+      "required": [
+        "preprocessing_id",
+        "split_id",
+        "source_bindings",
+        "ordered_steps",
+        "stateful",
+        "fit_partition",
+        "fit_row_selector",
+        "fit_artifact_hash",
+        "application_partitions",
+        "code_artifact_ids"
+      ],
+      "properties": {
+        "preprocessing_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "split_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "ordered_steps": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "stateful": {
+          "$ref": "#/$defs/scientificBoolean"
+        },
+        "fit_partition": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "fit_row_selector": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "fit_artifact_hash": {
+          "$ref": "#/$defs/scientificHash"
+        },
+        "application_partitions": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "code_artifact_ids": {
+          "$ref": "#/$defs/identifierList"
+        }
+      },
+      "additionalProperties": false
+    },
+    "modelRecord": {
+      "type": "object",
+      "required": [
+        "model_record_id",
+        "source_bindings",
+        "role",
+        "architecture",
+        "implementation_artifact_ids",
+        "source_tree_hash",
+        "uncommitted_change_artifact_id",
+        "initialization_or_pretraining",
+        "weight_artifact_ids",
+        "input_contract",
+        "output_contract"
+      ],
+      "properties": {
+        "model_record_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "role": {
+          "enum": [
+            "baseline",
+            "candidate",
+            "selected",
+            "ensemble_member",
+            "reference",
+            "unknown"
+          ]
+        },
+        "architecture": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "implementation_artifact_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "source_tree_hash": {
+          "$ref": "#/$defs/scientificHash"
+        },
+        "uncommitted_change_artifact_id": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "initialization_or_pretraining": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "weight_artifact_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "input_contract": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "output_contract": {
+          "$ref": "#/$defs/scientificValue"
+        }
+      },
+      "additionalProperties": false
+    },
+    "searchRecord": {
+      "type": "object",
+      "required": [
+        "search_id",
+        "work_unit_id",
+        "source_bindings",
+        "search_space",
+        "search_strategy",
+        "budget",
+        "selection_metric",
+        "selection_rule",
+        "selection_partition",
+        "trial_ids",
+        "failed_trial_ids",
+        "selected_trial_ids",
+        "selection_derivation"
+      ],
+      "properties": {
+        "search_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "work_unit_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "search_space": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "search_strategy": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "budget": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "selection_metric": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "selection_rule": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "selection_partition": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "trial_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "failed_trial_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "selected_trial_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "selection_derivation": {
+          "$ref": "#/$defs/selectionDerivation"
+        }
+      },
+      "additionalProperties": false
+    },
+    "selectionDerivation": {
+      "type": "object",
+      "required": [
+        "mode",
+        "input_selected_trial_ids",
+        "input_model_record_ids",
+        "output_model_record_ids",
+        "rule_or_rationale",
+        "source_bindings"
+      ],
+      "properties": {
+        "mode": {
+          "enum": ["direct_trial_model", "ensemble", "post_search_rule"]
+        },
+        "input_selected_trial_ids": {
+          "type": "array",
+          "$ref": "#/$defs/identifierList",
+          "minItems": 1
+        },
+        "input_model_record_ids": {
+          "type": "array",
+          "$ref": "#/$defs/identifierList",
+          "minItems": 1
+        },
+        "output_model_record_ids": {
+          "type": "array",
+          "$ref": "#/$defs/identifierList",
+          "minItems": 1
+        },
+        "rule_or_rationale": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "trialRecord": {
+      "type": "object",
+      "required": [
+        "trial_id",
+        "search_id",
+        "attempt_id",
+        "model_record_id",
+        "split_id",
+        "source_bindings",
+        "status",
+        "hyperparameters",
+        "training_invocation_id",
+        "randomness_record_ids",
+        "checkpoint_artifact_ids",
+        "metric_result_ids",
+        "failure_event_ids",
+        "started_at",
+        "ended_at"
+      ],
+      "properties": {
+        "trial_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "search_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "attempt_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "model_record_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "split_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "status": {
+          "enum": [
+            "planned",
+            "running",
+            "completed",
+            "failed",
+            "cancelled",
+            "unknown"
+          ]
+        },
+        "hyperparameters": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "training_invocation_id": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "randomness_record_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "checkpoint_artifact_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "metric_result_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "failure_event_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "started_at": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "ended_at": {
+          "$ref": "#/$defs/scientificValue"
+        }
+      },
+      "additionalProperties": false
+    },
+    "testAccessEvent": {
+      "type": "object",
+      "required": [
+        "event_id",
+        "split_id",
+        "source_bindings",
+        "timestamp",
+        "actor",
+        "purpose",
+        "data_exposed",
+        "affected_decision_ids"
+      ],
+      "properties": {
+        "event_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "split_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "timestamp": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "actor": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "purpose": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "data_exposed": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "affected_decision_ids": {
+          "$ref": "#/$defs/identifierList"
+        }
+      },
+      "additionalProperties": false
+    },
+    "evaluationRecord": {
+      "type": "object",
+      "required": [
+        "evaluation_id",
+        "analysis_run_id",
+        "model_record_ids",
+        "split_id",
+        "source_bindings",
+        "partition",
+        "metric",
+        "estimate",
+        "interval",
+        "independent_statistical_unit",
+        "sample_count",
+        "subgroup_definition",
+        "calibration_assessment",
+        "threshold_definition",
+        "comparison_ids",
+        "result_id"
+      ],
+      "properties": {
+        "evaluation_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "analysis_run_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "model_record_ids": {
+          "type": "array",
+          "$ref": "#/$defs/identifierList",
+          "minItems": 1
+        },
+        "split_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "partition": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "metric": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "estimate": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "interval": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "independent_statistical_unit": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "sample_count": {
+          "$ref": "#/$defs/scientificInteger"
+        },
+        "subgroup_definition": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "calibration_assessment": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "threshold_definition": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "comparison_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "result_id": {
+          "$ref": "#/$defs/identifier"
+        }
+      },
+      "additionalProperties": false
+    },
+    "randomnessRecord": {
+      "type": "object",
+      "required": [
+        "randomness_record_id",
+        "trial_id",
+        "source_bindings",
+        "root_seed",
+        "derivation_method",
+        "worker_and_rank_seeds",
+        "data_order_seed",
+        "hardware",
+        "nondeterministic_operations",
+        "determinism_controls"
+      ],
+      "properties": {
+        "randomness_record_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "trial_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "root_seed": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "derivation_method": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "worker_and_rank_seeds": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "data_order_seed": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "hardware": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "nondeterministic_operations": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "determinism_controls": {
+          "$ref": "#/$defs/scientificValue"
+        }
+      },
+      "additionalProperties": false
+    },
+    "inferenceRecipe": {
+      "type": "object",
+      "required": [
+        "inference_recipe_id",
+        "model_record_id",
+        "source_bindings",
+        "weight_artifact_id",
+        "environment_id",
+        "invocation_id",
+        "preprocessing_id",
+        "input_schema",
+        "output_schema",
+        "thresholds",
+        "smoke_test"
+      ],
+      "properties": {
+        "inference_recipe_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "model_record_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "weight_artifact_id": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "environment_id": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "invocation_id": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "preprocessing_id": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "input_schema": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "output_schema": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "thresholds": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "smoke_test": {
+          "type": "object",
+          "required": [
+            "status",
+            "input_artifact_id",
+            "expected_output",
+            "observed_output",
+            "source_bindings"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "passed",
+                "failed",
+                "not_run",
+                "unknown"
+              ]
+            },
+            "input_artifact_id": {
+              "$ref": "#/$defs/scientificValue"
+            },
+            "expected_output": {
+              "$ref": "#/$defs/scientificValue"
+            },
+            "observed_output": {
+              "$ref": "#/$defs/scientificValue"
+            },
+            "source_bindings": {
+              "$ref": "#/$defs/sourceBindings"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "scientificString": {
+      "$ref": "../defs/common.schema.json#/$defs/StringField"
+    },
+    "scientificNumber": {
+      "$ref": "../defs/common.schema.json#/$defs/NumberField"
+    },
+    "scientificInteger": {
+      "$ref": "../defs/common.schema.json#/$defs/IntegerField"
+    },
+    "scientificBoolean": {
+      "$ref": "../defs/common.schema.json#/$defs/BooleanField"
+    },
+    "scientificHash": {
+      "$ref": "../defs/common.schema.json#/$defs/HashField"
+    },
+    "scientificStringArray": {
+      "$ref": "../defs/common.schema.json#/$defs/StringArrayField"
+    }
+  }
+}

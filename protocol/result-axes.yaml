@@ -1,0 +1,188 @@
+protocol: result-axes
+version: 1.0.0
+status: normative
+
+purpose: Keep scientific effect, statistical decision, interpretability, record use, and technical failure independent.
+
+result_record:
+  required_axes:
+    - scientific_effect_class
+    - statistical_decision
+    - interpretability_status
+    - record_disposition
+  required_context:
+    - result_id
+    - estimand_or_observation
+    - population_or_system
+    - condition
+    - time_or_frame_scope
+    - unit
+    - evidence_bindings
+  optional_orthogonal_records:
+    - failure_event_ids
+    - uncertainty
+    - sensitivity_assessment
+    - conflict_set_ids
+  invariant: No axis may be derived solely from another axis.
+
+scientific_effect_class:
+  question: What scientific pattern was estimated or observed?
+  values:
+    increase: Direction is higher relative to the declared reference.
+    decrease: Direction is lower relative to the declared reference.
+    no_detectable_effect: The method did not detect an effect within its stated sensitivity; this is not proof of equivalence.
+    equivalent: The estimate satisfies a declared scientific equivalence bound under a valid equivalence procedure.
+    heterogeneous: Direction or magnitude materially differs across declared strata, times, replicas, or conditions.
+    effect_present_direction_uncertain: Evidence supports a difference but not a stable direction.
+    not_estimated: No effect estimate was produced.
+    unknown: Available records do not establish an effect class.
+    not_applicable: The result is not an effect estimate and the applicability rule is recorded.
+    withheld: The class is known internally but not disclosed in this projection.
+
+statistical_decision:
+  question: What formal inferential decision was made?
+  values:
+    reject_null: A declared null hypothesis was rejected under the recorded procedure.
+    do_not_reject_null: The procedure did not reject; this does not establish no effect.
+    equivalent: A valid equivalence decision met its declared bounds.
+    noninferior: A valid noninferiority decision met its declared margin.
+    inconclusive: A formal procedure was attempted but cannot support a determinate decision.
+    descriptive_only: No formal inferential decision was intended.
+    not_performed: No formal statistical decision was performed.
+    unknown: It is unknown whether or how a decision was made.
+    not_applicable: A statistical decision is inapplicable and the applicability rule is recorded.
+    withheld: The decision is known internally but not disclosed in this projection.
+
+interpretability_status:
+  question: Can the result answer its stated scientific question under the recorded quality conditions?
+  values:
+    interpretable:
+      meaning: Required controls, quality conditions, context, and provenance are adequate for the bounded interpretation.
+    qualified:
+      meaning: Interpretation is possible only with explicit material qualifications.
+      requires: qualification_ids
+    inconclusive:
+      meaning: Evidence cannot distinguish relevant explanations or precision is insufficient.
+    not_interpretable:
+      meaning: Failed controls, invalid procedure, broken provenance, or other blockers prevent scientific interpretation.
+      requires: blocker_ids
+    unknown:
+      meaning: Interpretability cannot be assessed from available records.
+    not_applicable:
+      meaning: Interpretability assessment is inapplicable and the applicability rule is recorded.
+    withheld:
+      meaning: The assessment is known internally but not disclosed in this projection.
+
+record_disposition:
+  question: How may this record be used in the current report version?
+  values:
+    primary: Included in the primary analysis or principal answer.
+    sensitivity_only: Excluded from primary analysis but included in a declared sensitivity analysis.
+    contextual: Retained as context without inferential weight for the principal answer.
+    excluded: Not used for the declared analysis; exclusion decision and reason are required.
+    superseded: Replaced by a later version while retained historically.
+    retracted: Withdrawn because the record is no longer valid; downstream propagation is required.
+    pending_review: Use is not yet adjudicated.
+    unknown: Disposition cannot be established.
+    not_applicable: Disposition is inapplicable and the applicability rule is recorded.
+    withheld: Disposition is known internally but not disclosed in this projection.
+
+failure_event:
+  purpose: Record technical or procedural failure without overloading scientific effect or disposition.
+  required_fields:
+    - failure_event_id
+    - affected_object_id
+    - failure_class
+    - onset_or_detection
+    - impact
+    - evidence_bindings
+    - resolution_status
+  failure_classes:
+    - instrument
+    - reagent_or_material
+    - protocol_deviation
+    - data_integrity
+    - software
+    - hardware
+    - resource_exhaustion
+    - convergence_or_stability
+    - quality_control
+    - access_or_permission
+    - operator_or_process
+    - unknown
+    - withheld
+  resolution_status_values:
+    - unresolved
+    - mitigated
+    - resolved_for_future_attempts
+    - not_applicable
+    - unknown
+    - withheld
+  invariants:
+    - resolved_for_future_attempts does not erase the original failure or repair its affected result automatically.
+    - A failure may coexist with usable partial output, a primary or sensitivity disposition, and any scientific effect class.
+    - Absence of a failure event never implies successful execution.
+
+negative_result_qualification:
+  potential_negative_classes:
+    - no_detectable_effect
+    - do_not_reject_null
+  may_support_biological_counterevidence_only_if_all_known_and_adequate:
+    - positive and negative controls appropriate to the assay
+    - quality-control acceptance
+    - detection limit or minimum detectable effect for the relevant scale
+    - interval estimate or equivalent uncertainty characterization
+    - analysis population and exclusions
+    - measurement validity for the condition and time point
+    - prespecified or explicitly post hoc decision context
+  additional_for_equivalence:
+    - scientifically justified equivalence bounds
+    - valid equivalence procedure
+    - precision sufficient for those bounds
+  interpretation_rules:
+    - do_not_reject_null alone must be worded as insufficient evidence to reject, not evidence of no effect.
+    - no_detectable_effect must state the detection boundary or mark it unknown.
+    - Failed positive controls force not_interpretable for a claim that absence of signal is biological counterevidence.
+    - Unknown sensitivity prevents a claim of equivalence or absence; it does not require discarding the observation.
+
+axis_combinations:
+  allowed_examples:
+    - scientific_effect_class: decrease
+      statistical_decision: reject_null
+      interpretability_status: qualified
+      record_disposition: sensitivity_only
+    - scientific_effect_class: no_detectable_effect
+      statistical_decision: do_not_reject_null
+      interpretability_status: not_interpretable
+      record_disposition: primary
+      note: The primary record remains visible but cannot support a biological no-effect claim.
+    - scientific_effect_class: increase
+      statistical_decision: descriptive_only
+      interpretability_status: interpretable
+      record_disposition: excluded
+      note: Scientific pattern and analysis use remain distinct.
+
+heterogeneity_and_conflict:
+  heterogeneity_when: Results differ because a scientifically material context dimension differs and the dimension is represented.
+  conflict_when: Results make incompatible assertions for the same entity version, estimand, population or system, condition, time scope, and applicable analysis definition.
+  rules:
+    - Opposite directions at different time points or conditions must not be collapsed into one conflict value.
+    - A true conflict requires a ConflictSet and must not be resolved by overwriting an axis.
+    - Heterogeneity may itself be the scientific_effect_class when supported by a recorded analysis.
+
+conformance_rules:
+  RES001:
+    condition: A technical failure is encoded only as a scientific effect, statistical decision, or exclusion.
+    outcome: blocker
+  RES002:
+    condition: One result axis is omitted or inferred solely from another axis.
+    outcome: error
+  NUL001:
+    condition: A null or non-significant result supports biological absence despite inadequate or unknown controls, sensitivity, or uncertainty.
+    outcome: blocker
+  NEG001:
+    condition: An in-scope negative, failed, excluded, superseded, or retracted record is silently omitted.
+    outcome: blocker
+  CNF001:
+    condition: A true conflict is unregistered or a contextual difference is collapsed into a conflict without retaining the context.
+    outcome: blocker

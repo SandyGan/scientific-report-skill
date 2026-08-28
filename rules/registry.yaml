@@ -1,0 +1,2211 @@
+registry_version: 1.0.0
+schema_version: report-rule-registry/v1
+authority: rules/registry.yaml
+description: Single authoritative catalog for semantic, package, disclosure, security, and accessibility
+  rules. Schemas establish structure; this registry establishes meaning. Domain overlays may activate rules
+  and bind parameters, but may not redefine a rule condition, message, remediation, or waiver policy.
+expression_language:
+  id: report-rule-expression/v1
+  description: Declarative predicates over the normalized report graph. `exists`, `all`, `any`, `count`,
+    `references`, `reachable`, `changed`, `matches`, and `bundle_contains` are validator primitives. Paths are
+    RFC 6901 JSON Pointer templates; `*` denotes iteration over array members.
+severity_order:
+  - information
+  - warning
+  - error
+  - blocker
+waiver_contract:
+  required_fields:
+    - waiver_id
+    - rule_id
+    - scope_pointer
+    - rationale
+    - approver
+    - approved_at
+    - expires_at
+    - source_bindings
+  behavior: A waiver records accepted residual risk; it does not make a failed predicate pass, erase the
+    finding, or authorize a stronger scientific claim. Waivers cannot reveal withheld content.
+epistemic_input_policy:
+  unknown: Never coerce to absent, false, zero, not_applicable, or pass. If a predicate cannot be decided, emit
+    unknown/not_evaluated unless the rule specifically detects an unsupported unknown-dependent claim.
+  not_applicable: Accept only when a named applicability rule and traceable decision establish it. Do not infer
+    it from an empty collection.
+  withheld: Evaluate only non-revealing state and authorized metadata. Never request, log, hash into a public
+    artifact, or reconstruct the protected value. Inability to evaluate protected content is
+    unknown/not_evaluated, not pass.
+  known: Require the canonical source-or-derivation provenance envelope before treating a value as known.
+  sentinel_strings: Empty strings and placeholders such as TBD or N/A never substitute for an epistemic state.
+  waiver: A waiver never converts unknown or not_evaluated into pass and never authorizes disclosure of withheld
+    content.
+rules:
+  - id: COV001
+    title: Authoritative source item left undisposed
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - coverage
+    severity: blocker
+    condition: source_coverage.authoritative_universe.state == "known" and any source_coverage.registered_items
+      item has no disposition in {included, excluded_with_reason, unreadable, inaccessible, duplicate,
+      unmapped}, or an excluded/duplicate item lacks its reason or target.
+    pointer_hint: /source_coverage/registered_items/*/disposition
+    message: An item in the authoritative source universe has not been explicitly disposed.
+    remediation: Inventory the item and record one allowed disposition with a source-bound reason; include or map
+      it where possible. Do not delete the item merely to make the denominator smaller.
+    waiver_policy:
+      allowed: false
+      rationale: Coverage of a declared authoritative universe is a publication boundary.
+  - id: COV002
+    title: Absolute completeness language without an authoritative universe
+    scope:
+      artifacts:
+        - scientific_report
+        - rendered_bundle
+      domains:
+        - core
+      phases:
+        - coverage
+        - rendering
+    severity: blocker
+    condition: source_coverage.authoritative_universe.state != "known" and any public narrative or coverage label
+      asserts absolute or exhaustive completeness rather than registered-source completeness with an explicit
+      limitation.
+    pointer_hint: /source_coverage/completeness_statement
+    message: Absolute completeness is claimed although overall completeness cannot be proved.
+    remediation: Replace absolute wording with a bounded statement about registered sources, expose the missing
+      authoritative universe, and set overall completeness to not_evaluable or the equivalent explicit unknown
+      state.
+    waiver_policy:
+      allowed: false
+      rationale: A waiver cannot turn an unknown source universe into a known denominator.
+  - id: WRK001
+    title: Unsupported completed work unit
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - work_execution
+    severity: blocker
+    condition: any work_unit or attempt has status == "completed" while its completion criterion is missing,
+      unknown, or not satisfied by cited execution and output evidence from the represented execution scope.
+    pointer_hint: /work_units/*/status
+    message: Work is marked completed without a completion criterion and evidence that it was met.
+    remediation: Supply the predeclared or source-supported completion criterion and bind execution/output
+      evidence, or downgrade status to attempted or unknown.
+    waiver_policy:
+      allowed: false
+      rationale: Completed is an evidence-bearing state, not a reviewer preference.
+  - id: WRK002
+    title: External work counted as project execution
+    scope:
+      artifacts:
+        - scientific_report
+        - rendered_bundle
+      domains:
+        - core
+      phases:
+        - work_execution
+        - rendering
+    severity: blocker
+    condition: a completion or attempt count labeled as this project includes work whose execution_scope is
+      external_study or upstream_collaborator, or includes reanalysis as new experimental execution without a
+      separate count.
+    pointer_hint: /work_units/*/execution_scope
+    message: Work performed outside this project is included in this project's completed-work count.
+    remediation: Separate this_project, reanalysis, external_study, upstream_collaborator, and synthetic scopes in
+      both facts and displayed denominators.
+    waiver_policy:
+      allowed: false
+      rationale: Execution ownership must remain explicit.
+  - id: WRK003
+    title: Retry overwrote prior failed history
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - work_execution
+    severity: blocker
+    condition: a later successful attempt follows a failed/aborted attempt or a partially_succeeded/cancelled attempt
+      carrying a material FailureEvent, but no supersession/recovery chain or source-bound typed not_a_retry
+      relation distinguishes their history.
+    pointer_hint: /work_units/*/attempts
+    message: A successful later attempt does not preserve or classify the preceding material failure relationship.
+    remediation: Restore immutable predecessor attempts and segments, link retries through supersession or recovery,
+      retain failure events and partial-output dispositions, or add a typed source-bound not_a_retry relation for a
+      genuinely independent later attempt.
+    waiver_policy:
+      allowed: false
+      rationale: Historical execution records are append-only.
+  - id: TIM001
+    title: Unsupported prospective timing classification
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - decision_timing
+    severity: blocker
+    condition: any criterion, exclusion, threshold, endpoint, analysis plan, or decision is labeled
+      predefined/prospective while no trustworthy timestamped source demonstrates it existed before outcome or
+      test-data access.
+    pointer_hint: /decision_events/*/timing_classification
+    message: A decision is labeled prospective without evidence that it preceded outcome access.
+    remediation: Bind a trustworthy pre-outcome record and access timeline, or classify the decision as adaptive,
+      post_hoc, missing, or unknown as supported.
+    waiver_policy:
+      allowed: false
+      rationale: Prospective status is a historical fact.
+  - id: MAT001
+    title: Material flow or analysis population does not close
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+        - wet_lab
+        - ai_ml
+        - molecular_dynamics
+      phases:
+        - lineage
+    severity: error
+    condition: any material/sample/dataset/system input cannot be followed through transformations, pools/splits,
+      inclusions, exclusions, losses, and outputs, or reported analysis counts disagree with the reachable
+      lineage without an explicit unresolved discrepancy.
+    pointer_hint: /material_lineage
+    message: Material lineage or the analysis-population ledger has an unexplained gap or count mismatch.
+    remediation: Add source-bound lineage edges, pool/split membership, dropout and exclusion records, and
+      reconcile counts; otherwise mark the population unknown and qualify dependent results.
+    waiver_policy:
+      allowed: true
+      maximum_severity_after_waiver: warning
+      requirements:
+        - named_approver
+        - bounded_scope
+        - unresolved_gap_disclosed
+        - dependent_claims_qualified
+        - expiry
+  - id: DER001
+    title: Quantitative claim lacks derivation closure
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+        - wet_lab
+        - ai_ml
+        - molecular_dynamics
+      phases:
+        - derivation
+    severity: error
+    condition: a quantitative non-background claim or displayed value is not reachable through DataSlice ->
+      DerivationRecord -> AnalysisRun -> OutputArtifact -> EvidenceItem, including input version/hash,
+      selector/filter, code or invocation, environment, exit state, and output identity as applicable.
+    pointer_hint: /claims/*/evidence_item_ids
+    message: A quantitative claim cannot be traced through a closed derivation chain.
+    remediation: Register the exact data slice, derivation, actual analysis run, output artifact, and evidence
+      link. If unavailable, preserve unknown provenance and weaken or remove the quantitative claim.
+    waiver_policy:
+      allowed: true
+      maximum_severity_after_waiver: warning
+      requirements:
+        - named_approver
+        - affected_values_listed
+        - provenance_gap_disclosed
+        - no_reproducibility_upgrade
+        - expiry
+  - id: CLM001
+    title: Non-background claim lacks support
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - argument_graph
+    severity: blocker
+    condition: any claim whose role is not background has neither admissible direct evidence nor a valid argument
+      step whose premises are supported; causal and mechanistic claims additionally require an admissible
+      concluding step with known nonempty rationale, assumptions, and alternative explanations and cannot rely
+      on association alone.
+    pointer_hint: /claims/*
+    message: A report claim has no valid evidence or supported premises.
+    remediation: Link admissible evidence or supported premises, register qualifications and counterevidence, or
+      recast the statement as a question, hypothesis, limitation, or unknown.
+    waiver_policy:
+      allowed: false
+      rationale: Unsupported statements cannot remain scientific claims.
+  - id: BRG001
+    title: Cross-domain mechanism claim lacks a valid bridge
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+        - cross_domain
+      phases:
+        - argument_graph
+    severity: blocker
+    condition: a claim's direct evidence or cycle-safe full premise closure spans domains without a CrossDomainBridge
+      that connects those domains, enables the exact cross-domain ArgumentStep, and aligns entity/construct,
+      condition, intervention/dose, endpoint, state, and time/scale context.
+    pointer_hint: /cross_domain_bridges/*
+    message: A cross-domain mechanism claim jumps between incompatible or unaligned evidence contexts.
+    remediation: Add and validate a bridge with source-bound mappings and mismatch impact; otherwise limit the
+      claim to association or separate domain-specific observations.
+    waiver_policy:
+      allowed: false
+      rationale: A waiver cannot supply missing scientific compatibility.
+  - id: DEP001
+    title: Dependent evidence counted as independent
+    scope:
+      artifacts:
+        - scientific_report
+        - rendered_bundle
+      domains:
+        - core
+        - wet_lab
+        - ai_ml
+        - molecular_dynamics
+      phases:
+        - argument_graph
+        - rendering
+    severity: blocker
+    condition: evidence units sharing an AnalysisPopulation, biological group/donor/material ancestry, data slice,
+      trajectory, checkpoint, initialization, analysis output, or other transitive dependency are placed in
+      separate groups marked independent or worded as independent support.
+    pointer_hint: /claim_dependencies
+    message: Dependent evidence is represented as independent corroboration.
+    remediation: Register dependency edges and clusters, recompute independent-unit counts, and revise
+      corroboration language and uncertainty.
+    waiver_policy:
+      allowed: false
+      rationale: The protocol defines this invariant as a non-waivable release blocker.
+  - id: CNF001
+    title: Conflict omitted or heterogeneity collapsed
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+        - wet_lab
+        - ai_ml
+        - molecular_dynamics
+      phases:
+        - conflict
+    severity: blocker
+    condition: incompatible values for the same entity, context, estimand, and version are not registered as a
+      true conflict, or retained_as_heterogeneity lacks a typed, known, source-bound material context difference
+      for every incompatible result pair.
+    pointer_hint: /conflict_sets
+    message: A true conflict is unregistered, or contextual heterogeneity has been flattened.
+    remediation: Preserve all source values, compare identity/context/estimand, create a ConflictSet only for
+      like-for-like incompatibility, and otherwise model heterogeneous conditions explicitly.
+    waiver_policy:
+      allowed: false
+      rationale: The protocol defines this invariant as a non-waivable release blocker.
+  - id: NUL001
+    title: Negative result overinterpreted
+    scope:
+      artifacts:
+        - scientific_report
+        - rendered_bundle
+      domains:
+        - core
+        - wet_lab
+      phases:
+        - results
+        - argument_graph
+    severity: blocker
+    condition: a no-signal, no-detectable-effect, do-not-reject, or excluded result is used as biological
+      counterevidence, equivalence, or absence when every declared control/QC/context/population identifier does
+      not resolve to an applicable typed record, concrete checks fail, sensitivity is inadequate, or required
+      interval, detection limit, MDE, or equivalence-bound evidence is absent.
+    pointer_hint: /results/*/scientific_effect_class
+    message: A negative or null result is stronger than the assay controls and sensitivity support.
+    remediation: Report the orthogonal result axes without converting nonsignificance to absence. Supply valid
+      controls, sensitivity and interval evidence, or mark the result inconclusive/not interpretable and
+      weaken dependent claims.
+    waiver_policy:
+      allowed: false
+      rationale: Interpretive strength cannot exceed assay capability.
+  - id: NEG001
+    title: Failure, negative, or excluded record missing from the ledger
+    scope:
+      artifacts:
+        - scientific_report
+        - rendered_bundle
+      domains:
+        - core
+        - wet_lab
+        - ai_ml
+        - molecular_dynamics
+      phases:
+        - coverage
+        - results
+        - rendering
+    severity: blocker
+    condition: an included source has no complete byte-range and parser/pattern-set-bound extraction attestation, or
+      that attestation identifies an attempted failure, no-effect/null result, adverse QC event, exclusion,
+      cancelled/failed trial, crashed segment, retraction, or superseded output that is absent from the normalized
+      ledger or hidden from full archive, no-script view, print, or search.
+    pointer_hint: /failures
+    message: A registered adverse, negative, failed, or excluded record has been omitted.
+    remediation: Add the atomic record with source locator, link its attempt/result and disposition, and ensure
+      deterministic rendering/search includes it even when filters are active.
+    waiver_policy:
+      allowed: false
+      rationale: The protocol defines this invariant as a non-waivable release blocker.
+  - id: REV001
+    title: Revision or retraction did not propagate
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - revision
+    severity: blocker
+    condition: a source, data slice, artifact, result, or claim is corrected, superseded, withdrawn, or retracted
+      but reachable downstream evidence/claims retain a valid state without a documented revalidation, impact
+      assessment, or review_required transition.
+    pointer_hint: /revision_events/*/affected_ids
+    message: An upstream revision has not invalidated or revalidated all dependent claims.
+    remediation: Traverse dependency edges, mark downstream objects invalidated or review_required, record the
+      impact assessment, and revalidate before restoring any claim.
+    waiver_policy:
+      allowed: false
+      rationale: Stale validity is not an acceptable residual-risk state.
+  - id: REP001
+    title: Reproducibility level exceeds available evidence
+    scope:
+      artifacts:
+        - scientific_report
+        - rendered_bundle
+      domains:
+        - core
+        - wet_lab
+        - ai_ml
+        - molecular_dynamics
+      phases:
+        - reproducibility
+    severity: blocker
+    condition: a reproducibility unit's stated level exceeds the conservative minimum of source/derivation
+      closure, actual-invocation versus recipe agreement, input/output access, environment capture,
+      random-state capture, rerun verification, independence, and claim/output coverage; or unknown and
+      withheld access are treated as available.
+    pointer_hint: /reproducibility_units/*/level
+    message: A reproducibility claim is stronger than one or more required axes support.
+    remediation: Lower the level to the weakest supported axis, expose per-axis states and denominator, reconcile
+      recipe differences, or add a hash-bound rerun and access evidence. Never infer a passing rerun from a
+      recipe alone.
+    waiver_policy:
+      allowed: false
+      rationale: A reproducibility grade is a derived evidence statement.
+  - id: ATT001
+    title: Validation attestation is not bound to the payload
+    scope:
+      artifacts:
+        - validation_attestation
+        - package_manifest
+        - rendered_bundle
+      domains:
+        - core
+      phases:
+        - package_identity
+    severity: blocker
+    condition: the attestation's canonical scientific-payload digest, schema/rule registry versions, disclosure
+      projection identity, or manifest identity differs from the packaged artifacts, or the attestation
+      predates a scientific payload change.
+    pointer_hint: /scientific_payload_digest
+    message: The validation attestation does not identify the packaged scientific payload.
+    remediation: Canonicalize and hash the final public payload, validate it against the declared schema and
+      registry, generate a new attestation, and update the manifest. Do not copy forward a previous pass
+      state.
+    waiver_policy:
+      allowed: false
+      rationale: An unbound attestation provides no validation assurance.
+  - id: RED001
+    title: Restricted or local-only value leaked into the public bundle
+    scope:
+      artifacts:
+        - public_scientific_report
+        - package_manifest
+        - rendered_bundle
+      domains:
+        - core
+      phases:
+        - disclosure
+        - packaging
+    severity: blocker
+    condition: the public bundle, including JSON, HTML, SVG, index, metadata, URL, path, log, archive entry, or
+      filename, contains a secret, a withheld original value, a restricted locator, a credential/token
+      pattern, or an absolute local path.
+    pointer_hint: /disclosure_state
+    message: Public output contains content that must be withheld or kept local.
+    remediation: Rebuild from the disclosure projection, replace values with explicit withheld envelopes and
+      non-revealing reasons, sanitize paths/names and indexes, rotate exposed credentials, then scan every
+      archive member again.
+    waiver_policy:
+      allowed: false
+      rationale: Disclosure controls cannot be waived in a public artifact.
+  - id: SEC001
+    title: Unsafe active content, URL, or archive path
+    scope:
+      artifacts:
+        - package_manifest
+        - rendered_bundle
+      domains:
+        - core
+      phases:
+        - security
+        - packaging
+    severity: blocker
+    condition: A bundled path is absolute or escapes its root; an archive entry traverses, aliases, or overwrites
+      another entry; a rendered field becomes executable markup, script, style, or a dangerous URL; or the
+      offline bundle loads undeclared remote content.
+    pointer_hint: /files/*/path
+    message: The package contains an unsafe path, active content, dangerous URL, or undeclared remote dependency.
+    remediation: Reject traversal and ambiguous archive entries, normalize and confine relative paths,
+      context-escape untrusted text, allowlist inert URL schemes, remove remote dependencies and active
+      payloads, and rebuild the manifest.
+    waiver_policy:
+      allowed: false
+      rationale: The offline report must remain inert and confined to its package root.
+  - id: A11Y001
+    title: Core reading task is not accessible
+    scope:
+      artifacts:
+        - rendered_bundle
+      domains:
+        - core
+      phases:
+        - accessibility
+        - rendering
+    severity: error
+    condition: a core task (overview, status distinction, claim-to-evidence navigation, failure/negative-result
+      discovery, methods, provenance, or reproduction) cannot be completed with keyboard alone or in
+      linear/no-script content, or meaning depends only on color, motion, hover, pointer gesture, or a chart
+      without an equivalent table/text representation.
+    pointer_hint: /render_validation/accessibility/core_tasks/*
+    message: At least one core scientific reading task is unavailable to keyboard or linear-view users.
+    remediation: Restore semantic headings/landmarks, visible focus and skip navigation, native controls, textual
+      state labels, linear DOM order, no-script content, table/text alternatives, reduced motion,
+      forced-colors support, and 400% reflow without loss.
+    waiver_policy:
+      allowed: true
+      maximum_severity_after_waiver: warning
+      requirements:
+        - specific_task_named
+        - accessible_alternative_provided
+        - named_approver
+        - remediation_deadline
+        - expiry
+  - id: WET001
+    title: Replicate denominator or biological independence is inflated
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - wet_lab
+      phases:
+        - domain_semantics
+    severity: blocker
+    condition: a ReplicateDesign does not declare an exact typed specimen_ids denominator for its work unit, or
+      biological/technical N disagrees with those members and their resolved donor/pool ancestry.
+    pointer_hint: /extensions/domain_payloads/*/replicate_designs/*/biological_n
+    message: A wet-lab design's explicit member denominator, biological N, technical N, and lineage do not reconcile.
+    remediation: Declare exact design-scoped specimen_ids, register pool/donor lineage and technical nesting,
+      recompute N and uncertainty, and reassess dependent claims.
+    waiver_policy:
+      allowed: false
+      rationale: Independence and biological N are properties of design, not row count.
+  - id: WET002
+    title: Required wet-lab identity or quality state absent
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - wet_lab
+      phases:
+        - domain_semantics
+    severity: error
+    condition: a material or specimen critical to a result omits applicable identity and QC envelopes such as
+      organism/donor/cell line, catalog/lot/RRID, passage, authentication, mycoplasma, construct
+      sequence/version/hash, or equipment calibration without explicit unknown/not_applicable/withheld state.
+    pointer_hint: /extensions/domain_payloads/*/material_records/*
+    message: A critical wet-lab material lacks an explicit identity or quality-control state.
+    remediation: Record source-bound values or explicit missingness envelopes, state impact on identity and
+      interpretation, and qualify affected results.
+    waiver_policy:
+      allowed: true
+      maximum_severity_after_waiver: warning
+      requirements:
+        - affected_materials_listed
+        - identity_risk_disclosed
+        - dependent_claims_qualified
+        - named_approver
+  - id: WET003
+    title: Allocation, blinding, or dropout ledger incomplete
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - wet_lab
+      phases:
+        - domain_semantics
+    severity: error
+    condition: an applicable experiment lacks explicit source-bound or missing states for randomization, batch
+      balance, blinding/unblinding, dropout, contamination, or analysis exclusion, or those states disagree
+      with material lineage.
+    pointer_hint: /extensions/domain_payloads/*/replicate_designs/*/randomization
+    message: Wet-lab allocation, blinding, contamination, or dropout is not fully reconciled.
+    remediation: Add the allocation and QC events, timing, affected specimen IDs, exclusions and lineage edges;
+      otherwise expose unknown risk and qualify analysis.
+    waiver_policy:
+      allowed: true
+      maximum_severity_after_waiver: warning
+      requirements:
+        - missing_process_named
+        - bias_risk_disclosed
+        - affected_results_listed
+        - named_approver
+  - id: WET004
+    title: Protocol deviation or failed control is detached from results
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - wet_lab
+      phases:
+        - domain_semantics
+    severity: error
+    condition: a protocol deviation, contamination event, calibration failure, or failed control is not linked to
+      the affected attempt/specimens/results and does not have an impact assessment and disposition.
+    pointer_hint: /extensions/domain_payloads/*/qc_events/*/affected_ids
+    message: A wet-lab quality event is not propagated to affected scientific records.
+    remediation: Link affected IDs, add source-bound impact and disposition, update result interpretability and
+      claims, and preserve the event in failure/search views.
+    waiver_policy:
+      allowed: true
+      maximum_severity_after_waiver: warning
+      requirements:
+        - affected_scope_bounded
+        - impact_disclosed
+        - claims_qualified
+        - named_approver
+  - id: AIM001
+    title: Group leakage across model-development partitions
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - ai_ml
+      phases:
+        - domain_semantics
+    severity: blocker
+    condition: rows sharing an applicable independent group (donor, patient, specimen, sequence/homology cluster,
+      structure template, batch, time-linked unit, or other declared group key) occur across training and
+      validation/test partitions without a justified leakage-safe design and explicit assessment.
+    pointer_hint: /extensions/domain_payloads/*/split_records/*/group_key
+    message: Related observations cross data partitions and can leak information into evaluation.
+    remediation: Rebuild the split by the independent group, freeze and hash its manifest, retrain/evaluate,
+      register the leakage assessment, and invalidate affected results.
+    waiver_policy:
+      allowed: false
+      rationale: A contaminated held-out estimate cannot be repaired by disclosure alone.
+  - id: AIM002
+    title: Correlated trajectory frames split across partitions
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - ai_ml
+        - molecular_dynamics
+      phases:
+        - domain_semantics
+    severity: blocker
+    condition: adjacent or correlated frames from the same trajectory/replica/continuous simulation segment are
+      randomly distributed across training and validation/test partitions, or trajectory identity is
+      unavailable when frame-derived rows are split.
+    pointer_hint: /extensions/domain_payloads/*/split_records/*/trajectory_boundary
+    message: Correlated frames from one trajectory are used on both sides of an evaluation boundary.
+    remediation: Group by trajectory, replica, or an independence-justified block; rebuild and hash splits;
+      retrain and invalidate contaminated evaluations.
+    waiver_policy:
+      allowed: false
+      rationale: Random frame splitting does not create independent held-out evidence.
+  - id: AIM003
+    title: Stateful preprocessing fit outside training data
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - ai_ml
+      phases:
+        - domain_semantics
+    severity: blocker
+    condition: a stateful normalization, imputation, feature selection, vocabulary, representation, calibration,
+      or similar preprocessing step is fit using validation/test rows, or its fit partition, selector, code,
+      and fitted artifact hash are not sufficient to establish train-only fitting.
+    pointer_hint: /extensions/domain_payloads/*/preprocessing_records/*/fit_partition
+    message: Stateful preprocessing is contaminated by held-out data or its fit scope is unprovable.
+    remediation: Fit only on training data inside each split/fold, persist and hash fitted state, apply it without
+      refitting, retrain/evaluate, and invalidate affected results.
+    waiver_policy:
+      allowed: false
+      rationale: Held-out information in fitted preprocessing invalidates evaluation independence.
+  - id: AIM004
+    title: Trial search or selection history incomplete
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - ai_ml
+      phases:
+        - domain_semantics
+    severity: error
+    condition: a reported selected-role model does not exactly derive from selected completed trials, or lacks a
+      typed source-bound direct, ensemble, or post-search selection derivation whose inputs and outputs reconcile
+      with the full search/trial/model ledger.
+    pointer_hint: /extensions/domain_payloads/*/search_records/*
+    message: The model-selection result cannot be reconciled with the complete trial history.
+    remediation: Register search budget/space/rule, every attempted trial and failure, and a typed
+      selection_derivation tying selected_trial_ids and their models to exactly the selected-role output models;
+      use an explicit source-bound ensemble/post-search rule when outputs are not direct trial models.
+    waiver_policy:
+      allowed: true
+      maximum_severity_after_waiver: warning
+      requirements:
+        - missing_trials_bounded
+        - selection_bias_disclosed
+        - test_claims_qualified
+        - named_approver
+  - id: AIM005
+    title: Test access is inconsistent with model selection claims
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - ai_ml
+      phases:
+        - domain_semantics
+    severity: blocker
+    condition: test results, rows, labels, or feedback were accessed before a claimed frozen selection/threshold
+      decision, an access event is missing from the timeline, or test feedback influenced tuning while the
+      result remains labeled untouched or confirmatory.
+    pointer_hint: /extensions/domain_payloads/*/test_access_events
+    message: Test-data access history contradicts the claimed evaluation timing or independence.
+    remediation: Complete the access ledger, relabel affected decisions/results as adaptive or post hoc, use a
+      genuinely untouched evaluation set where available, and update claims and uncertainty.
+    waiver_policy:
+      allowed: false
+      rationale: Access timing is historical and determines confirmatory status.
+  - id: MDS001
+    title: Molecular-dynamics restart chain is incomplete
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - molecular_dynamics
+      phases:
+        - domain_semantics
+    severity: blocker
+    condition: a checkpoint restart or parameter-changing continuation lacks linked prior and new immutable
+      segments, trigger, checkpoint identity, changed-parameter record, failure/partial-output disposition, or
+      preserved earlier trajectory.
+    pointer_hint: /extensions/domain_payloads/*/restart_records/*
+    message: A simulation restart does not preserve the complete segment and failure history.
+    remediation: Restore every segment, checkpoint and failure event, link the restart, record parameter changes
+      and scientific impact, and keep usable pre-failure outputs with their explicit disposition.
+    waiver_policy:
+      allowed: false
+      rationale: Restart history is required to interpret trajectory continuity and protocol changes.
+  - id: MDS002
+    title: Structured sampling-adequacy conclusion lacks diagnostics
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - molecular_dynamics
+      phases:
+        - domain_semantics
+    severity: blocker
+    condition: sampling_adequacy_assessment has an affirmative qualified_adequacy, adequate, or converged status
+      without known burn-in, autocorrelation, effective sample sizes, criteria, diagnostics, replica-level
+      results, and heterogeneity, or its structured support assessments are not affirmatively source-bound.
+    pointer_hint: /extensions/domain_payloads/*/trajectory_analysis_records/*/sampling_adequacy_assessment
+    message: The structured molecular-dynamics sampling-adequacy conclusion is stronger than its diagnostics support.
+    remediation: Record the typed conclusion status and observable scope, define criteria and timing, report
+      burn-in, autocorrelation/effective samples, per-replica results and heterogeneity, and bind affirmative
+      criteria/diagnostic/ESS/replica assessments; otherwise use insufficient_sampling or no_conclusion.
+    waiver_policy:
+      allowed: false
+      rationale: A convergence claim is a scientific conclusion, not a formatting choice.
+  - id: MDS003
+    title: Trajectory analysis slice is not reproducibly identified
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - molecular_dynamics
+      phases:
+        - domain_semantics
+    severity: error
+    condition: a trajectory-derived result lacks trajectory/segment identities, PBC processing, fit and
+      measurement selections, frame range, stride, burn-in, exact DataSlice, analysis run, or output linkage.
+    pointer_hint: /extensions/domain_payloads/*/trajectory_analysis_records/*/data_slice_id
+    message: A trajectory-derived result cannot be reproduced from a precise processed frame slice.
+    remediation: Register the full processing order, selections, frames/stride/burn-in, segment and artifact
+      hashes, DataSlice and analysis run, then regenerate affected outputs.
+    waiver_policy:
+      allowed: true
+      maximum_severity_after_waiver: warning
+      requirements:
+        - missing_dimension_named
+        - affected_results_listed
+        - no_reproducibility_upgrade
+        - named_approver
+  - id: MDS004
+    title: Simulated system or protocol identity is incomplete
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - molecular_dynamics
+      phases:
+        - domain_semantics
+    severity: error
+    condition: a critical simulation result lacks explicit known/missing states for source structure/version and
+      atom mapping, system components, chemistry/protonation, force-field parameter versions/hashes,
+      solvation/ions/PBC, or applicable integrator, timestep, thermostat, barostat, constraints, cutoff and
+      long-range electrostatics settings.
+    pointer_hint: /extensions/domain_payloads/*/system_records/*
+    message: The molecular system or simulation protocol is not identified enough to interpret the result.
+    remediation: Record source-bound values or explicit unknown/not_applicable/withheld envelopes and parameter
+      artifacts; qualify system-dependent claims and lower reproducibility axes where identity remains
+      incomplete.
+    waiver_policy:
+      allowed: true
+      maximum_severity_after_waiver: warning
+      requirements:
+        - missing_parameters_listed
+        - interpretation_impact_disclosed
+        - no_reproducibility_upgrade
+        - named_approver
+  - id: MDS005
+    title: Replica evidence is not independent
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - molecular_dynamics
+      phases:
+        - domain_semantics
+    severity: error
+    condition: simulations counted as independent replicas share the same stochastic stream or effective initial
+      condition without a justified independence basis, seed lineage is unknown, or restarted segments are
+      counted as new replicas rather than continuations.
+    pointer_hint: /extensions/domain_payloads/*/replica_records/*/independence_basis
+    message: Molecular-dynamics replicas or restarts are counted as more independent evidence than recorded
+      initialization supports.
+    remediation: Reconstruct seed and initial-condition lineage, classify restarts as segments, cluster dependent
+      replicas, recompute independent counts and uncertainty, and revise corroboration language.
+    waiver_policy:
+      allowed: true
+      maximum_severity_after_waiver: warning
+      requirements:
+        - dependency_disclosed
+        - independent_count_corrected
+        - uncertainty_reassessed
+        - named_approver
+  - id: CLM002
+    title: Claim dependency graph contains a cycle
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - argument_graph
+    severity: blocker
+    condition: The claim-argument dependency subgraph contains a cycle.
+    pointer_hint: /argument_steps
+    message: Claim dependency graph contains a cycle.
+    remediation: Remove or reorient cyclic argument dependencies, preserve the affected premises as
+      review-required, and recompute every reachable claim before validation.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: TIM002
+    title: Adaptive decision lacks a locked rule
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - decision_timing
+    severity: blocker
+    condition: An adaptive label lacks a locked adaptation rule, trigger, or permitted-change record.
+    pointer_hint: /decision_events/*
+    message: Adaptive decision lacks a locked rule.
+    remediation: Restore append-only decision history and trustworthy timing evidence; relabel the decision as
+      adaptive, post_hoc, missing, or unknown when prospective timing cannot be established.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: TIM003
+    title: Post-hoc decision overwrote prior history
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - decision_timing
+    severity: blocker
+    condition: A post-hoc material change overwrites the earlier decision.
+    pointer_hint: /decision_events/*/supersedes
+    message: Post-hoc decision overwrote prior history.
+    remediation: Restore append-only decision history and trustworthy timing evidence; relabel the decision as
+      adaptive, post_hoc, missing, or unknown when prospective timing cannot be established.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: TIM004
+    title: Missing timing narrated as prospective
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - decision_timing
+    severity: blocker
+    condition: Missing timing is narrated as prospective, preregistered, or confirmatory.
+    pointer_hint: /decision_events/*/timing_classification
+    message: Missing timing narrated as prospective.
+    remediation: Restore append-only decision history and trustworthy timing evidence; relabel the decision as
+      adaptive, post_hoc, missing, or unknown when prospective timing cannot be established.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: TIM005
+    title: Timing inferred from weak metadata
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - decision_timing
+    severity: blocker
+    condition: A timing classification is inferred solely from tense, filename, publication date, or filesystem
+      metadata.
+    pointer_hint: /decision_events/*/timing_evidence
+    message: Timing inferred from weak metadata.
+    remediation: Restore append-only decision history and trustworthy timing evidence; relabel the decision as
+      adaptive, post_hoc, missing, or unknown when prospective timing cannot be established.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: RED002
+    title: Protected required field has the wrong missing state
+    scope:
+      artifacts:
+        - public_scientific_report
+        - package_manifest
+        - rendered_bundle
+      domains:
+        - core
+      phases:
+        - disclosure
+    severity: blocker
+    condition: A protected required field is omitted or mapped to unknown or not_applicable instead of withheld, or
+      the public payload is not compared with its hash-bound canonical source and field-action projection record.
+    pointer_hint: /disclosure_projection
+    message: Protected required field has the wrong missing state.
+    remediation: Rebuild the public projection and package from authorized disclosure decisions, preserve withheld
+      semantics, remove recoverable metadata and remote activity, and rerun every disclosure check before
+      release.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: RED003
+    title: Redaction metadata leaks protected content
+    scope:
+      artifacts:
+        - public_scientific_report
+        - package_manifest
+        - rendered_bundle
+      domains:
+        - core
+      phases:
+        - disclosure
+    severity: blocker
+    condition: A redaction token, identifier, digest, filename, count, index, or metadata can disclose or feasibly
+      recover a protected value.
+    pointer_hint: /package_manifest/files/*
+    message: Redaction metadata leaks protected content.
+    remediation: Rebuild the public projection and package from authorized disclosure decisions, preserve withheld
+      semantics, remove recoverable metadata and remote activity, and rerun every disclosure check before
+      release.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: RED004
+    title: Disclosure projection changes scientific meaning
+    scope:
+      artifacts:
+        - public_scientific_report
+        - package_manifest
+        - rendered_bundle
+      domains:
+        - core
+      phases:
+        - disclosure
+    severity: blocker
+    condition: Projection strengthens scientific meaning, changes a non-disclosure epistemic state, drops provenance
+      without an authorized field action, or fails canonical-source/projected-payload hash and replay reconciliation.
+    pointer_hint: /disclosure_projection
+    message: Disclosure projection changes scientific meaning.
+    remediation: Rebuild the public projection and package from authorized disclosure decisions, preserve withheld
+      semantics, remove recoverable metadata and remote activity, and rerun every disclosure check before
+      release.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: RED005
+    title: Public package uses active remote content
+    scope:
+      artifacts:
+        - public_scientific_report
+        - package_manifest
+        - rendered_bundle
+      domains:
+        - core
+      phases:
+        - disclosure
+    severity: blocker
+    condition: A public package contains active remote dependencies or emits network requests.
+    pointer_hint: /package_manifest/files/*
+    message: Public package uses active remote content.
+    remediation: Rebuild the public projection and package from authorized disclosure decisions, preserve withheld
+      semantics, remove recoverable metadata and remote activity, and rerun every disclosure check before
+      release.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: RED006
+    title: Release proceeds after an unevaluated disclosure check
+    scope:
+      artifacts:
+        - public_scientific_report
+        - package_manifest
+        - rendered_bundle
+      domains:
+        - core
+      phases:
+        - disclosure
+    severity: blocker
+    condition: Release occurs after any disclosure check is not_evaluated, unknown, or failed.
+    pointer_hint: /validation_attestation/gates
+    message: Release proceeds after an unevaluated disclosure check.
+    remediation: Rebuild the public projection and package from authorized disclosure decisions, preserve withheld
+      semantics, remove recoverable metadata and remote activity, and rerun every disclosure check before
+      release.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: EPI001
+    title: Scientific assertion lacks a support path
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - epistemic
+    severity: blocker
+    condition: "The invariant is violated: Every non-background scientific assertion must bind to direct evidence,
+      a derivation closure, or explicit upstream claims and argument steps."
+    pointer_hint: /claims/*
+    message: Scientific assertion lacks a support path.
+    remediation: "Correct all affected objects so the invariant is restored without guessing, deleting adverse
+      history, strengthening claims, or leaking withheld content: Every non-background scientific assertion
+      must bind to direct evidence, a derivation closure, or explicit upstream claims and argument steps."
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: EPI002
+    title: Non-performed work represented as project-performed
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - epistemic
+    severity: blocker
+    condition: "The invariant is violated: Planned, inferred, external, not-performed, and unknown work must never
+      be narrated or counted as project-performed work."
+    pointer_hint: /work_units/*
+    message: Non-performed work represented as project-performed.
+    remediation: "Correct all affected objects so the invariant is restored without guessing, deleting adverse
+      history, strengthening claims, or leaking withheld content: Planned, inferred, external, not-performed,
+      and unknown work must never be narrated or counted as project-performed work."
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: EPI003
+    title: Unknown value was guessed
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - epistemic
+    severity: blocker
+    condition: "The invariant is violated: Unknown values must remain unknown; normalization and narrative
+      generation must not guess them."
+    pointer_hint: /*/state
+    message: Unknown value was guessed.
+    remediation: "Correct all affected objects so the invariant is restored without guessing, deleting adverse
+      history, strengthening claims, or leaking withheld content: Unknown values must remain unknown;
+      normalization and narrative generation must not guess them."
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: EPI004
+    title: Adverse scientific record lost
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - epistemic
+    severity: blocker
+    condition: "The invariant is violated: Negative, null, failed, excluded, superseded, retracted, and
+      conflicting records within scope must remain first-class records."
+    pointer_hint: /results
+    message: Adverse scientific record lost.
+    remediation: "Correct all affected objects so the invariant is restored without guessing, deleting adverse
+      history, strengthening claims, or leaking withheld content: Negative, null, failed, excluded,
+      superseded, retracted, and conflicting records within scope must remain first-class records."
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: EPI005
+    title: Retry history mutated
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - epistemic
+    severity: blocker
+    condition: "The invariant is violated: A retry appends a new attempt or segment and must not overwrite prior
+      history."
+    pointer_hint: /work_units/*/attempts
+    message: Retry history mutated.
+    remediation: "Correct all affected objects so the invariant is restored without guessing, deleting adverse
+      history, strengthening claims, or leaking withheld content: A retry appends a new attempt or segment and
+      must not overwrite prior history."
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: EPI006
+    title: Numeric claim lost quantitative context
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - epistemic
+    severity: blocker
+    condition: "The invariant is violated: Every numeric claim must preserve units, population or denominator,
+      uncertainty where applicable, and a derivation or exact source locator."
+    pointer_hint: /claims/*
+    message: Numeric claim lost quantitative context.
+    remediation: "Correct all affected objects so the invariant is restored without guessing, deleting adverse
+      history, strengthening claims, or leaking withheld content: Every numeric claim must preserve units,
+      population or denominator, uncertainty where applicable, and a derivation or exact source locator."
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: EPI007
+    title: Report boundary is incomplete
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - epistemic
+    severity: blocker
+    condition: "The invariant is violated: The report must state its source universe, cutoff, inclusion boundary,
+      exclusion boundary, and completeness class."
+    pointer_hint: /source_coverage
+    message: Report boundary is incomplete.
+    remediation: "Correct all affected objects so the invariant is restored without guessing, deleting adverse
+      history, strengthening claims, or leaking withheld content: The report must state its source universe,
+      cutoff, inclusion boundary, exclusion boundary, and completeness class."
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: EPI008
+    title: Conflict silently reconciled
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - epistemic
+    severity: blocker
+    condition: "The invariant is violated: Conflicting values must not be silently reconciled; conflict or
+      justified heterogeneity must be represented explicitly."
+    pointer_hint: /conflict_sets
+    message: Conflict silently reconciled.
+    remediation: "Correct all affected objects so the invariant is restored without guessing, deleting adverse
+      history, strengthening claims, or leaking withheld content: Conflicting values must not be silently
+      reconciled; conflict or justified heterogeneity must be represented explicitly."
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: EPI009
+    title: Invalidation did not propagate
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - epistemic
+    severity: blocker
+    condition: "The invariant is violated: A source correction, retraction, or invalidation must propagate to
+      dependent evidence, derivations, claims, question resolutions, and summaries."
+    pointer_hint: /revision_events/*
+    message: Invalidation did not propagate.
+    remediation: "Correct all affected objects so the invariant is restored without guessing, deleting adverse
+      history, strengthening claims, or leaking withheld content: A source correction, retraction, or
+      invalidation must propagate to dependent evidence, derivations, claims, question resolutions, and
+      summaries."
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: EPI010
+    title: Validation claim lacks matching attestation
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - epistemic
+    severity: blocker
+    condition: "The invariant is violated: Validation claims must come only from a matching validation
+      attestation, not from prose, filenames, or generation logs."
+    pointer_hint: /validation_attestation
+    message: Validation claim lacks matching attestation.
+    remediation: "Correct all affected objects so the invariant is restored without guessing, deleting adverse
+      history, strengthening claims, or leaking withheld content: Validation claims must come only from a
+      matching validation attestation, not from prose, filenames, or generation logs."
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: EPI011
+    title: Rendering changes scientific semantics
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - epistemic
+    severity: blocker
+    condition: "The invariant is violated: Public rendering must be a deterministic, lossless presentation of the
+      public scientific payload for all material scientific states."
+    pointer_hint: /render_validation
+    message: Rendering changes scientific semantics.
+    remediation: "Correct all affected objects so the invariant is restored without guessing, deleting adverse
+      history, strengthening claims, or leaking withheld content: Public rendering must be a deterministic,
+      lossless presentation of the public scientific payload for all material scientific states."
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: EPI012
+    title: Disclosure projection erases withheld state
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - epistemic
+    severity: blocker
+    condition: "The invariant is violated: Disclosure projection must preserve the existence and semantic state of
+      withheld required records without leaking protected values."
+    pointer_hint: /disclosure_state
+    message: Disclosure projection erases withheld state.
+    remediation: "Correct all affected objects so the invariant is restored without guessing, deleting adverse
+      history, strengthening claims, or leaking withheld content: Disclosure projection must preserve the
+      existence and semantic state of withheld required records without leaking protected values."
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: WFA001
+    title: Wet-lab species applicability is wrong
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - wet_lab
+      phases:
+        - applicability
+    severity: blocker
+    condition: "When Entity is a biological organism, tissue, cell, sample, construct hosted in a biological
+      system, or derived material whose species affects interpretation., the field at /entities/*/species is
+      absent or marked not_applicable; or not_applicable is used without establishing: Entity is proven wholly
+      nonbiological and no biological correspondence is claimed."
+    pointer_hint: /extensions/domain_payloads/*/specimen_records/*/organism
+    message: Wet-lab species applicability is wrong.
+    remediation: Evaluate applicability from source-bound context. When applicable, record a known, unknown, or
+      withheld envelope at /entities/*/species; use not_applicable only with the named rule and traceable
+      evidence.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: WFA002
+    title: Wet-lab donor applicability is wrong
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - wet_lab
+      phases:
+        - applicability
+    severity: blocker
+    condition: "When Human, animal, or donor-derived biological material is used and donor dependence is
+      material., the field at /entities/*/donor_id is absent or marked not_applicable; or not_applicable is
+      used without establishing: Material is a clonal line or non-donor-derived system and donor grouping has
+      no meaning."
+    pointer_hint: /extensions/domain_payloads/*/specimen_records/*/donor
+    message: Wet-lab donor applicability is wrong.
+    remediation: Evaluate applicability from source-bound context. When applicable, record a known, unknown, or
+      withheld envelope at /entities/*/donor_id; use not_applicable only with the named rule and traceable
+      evidence.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: WFA003
+    title: Cell-passage applicability is wrong
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - wet_lab
+      phases:
+        - applicability
+    severity: blocker
+    condition: "When A passaged cell culture is used., the field at /entities/*/passage is absent or marked
+      not_applicable; or not_applicable is used without establishing: Entity is not a passaged cell culture."
+    pointer_hint: /extensions/domain_payloads/*/material_records/*/passage
+    message: Cell-passage applicability is wrong.
+    remediation: Evaluate applicability from source-bound context. When applicable, record a known, unknown, or
+      withheld envelope at /entities/*/passage; use not_applicable only with the named rule and traceable
+      evidence.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: WFA004
+    title: Randomization applicability is wrong
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - wet_lab
+      phases:
+        - applicability
+    severity: blocker
+    condition: "When Allocation or processing order could affect comparison., the field at
+      /methods/*/randomization is absent or marked not_applicable; or not_applicable is used without
+      establishing: No comparative allocation or order-sensitive sampling exists and rationale is recorded."
+    pointer_hint: /extensions/domain_payloads/*/replicate_designs/*/randomization
+    message: Randomization applicability is wrong.
+    remediation: Evaluate applicability from source-bound context. When applicable, record a known, unknown, or
+      withheld envelope at /methods/*/randomization; use not_applicable only with the named rule and traceable
+      evidence.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: WFA005
+    title: Blinding applicability is wrong
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - wet_lab
+      phases:
+        - applicability
+    severity: blocker
+    condition: "When Human or process knowledge could influence measurement, selection, or interpretation., the
+      field at /methods/*/blinding is absent or marked not_applicable; or not_applicable is used without
+      establishing: The complete procedure is objectively automated and no discretionary step exists."
+    pointer_hint: /extensions/domain_payloads/*/replicate_designs/*/blinding
+    message: Blinding applicability is wrong.
+    remediation: Evaluate applicability from source-bound context. When applicable, record a known, unknown, or
+      withheld envelope at /methods/*/blinding; use not_applicable only with the named rule and traceable
+      evidence.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: WFA006
+    title: Assay-sensitivity applicability is wrong
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - wet_lab
+      phases:
+        - applicability
+    severity: blocker
+    condition: "When A negative, null, absence, equivalence, noninferiority, or detection-limit claim is made.,
+      the field at /results/*/assay_sensitivity is absent or marked not_applicable; or not_applicable is used
+      without establishing: No such claim or interpretation is in scope."
+    pointer_hint: /extensions/domain_payloads/*/control_records/*/assay_sensitivity
+    message: Assay-sensitivity applicability is wrong.
+    remediation: Evaluate applicability from source-bound context. When applicable, record a known, unknown, or
+      withheld envelope at /results/*/assay_sensitivity; use not_applicable only with the named rule and
+      traceable evidence.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: AFA001
+    title: Split-manifest applicability is wrong
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - ai_ml
+      phases:
+        - applicability
+    severity: blocker
+    condition: "When Data are partitioned for training, selection, calibration, validation, or testing., the field
+      at /entities/*/split_manifest is absent or marked not_applicable; or not_applicable is used without
+      establishing: No data partition or generalization claim exists."
+    pointer_hint: /extensions/domain_payloads/*/split_records
+    message: Split-manifest applicability is wrong.
+    remediation: Evaluate applicability from source-bound context. When applicable, record a known, unknown, or
+      withheld envelope at /entities/*/split_manifest; use not_applicable only with the named rule and
+      traceable evidence.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: AFA002
+    title: Leakage group-key applicability is wrong
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - ai_ml
+      phases:
+        - applicability
+    severity: blocker
+    condition: "When Rows share donor, patient, sequence cluster, structure template, trajectory, batch, or
+      another leakage-relevant ancestor., the field at /entities/*/group_key is absent or marked
+      not_applicable; or not_applicable is used without establishing: Independence of every row is established
+      and no grouping variable exists."
+    pointer_hint: /extensions/domain_payloads/*/split_records/*/group_key
+    message: Leakage group-key applicability is wrong.
+    remediation: Evaluate applicability from source-bound context. When applicable, record a known, unknown, or
+      withheld envelope at /entities/*/group_key; use not_applicable only with the named rule and traceable
+      evidence.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: AFA003
+    title: Test-access applicability is wrong
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - ai_ml
+      phases:
+        - applicability
+    severity: blocker
+    condition: "When A held-out test resource or final evaluation set exists., the field at
+      /methods/*/test_access_log is absent or marked not_applicable; or not_applicable is used without
+      establishing: No held-out test claim or resource exists."
+    pointer_hint: /extensions/domain_payloads/*/test_access_events
+    message: Test-access applicability is wrong.
+    remediation: Evaluate applicability from source-bound context. When applicable, record a known, unknown, or
+      withheld envelope at /methods/*/test_access_log; use not_applicable only with the named rule and
+      traceable evidence.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: AFA004
+    title: AI/ML random-state applicability is wrong
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - ai_ml
+      phases:
+        - applicability
+    severity: blocker
+    condition: "When Training, selection, sampling, initialization, augmentation, or evaluation is stochastic or
+      nondeterministic., the field at /methods/*/random_state is absent or marked not_applicable; or
+      not_applicable is used without establishing: All applicable operations are deterministically proven and
+      no random state is consumed."
+    pointer_hint: /extensions/domain_payloads/*/randomness_records
+    message: AI/ML random-state applicability is wrong.
+    remediation: Evaluate applicability from source-bound context. When applicable, record a known, unknown, or
+      withheld envelope at /methods/*/random_state; use not_applicable only with the named rule and traceable
+      evidence.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: AFA005
+    title: Calibration applicability is wrong
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - ai_ml
+      phases:
+        - applicability
+    severity: blocker
+    condition: "When Probabilities, risks, or confidence values are interpreted quantitatively., the field at
+      /results/*/calibration is absent or marked not_applicable; or not_applicable is used without
+      establishing: Outputs are not probabilistic and no calibration claim is made."
+    pointer_hint: /extensions/domain_payloads/*/evaluation_records/*/calibration_assessment
+    message: Calibration applicability is wrong.
+    remediation: Evaluate applicability from source-bound context. When applicable, record a known, unknown, or
+      withheld envelope at /results/*/calibration; use not_applicable only with the named rule and traceable
+      evidence.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: MFA001
+    title: Protonation applicability is wrong
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - molecular_dynamics
+      phases:
+        - applicability
+    severity: blocker
+    condition: "When The simulated system includes ionizable sites whose state affects the model., the field at
+      /entities/*/protonation_state is absent or marked not_applicable; or not_applicable is used without
+      establishing: No ionizable modeled entity exists."
+    pointer_hint: /extensions/domain_payloads/*/protonation_records
+    message: Protonation applicability is wrong.
+    remediation: Evaluate applicability from source-bound context. When applicable, record a known, unknown, or
+      withheld envelope at /entities/*/protonation_state; use not_applicable only with the named rule and
+      traceable evidence.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: MFA002
+    title: Periodic-boundary applicability is wrong
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - molecular_dynamics
+      phases:
+        - applicability
+    severity: blocker
+    condition: "When The simulated system uses a periodic box., the field at
+      /methods/*/periodic_boundary_conditions is absent or marked not_applicable; or not_applicable is used
+      without establishing: A nonperiodic method is established."
+    pointer_hint: /extensions/domain_payloads/*/solvation_records/*/periodic_boundary_conditions
+    message: Periodic-boundary applicability is wrong.
+    remediation: Evaluate applicability from source-bound context. When applicable, record a known, unknown, or
+      withheld envelope at /methods/*/periodic_boundary_conditions; use not_applicable only with the named
+      rule and traceable evidence.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: MFA003
+    title: MD random-state applicability is wrong
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - molecular_dynamics
+      phases:
+        - applicability
+    severity: blocker
+    condition: "When Initialization, thermostat, enhanced sampling, replica generation, or another operation is
+      stochastic., the field at /methods/*/random_state is absent or marked not_applicable; or not_applicable
+      is used without establishing: The full procedure is deterministically proven."
+    pointer_hint: /extensions/domain_payloads/*/replica_records/*/root_seed
+    message: MD random-state applicability is wrong.
+    remediation: Evaluate applicability from source-bound context. When applicable, record a known, unknown, or
+      withheld envelope at /methods/*/random_state; use not_applicable only with the named rule and traceable
+      evidence.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: MFA004
+    title: Correlation analysis applicability is wrong
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - molecular_dynamics
+      phases:
+        - applicability
+    severity: blocker
+    condition: "When Frames or time-correlated observations support uncertainty, convergence, or
+      independent-sample claims., the field at /results/*/correlation_time_and_effective_sample_size is absent
+      or marked not_applicable; or not_applicable is used without establishing: No time-series inferential or
+      convergence claim is made."
+    pointer_hint: /extensions/domain_payloads/*/trajectory_analysis_records/*/correlation_time_estimates
+    message: Correlation analysis applicability is wrong.
+    remediation: Evaluate applicability from source-bound context. When applicable, record a known, unknown, or
+      withheld envelope at /results/*/correlation_time_and_effective_sample_size; use not_applicable only with
+      the named rule and traceable evidence.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: MFA005
+    title: Restart-lineage applicability is wrong
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - molecular_dynamics
+      phases:
+        - applicability
+    severity: blocker
+    condition: "When An attempt has multiple segments, checkpoint continuation, or restart., the field at
+      /attempts/*/restart_lineage is absent or marked not_applicable; or not_applicable is used without
+      establishing: A single uninterrupted segment is established."
+    pointer_hint: /extensions/domain_payloads/*/restart_records
+    message: Restart-lineage applicability is wrong.
+    remediation: Evaluate applicability from source-bound context. When applicable, record a known, unknown, or
+      withheld envelope at /attempts/*/restart_lineage; use not_applicable only with the named rule and
+      traceable evidence.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: APP001
+    title: Not-applicable lacks a valid decision
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - applicability
+    severity: blocker
+    condition: not_applicable lacks a satisfied applicability rule and traceable decision.
+    pointer_hint: /applicability_decisions/*
+    message: Not-applicable lacks a valid decision.
+    remediation: Restore the original epistemic state, add a traceable applicability decision and rule basis,
+      enable any triggered module, and do not infer non-applicability from absence or an empty array.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: APP002
+    title: Unknown context converted to not-applicable
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - applicability
+    severity: blocker
+    condition: Unknown or absent context is converted to not_applicable.
+    pointer_hint: /applicability_decisions/*
+    message: Unknown context converted to not-applicable.
+    remediation: Restore the original epistemic state, add a traceable applicability decision and rule basis,
+      enable any triggered module, and do not infer non-applicability from absence or an empty array.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: APP003
+    title: Withheld state was changed
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - applicability
+    severity: blocker
+    condition: A withheld value is converted to unknown, not_applicable, zero, false, or empty.
+    pointer_hint: /*/state
+    message: Withheld state was changed.
+    remediation: Restore the original epistemic state, add a traceable applicability decision and rule basis,
+      enable any triggered module, and do not infer non-applicability from absence or an empty array.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: APP004
+    title: Applicable domain module omitted
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - applicability
+    severity: blocker
+    condition: A domain trigger exists while the corresponding module is omitted or marked not_applicable.
+    pointer_hint: /module_manifest
+    message: Applicable domain module omitted.
+    remediation: Restore the original epistemic state, add a traceable applicability decision and rule basis,
+      enable any triggered module, and do not infer non-applicability from absence or an empty array.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: APP005
+    title: Empty collection used as applicability evidence
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - applicability
+    severity: blocker
+    condition: An empty collection is used as the only evidence of no records or inapplicability.
+    pointer_hint: /section_coverage/*
+    message: Empty collection used as applicability evidence.
+    remediation: Restore the original epistemic state, add a traceable applicability decision and rule basis,
+      enable any triggered module, and do not infer non-applicability from absence or an empty array.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: MOD001
+    title: Report mode is absent or hidden
+    scope:
+      artifacts:
+        - scientific_report
+        - rendered_bundle
+      domains:
+        - core
+      phases:
+        - rendering
+    severity: error
+    condition: A report mode is absent or not visibly labelled.
+    pointer_hint: /report_mode
+    message: Report mode is absent or hidden.
+    remediation: Label the mode and subset visibly, provide a route to the complete static archive, require
+      current gate/attestation evidence for release, and append revisions rather than mutating an archive.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: MOD002
+    title: Partial view represented as a complete release
+    scope:
+      artifacts:
+        - scientific_report
+        - rendered_bundle
+      domains:
+        - core
+      phases:
+        - rendering
+    severity: blocker
+    condition: A working copy, review package, summary, or filtered view is represented as a complete release.
+    pointer_hint: /report_mode
+    message: Partial view represented as a complete release.
+    remediation: Label the mode and subset visibly, provide a route to the complete static archive, require
+      current gate/attestation evidence for release, and append revisions rather than mutating an archive.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: MOD003
+    title: Release mode used with unresolved gates
+    scope:
+      artifacts:
+        - scientific_report
+        - rendered_bundle
+      domains:
+        - core
+      phases:
+        - rendering
+    severity: blocker
+    condition: Release has a failed, unknown, or not_evaluated required gate or a stale attestation.
+    pointer_hint: /report_mode
+    message: Release mode used with unresolved gates.
+    remediation: Label the mode and subset visibly, provide a route to the complete static archive, require
+      current gate/attestation evidence for release, and append revisions rather than mutating an archive.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: MOD004
+    title: Filter hides a material scientific state
+    scope:
+      artifacts:
+        - scientific_report
+        - rendered_bundle
+      domains:
+        - core
+      phases:
+        - rendering
+    severity: blocker
+    condition: A mode or filter suppresses a material scientific state without a visible subset indicator and
+      full-view route.
+    pointer_hint: /render_validation/filters
+    message: Filter hides a material scientific state.
+    remediation: Label the mode and subset visibly, provide a route to the complete static archive, require
+      current gate/attestation evidence for release, and append revisions rather than mutating an archive.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: MOD005
+    title: Archive record modified in place
+    scope:
+      artifacts:
+        - scientific_report
+        - rendered_bundle
+      domains:
+        - core
+      phases:
+        - rendering
+    severity: blocker
+    condition: An archival record is modified in place.
+    pointer_hint: /revision_events
+    message: Archive record modified in place.
+    remediation: Label the mode and subset visibly, provide a route to the complete static archive, require
+      current gate/attestation evidence for release, and append revisions rather than mutating an archive.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: REP002
+    title: Recipe fidelity lacks invocation comparison
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - reproducibility
+    severity: blocker
+    condition: Recipe fidelity is asserted without comparing the recipe to historical invocation evidence.
+    pointer_hint: /reproducibility_units/*/recipe_comparison
+    message: Recipe fidelity lacks invocation comparison.
+    remediation: Expose every reproducibility axis and critical-unit denominator, add the required invocation
+      comparison, replay, comparator, or independence assessment, and lower the claimed level to the weakest
+      supported axis.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: REP003
+    title: Replay level asserted without a completed replay
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - reproducibility
+    severity: blocker
+    condition: R2 is asserted without a completed replay and predefined or valid adaptive comparator.
+    pointer_hint: /reproducibility_units/*/replay_events
+    message: Replay level asserted without a completed replay.
+    remediation: Expose every reproducibility axis and critical-unit denominator, add the required invocation
+      comparison, replay, comparator, or independence assessment, and lower the claimed level to the weakest
+      supported axis.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: REP004
+    title: Independent reproduction asserted without independence
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - reproducibility
+    severity: blocker
+    condition: R3 is asserted without an explicit and adequate independence assessment.
+    pointer_hint: /reproducibility_units/*/independence
+    message: Independent reproduction asserted without independence.
+    remediation: Expose every reproducibility axis and critical-unit denominator, add the required invocation
+      comparison, replay, comparator, or independence assessment, and lower the claimed level to the weakest
+      supported axis.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: REP005
+    title: Computational and experimental reproduction collapsed
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - reproducibility
+    severity: error
+    condition: Computational reproduction and experimental replication are collapsed into one unlabeled state.
+    pointer_hint: /reproducibility_units/*/reproduction_kind
+    message: Computational and experimental reproduction collapsed.
+    remediation: Expose every reproducibility axis and critical-unit denominator, add the required invocation
+      comparison, replay, comparator, or independence assessment, and lower the claimed level to the weakest
+      supported axis.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: REP006
+    title: Reproducibility coverage omits key computations or critical units
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - reproducibility
+    severity: blocker
+    condition: A summary hides critical units or uses a self-selected denominator; an actual invocation or
+      AnalysisRun is uncovered by a reproducibility unit; or a covered key computation lacks a source-bound
+      assessed/explicit-gap disposition.
+    pointer_hint: /reproducibility_summary
+    message: Key computational work or a critical reproducibility denominator is unaccounted for.
+    remediation: Expose every reproducibility axis and critical-unit denominator, add the required invocation
+      comparison, replay, comparator, or independence assessment, and lower the claimed level to the weakest
+      supported axis.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: RES001
+    title: Technical failure collapsed into a result axis
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - results
+    severity: blocker
+    condition: A technical failure is encoded only as a scientific effect, statistical decision, or exclusion.
+    pointer_hint: /failures
+    message: Technical failure collapsed into a result axis.
+    remediation: Record technical failure separately and populate each orthogonal result axis only from its own
+      evidence; use explicit unknown or not_applicable rather than inference from another axis.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: RES002
+    title: One result axis inferred from another
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - results
+    severity: error
+    condition: One result axis is omitted or inferred solely from another axis.
+    pointer_hint: /results/*
+    message: One result axis inferred from another.
+    remediation: Record technical failure separately and populate each orthogonal result axis only from its own
+      evidence; use explicit unknown or not_applicable rather than inference from another axis.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: COV003
+    title: Source item lacks one current disposition
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - coverage
+    severity: blocker
+    condition: A source item lacks exactly one current disposition.
+    pointer_hint: /source_coverage/registered_items/*/disposition
+    message: Source item lacks one current disposition.
+    remediation: "Correct the source ledger without deleting the source: preserve snapshot identity, record one
+      current disposition and required equivalence/mapping/revision evidence, then recompute bounded
+      completeness."
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: COV004
+    title: Duplicate source lacks equivalence basis
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - coverage
+    severity: blocker
+    condition: A duplicate lacks a canonical source and equivalence basis.
+    pointer_hint: /source_coverage/registered_items/*/duplicate_of
+    message: Duplicate source lacks equivalence basis.
+    remediation: "Correct the source ledger without deleting the source: preserve snapshot identity, record one
+      current disposition and required equivalence/mapping/revision evidence, then recompute bounded
+      completeness."
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: COV005
+    title: Unmapped source treated as incorporated
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - coverage
+    severity: blocker
+    condition: An unmapped item is treated as scientifically incorporated.
+    pointer_hint: /source_coverage/registered_items/*/disposition
+    message: Unmapped source treated as incorporated.
+    remediation: "Correct the source ledger without deleting the source: preserve snapshot identity, record one
+      current disposition and required equivalence/mapping/revision evidence, then recompute bounded
+      completeness."
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: COV006
+    title: Late source changed a frozen snapshot
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - coverage
+    severity: blocker
+    condition: A late-arriving source changes a frozen snapshot without a revision event.
+    pointer_hint: /source_coverage/snapshots
+    message: Late source changed a frozen snapshot.
+    remediation: "Correct the source ledger without deleting the source: preserve snapshot identity, record one
+      current disposition and required equivalence/mapping/revision evidence, then recompute bounded
+      completeness."
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: WRK004
+    title: Planned or inferred work represented as executed
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - work_execution
+    severity: blocker
+    condition: Planned or inferred work is represented as attempted or completed without execution evidence.
+    pointer_hint: /work_units/*/status
+    message: Planned or inferred work represented as executed.
+    remediation: Restore execution state, scope, history, and count units from source-bound attempts/segments;
+      correct numerator, denominator, cutoff, and displayed wording.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: WRK005
+    title: Displayed work count lacks its denominator
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - work_execution
+    severity: error
+    condition: A displayed count lacks an explicit unit, numerator, denominator, scope, or cutoff.
+    pointer_hint: /summary_counts/*
+    message: Displayed work count lacks its denominator.
+    remediation: Restore execution state, scope, history, and count units from source-bound attempts/segments;
+      correct numerator, denominator, cutoff, and displayed wording.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: WRK006
+    title: Low-level records counted as work attempts
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - work_execution
+    severity: blocker
+    condition: Segment, artifact, or row counts are presented as work-unit or attempt counts.
+    pointer_hint: /summary_counts/*/unit
+    message: Low-level records counted as work attempts.
+    remediation: Restore execution state, scope, history, and count units from source-bound attempts/segments;
+      correct numerator, denominator, cutoff, and displayed wording.
+    waiver_policy:
+      allowed: false
+      rationale: This protocol invariant must be corrected or represented with its explicit unknown/not-applicable
+        state before release.
+  - id: MNF001
+    title: Required section coverage entry absent
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - section_coverage
+    severity: blocker
+    condition: A manifest section is absent from SectionCoverage.
+    pointer_hint: /section_coverage
+    message: Required section coverage entry absent.
+    remediation: Add or correct the required SectionCoverage entry, reconcile applicability with coverage status
+      and source accounting, and expose the same section and status in the full static archive.
+    waiver_policy:
+      allowed: false
+      rationale: Required section coverage is part of the explicit report boundary and cannot be silently omitted.
+  - id: MNF002
+    title: Invalid section applicability and coverage state
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - section_coverage
+    severity: blocker
+    condition: Section applicability and coverage status form an invalid combination.
+    pointer_hint: /section_coverage/*
+    message: Invalid section applicability and coverage state.
+    remediation: Add or correct the required SectionCoverage entry, reconcile applicability with coverage status
+      and source accounting, and expose the same section and status in the full static archive.
+    waiver_policy:
+      allowed: false
+      rationale: Required section coverage is part of the explicit report boundary and cannot be silently omitted.
+  - id: MNF003
+    title: Covered section lacks source accounting
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - section_coverage
+    severity: blocker
+    condition: covered or no_records lacks the required source-accounting evidence.
+    pointer_hint: /section_coverage/*/source_item_ids
+    message: Covered section lacks source accounting.
+    remediation: Add or correct the required SectionCoverage entry, reconcile applicability with coverage status
+      and source accounting, and expose the same section and status in the full static archive.
+    waiver_policy:
+      allowed: false
+      rationale: Required section coverage is part of the explicit report boundary and cannot be silently omitted.
+  - id: MNF004
+    title: Archive silently omits a section
+    scope:
+      artifacts:
+        - scientific_report
+        - rendered_bundle
+      domains:
+        - core
+      phases:
+        - section_coverage
+    severity: blocker
+    condition: A full archive silently omits a section heading or status.
+    pointer_hint: /render_validation/sections
+    message: Archive silently omits a section.
+    remediation: Add or correct the required SectionCoverage entry, reconcile applicability with coverage status
+      and source accounting, and expose the same section and status in the full static archive.
+    waiver_policy:
+      allowed: false
+      rationale: Required section coverage is part of the explicit report boundary and cannot be silently omitted.
+  - id: MNF005
+    title: Triggered domain section omitted
+    scope:
+      artifacts:
+        - scientific_report
+      domains:
+        - core
+      phases:
+        - section_coverage
+    severity: blocker
+    condition: A domain trigger exists but the module or its sections are absent.
+    pointer_hint: /module_manifest
+    message: Triggered domain section omitted.
+    remediation: Add or correct the required SectionCoverage entry, reconcile applicability with coverage status
+      and source accounting, and expose the same section and status in the full static archive.
+    waiver_policy:
+      allowed: false
+      rationale: Required section coverage is part of the explicit report boundary and cannot be silently omitted.

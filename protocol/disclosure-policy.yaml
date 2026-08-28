@@ -1,0 +1,202 @@
+protocol: disclosure-policy
+version: 1.0.0
+status: normative
+
+purpose: Produce audience-specific projections while preserving epistemic state and preventing protected values from leaking through content or package structure.
+
+principles:
+  - Disclosure changes visibility, not truth.
+  - A public projection is derived from an authorized canonical payload; it is not edited as an independent scientific record.
+  - Required but protected information remains represented as withheld, never silently absent, unknown, or not_applicable.
+  - Public artifacts must be safe under direct inspection, indexing, printing, search, source viewing, and file transfer.
+  - No disclosure mode may strengthen a claim, completion state, coverage class, reproducibility level, or validation status.
+
+classification_levels:
+  order_from_least_to_most_restrictive:
+    - public
+    - controlled
+    - restricted
+    - secret
+  public:
+    meaning: Approved for unrestricted release.
+  controlled:
+    meaning: Shareable only with an identified audience under recorded terms.
+  restricted:
+    meaning: Access is limited by ethics, privacy, license, security, or agreement.
+  secret:
+    meaning: Credentials, keys, tokens, or other values that must never enter a scientific report payload or release bundle.
+  rule: secret values are referenced only through safe credential or vault identifiers when necessary; their raw values are prohibited in all payloads and bundles.
+
+disclosure_profiles:
+  internal_authorized:
+    maximum_classification: restricted
+    package_rule: May contain protected scientific values only in an access-controlled package; secrets remain prohibited.
+  controlled_share:
+    maximum_classification: controlled
+    package_rule: Restricted values are projected to withheld unless a field-specific authorization grants disclosure.
+  public_release:
+    maximum_classification: public
+    package_rule: Controlled, restricted, and secret values are absent as raw values; required controlled or restricted fields are represented as withheld.
+  profile_rule: Each projection identifies profile, policy version, decision set, source payload digest, and projection digest.
+
+field_disclosure_state:
+  values:
+    public:
+      meaning: Value may be emitted for this audience.
+    withheld:
+      meaning: Value is known in a more authorized representation but cannot be emitted here.
+    unknown:
+      meaning: Value is epistemically unknown; disclosure must not disguise it as withheld.
+    not_applicable:
+      meaning: Field is inapplicable under a recorded applicability rule.
+  mapping_rules:
+    - known plus allowed classification becomes known with its value in the projection.
+    - known plus disallowed classification becomes withheld with null value.
+    - unknown remains unknown even when the field is classified.
+    - not_applicable remains not_applicable.
+    - withheld remains withheld unless the audience is authorized and the canonical value is available; it must never become guessed known.
+
+projection_algorithm:
+  ordered_steps:
+    - Bind the canonical source payload digest and disclosure profile.
+    - Evaluate field, object, relation, artifact, and filename classification decisions.
+    - Remove prohibited secret material before any serialization or logging.
+    - Replace protected required values with missing-value envelopes in withheld state.
+    - Remove optional protected objects only when their existence is itself protected and a section-level withheld coverage record preserves the gap.
+    - Replace protected identifiers with stable projection-scoped aliases where linkability is allowed.
+    - Rewrite protected paths and locators to safe aliases or withheld envelopes.
+    - Recompute references, indexes, search records, summaries, and counts from the projected graph without inferring hidden values.
+    - Scan every emitted byte and package path for prohibited material.
+    - Canonicalize and digest the projection.
+    - Produce a non-secret disclosure manifest and a restricted decision log outside the public package.
+  failure_rule: Any unresolved reference, possible leak, or policy evaluation error fails closed and blocks release.
+
+withholding_requirements:
+  public_envelope:
+    state: withheld
+    value: null
+    source_bindings: []
+    missing_reason:
+      required:
+        - non_sensitive_reason_code
+        - disclosure_decision_id
+    provenance_status: absent
+  invariants:
+    - The reason must not reveal the value, protected source identity, sensitive category detail, or membership.
+    - Public source bindings must be empty when even source existence is protected; otherwise safe public aliases may be used.
+    - Withheld values must not contribute to public aggregates unless an approved disclosure decision explicitly permits a non-invertible aggregate.
+    - Counts must be suppressed or coarsened when they reveal protected membership; their state becomes withheld rather than zero.
+
+leakage_surfaces:
+  content:
+    - public JSON and embedded structured data
+    - HTML text, attributes, comments, metadata, and templates
+    - CSS content, selectors, source maps, and custom properties
+    - JavaScript, search indexes, caches, and serialized state
+    - SVG titles, descriptions, IDs, metadata, and path labels
+    - images, thumbnails, OCR text, EXIF, and other metadata
+    - tables, print views, exports, and clipboard representations
+  package_structure:
+    - filenames and directory names
+    - relative and absolute paths
+    - manifest entries
+    - archive member names
+    - file sizes, ordering, and optional-presence patterns when sensitive
+  references:
+    - URLs, query strings, fragments, accessions, and object locators
+    - source identifiers and stable IDs
+    - integrity digests vulnerable to dictionary attack
+  operational:
+    - build logs, error traces, temporary files, caches, and validation output
+    - remote requests, analytics, fonts, scripts, styles, icons, and media
+
+public_package_prohibitions:
+  - raw credentials, API keys, passwords, session tokens, private keys, or signed access URLs
+  - protected personal, clinical, genomic, contractual, or security-sensitive values
+  - absolute filesystem paths, user names, home-directory fragments, or internal hostnames
+  - path traversal components or unsafe archive paths
+  - active remote dependencies, tracking, analytics, telemetry, or network beacons
+  - executable content derived unsafely from untrusted source material
+  - raw digests of low-entropy protected values
+  - redaction mappings or restricted disclosure-decision details
+
+safe_aliases:
+  requirements:
+    - Alias values are opaque and do not encode source value, classification, time, path, or sequence.
+    - Alias mapping is stored only at an authorized level.
+    - Aliases are stable within one declared projection lineage when scientific cross-reference requires stability.
+    - Cross-release linkability is a separate disclosure decision.
+    - Deleted or merged protected identifiers are never reassigned.
+  forbidden_methods:
+    - truncating or hashing a low-entropy protected value without a secret keyed construction
+    - preserving initials, dates, accession fragments, path fragments, or source ordering
+
+artifacts_and_access:
+  public_artifact_states:
+    - bundled
+    - public_external_reference
+    - controlled_access_reference
+    - withheld
+    - unavailable
+    - unknown
+    - not_applicable
+  rules:
+    - Controlled-access references describe the access process without embedding credentials or protected locators.
+    - A withheld artifact cannot satisfy a public reproducibility access axis unless a verified public access procedure exists.
+    - Public package validation must treat broken safe aliases and orphan references as blockers.
+
+redaction_decision_record:
+  public_fields:
+    - disclosure_decision_id
+    - policy_version
+    - public_reason_code
+    - affected_public_aliases
+    - decision_time
+    - accountable_role
+  restricted_fields:
+    - source_object_ids
+    - original_classification
+    - transformation details
+    - authorized audiences
+    - rationale
+    - reviewer identity where protected
+  public_reason_codes:
+    - privacy
+    - ethics_or_consent
+    - license_or_contract
+    - security
+    - controlled_access
+    - source_confidentiality
+    - other_restricted
+  rule: Redaction decisions are append-only and reviewable; policy changes create a new projection and digest.
+
+validation_requirements:
+  - perform a pre-attestation scan of projected content members and a finalization scan of the subsequently created attestation and manifest; release requires both
+  - scan all package bytes and member paths, not only canonical JSON
+  - verify no remote dependency or network request is needed
+  - verify public JSON and rendered views agree on withheld states
+  - verify unknown and not_applicable were not changed by projection
+  - verify aliases are referentially complete and non-reused
+  - verify disclosure manifest binds source payload and projection digests
+  - verify optional audit deletion does not alter scientific payload or validation claims
+  - record not_evaluated when a scan or check did not run; never imply pass
+
+conformance_rules:
+  RED001:
+    condition: A public package contains a secret, protected raw value, absolute path, internal hostname, or dangerous locator.
+    outcome: blocker
+  RED002:
+    condition: A protected required field is omitted or mapped to unknown or not_applicable instead of withheld.
+    outcome: blocker
+  RED003:
+    condition: A redaction token, identifier, digest, filename, count, index, or metadata can disclose or feasibly recover a protected value.
+    outcome: blocker
+  RED004:
+    condition: Projection strengthens scientific meaning or changes a non-disclosure epistemic state.
+    outcome: blocker
+  RED005:
+    condition: A public package contains active remote dependencies or emits network requests.
+    outcome: blocker
+  RED006:
+    condition: Release occurs after any disclosure check is not_evaluated, unknown, or failed.
+    outcome: blocker

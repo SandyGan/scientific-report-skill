@@ -1,0 +1,399 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.report-prompt.org/v1/scientific-report.schema.json",
+  "title": "Canonical scientific report",
+  "description": "Canonical evidence-led scientific fact payload. Validation, build state, and generation audit are deliberately excluded and must be bound externally by payload hash.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_id",
+    "project_id",
+    "report_version",
+    "schema_version",
+    "payload_role",
+    "title",
+    "language",
+    "report_mode",
+    "created_at",
+    "scope",
+    "cutoff",
+    "applicability_decisions",
+    "module_manifest",
+    "section_coverage",
+    "source_coverage",
+    "research_questions",
+    "entities",
+    "campaigns",
+    "work_units",
+    "attempts",
+    "segments",
+    "methods",
+    "decision_events",
+    "materials",
+    "material_relationships",
+    "analysis_populations",
+    "data_slices",
+    "derivations",
+    "invocations",
+    "environments",
+    "random_states",
+    "analysis_runs",
+    "results",
+    "failures",
+    "evidence_items",
+    "evidence_edges",
+    "evidence_dependency_groups",
+    "claims",
+    "argument_steps",
+    "argument_edges",
+    "claim_dependencies",
+    "cross_domain_bridges",
+    "conflict_sets",
+    "conflict_member_edges",
+    "artifacts",
+    "reproducibility_units",
+    "limitations",
+    "revision_events",
+    "review_tasks",
+    "disclosure_state",
+    "extensions"
+  ],
+  "properties": {
+    "report_id": {
+      "$ref": "./defs/common.schema.json#/$defs/Identifier"
+    },
+    "project_id": {
+      "$ref": "./defs/common.schema.json#/$defs/Identifier"
+    },
+    "report_version": {
+      "$ref": "./defs/common.schema.json#/$defs/Version"
+    },
+    "schema_version": {
+      "$ref": "./defs/common.schema.json#/$defs/Version"
+    },
+    "payload_role": {
+      "enum": [
+        "canonical_authoritative",
+        "public_projection",
+        "restricted_projection"
+      ]
+    },
+    "title": {
+      "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+    },
+    "language": {
+      "$ref": "./defs/common.schema.json#/$defs/LanguageTag"
+    },
+    "report_mode": {
+      "enum": [
+        "summary",
+        "full_archive",
+        "filtered_working_copy"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "scope": {
+      "$ref": "./defs/common.schema.json#/$defs/Scope"
+    },
+    "cutoff": {
+      "$ref": "./defs/common.schema.json#/$defs/DateTimeField"
+    },
+    "applicability_decisions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "./defs/common.schema.json#/$defs/ApplicabilityDecision"
+      }
+    },
+    "module_manifest": {
+      "type": "array",
+      "minItems": 1,
+      "contains": {
+        "properties": {
+          "module_id": {
+            "const": "core"
+          },
+          "status": {
+            "const": "enabled"
+          }
+        },
+        "required": [
+          "module_id",
+          "status"
+        ]
+      },
+      "items": {
+        "$ref": "./defs/common.schema.json#/$defs/ModuleManifestItem"
+      }
+    },
+    "section_coverage": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "./defs/common.schema.json#/$defs/SectionCoverage"
+      }
+    },
+    "source_coverage": {
+      "$ref": "./defs/source-coverage.schema.json#/$defs/SourceCoverage"
+    },
+    "research_questions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "./defs/claim-argument.schema.json#/$defs/ResearchQuestion"
+      }
+    },
+    "entities": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/common.schema.json#/$defs/Entity"
+      }
+    },
+    "campaigns": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/work-execution.schema.json#/$defs/Campaign"
+      }
+    },
+    "work_units": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/work-execution.schema.json#/$defs/WorkUnit"
+      }
+    },
+    "attempts": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/work-execution.schema.json#/$defs/Attempt"
+      }
+    },
+    "segments": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/work-execution.schema.json#/$defs/Segment"
+      }
+    },
+    "methods": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/work-execution.schema.json#/$defs/Method"
+      }
+    },
+    "decision_events": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/work-execution.schema.json#/$defs/DecisionEvent"
+      }
+    },
+    "materials": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/material-lineage.schema.json#/$defs/Material"
+      }
+    },
+    "material_relationships": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/material-lineage.schema.json#/$defs/MaterialRelationship"
+      }
+    },
+    "analysis_populations": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/material-lineage.schema.json#/$defs/AnalysisPopulation"
+      }
+    },
+    "data_slices": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/quantitative-derivation.schema.json#/$defs/DataSlice"
+      }
+    },
+    "derivations": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/quantitative-derivation.schema.json#/$defs/DerivationRecord"
+      }
+    },
+    "invocations": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/invocation.schema.json#/$defs/Invocation"
+      }
+    },
+    "environments": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/environment.schema.json#/$defs/Environment"
+      }
+    },
+    "random_states": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/random-state.schema.json#/$defs/RandomState"
+      }
+    },
+    "analysis_runs": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/quantitative-derivation.schema.json#/$defs/AnalysisRun"
+      }
+    },
+    "results": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/result-and-disposition.schema.json#/$defs/Result"
+      }
+    },
+    "failures": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/result-and-disposition.schema.json#/$defs/FailureEvent"
+      }
+    },
+    "evidence_items": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/claim-argument.schema.json#/$defs/EvidenceItem"
+      }
+    },
+    "evidence_edges": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/claim-argument.schema.json#/$defs/EvidenceEdge"
+      }
+    },
+    "evidence_dependency_groups": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/claim-argument.schema.json#/$defs/EvidenceDependencyGroup"
+      }
+    },
+    "claims": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/claim-argument.schema.json#/$defs/Claim"
+      }
+    },
+    "argument_steps": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/claim-argument.schema.json#/$defs/ArgumentStep"
+      }
+    },
+    "argument_edges": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/claim-argument.schema.json#/$defs/ArgumentEdge"
+      }
+    },
+    "claim_dependencies": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/claim-argument.schema.json#/$defs/ClaimDependency"
+      }
+    },
+    "cross_domain_bridges": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/claim-argument.schema.json#/$defs/CrossDomainBridge"
+      }
+    },
+    "conflict_sets": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/claim-argument.schema.json#/$defs/ConflictSet"
+      }
+    },
+    "conflict_member_edges": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/claim-argument.schema.json#/$defs/ConflictMemberEdge"
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/common.schema.json#/$defs/Artifact"
+      }
+    },
+    "reproducibility_units": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/reproducibility-unit.schema.json#/$defs/ReproducibilityUnit"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/common.schema.json#/$defs/Limitation"
+      }
+    },
+    "revision_events": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/claim-argument.schema.json#/$defs/RevisionEvent"
+      }
+    },
+    "review_tasks": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/common.schema.json#/$defs/ReviewTask"
+      }
+    },
+    "disclosure_state": {
+      "$ref": "./defs/common.schema.json#/$defs/DisclosureState"
+    },
+    "extensions": {
+      "$ref": "./defs/common.schema.json#/$defs/ExtensionMap"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "payload_role": {
+            "const": "canonical_authoritative"
+          }
+        },
+        "required": [
+          "payload_role"
+        ]
+      },
+      "then": {
+        "properties": {
+          "disclosure_state": {
+            "properties": {
+              "projection_status": {
+                "const": "not_projected"
+              },
+              "projection_id": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "disclosure_state": {
+            "properties": {
+              "projection_status": {
+                "enum": [
+                  "projected",
+                  "projection_incomplete"
+                ]
+              },
+              "projection_id": {
+                "$ref": "./defs/common.schema.json#/$defs/Identifier"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

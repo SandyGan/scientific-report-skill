@@ -1,0 +1,282 @@
+protocol: reproducibility-policy
+version: 1.0.0
+status: normative
+
+purpose: Assess replay and independent reproduction per bounded critical unit without hiding missing access, environment, randomness, or coverage behind a composite score.
+
+reproducibility_unit:
+  definition: The smallest scientifically meaningful computation, analysis, experiment, or transformation for which inputs, procedure, environment, outputs, and verification can be assessed together.
+  required_fields:
+    - reproducibility_unit_id
+    - title
+    - unit_kind
+    - criticality
+    - scope
+    - covered_claim_ids
+    - covered_output_ids
+    - historical_invocation_ids
+    - recipe_id
+    - input_closure
+    - artifact_closure
+    - environment_record
+    - random_state_record
+    - access_assessment
+    - comparison_specification
+    - replay_events
+    - independent_reproduction_events
+    - axis_assessments
+    - conservative_level
+  unit_kind_values:
+    - data_acquisition
+    - material_preparation
+    - wet_lab_experiment
+    - data_transformation
+    - statistical_analysis
+    - model_training
+    - model_inference
+    - simulation
+    - trajectory_analysis
+    - figure_or_table_derivation
+    - integrated_workflow
+    - other_declared
+  criticality_values:
+    - critical
+    - supporting
+    - contextual
+  boundary_rule: A unit must be split when materially different access conditions, environments, random-state requirements, comparison criteria, or responsible actors apply.
+
+axis_assessments:
+  state_values:
+    - satisfied
+    - partial
+    - unsatisfied
+    - unknown
+    - not_applicable
+    - withheld
+  axes:
+    provenance_closure:
+      question: Are all source, input, transformation, intermediate, and output dependencies identified and integrity-bound?
+      satisfied_requires:
+        - complete input closure
+        - complete artifact closure
+        - stable identifiers and integrity digests where feasible
+        - no unresolved dependency gaps
+    recipe_fidelity:
+      question: Does the executable recipe represent the historical procedure?
+      satisfied_requires:
+        - historical invocation is recorded
+        - recipe is recorded
+        - normalized comparison has no material unexplained difference
+      rule: A clean modern recipe and a historical invocation are distinct records.
+    data_and_artifact_access:
+      question: Can the scoped actor obtain every required input, checkpoint, intermediate, and output under stated conditions?
+      satisfied_requires:
+        - access status is available_now or verified_procedure
+        - license, ethics, and permission conditions are recorded
+        - integrity verification method is available
+    environment_capture:
+      question: Are software, hardware-sensitive facts, configuration, and dependencies sufficient for the unit?
+      satisfied_requires:
+        - environment identity and dependency closure
+        - relevant operating system, runtime, libraries, drivers, firmware, containers, or instruments
+        - locale, timezone, and precision settings when material
+        - nondeterminism caveats
+    random_state_capture:
+      question: Are all material sources of randomness and nondeterminism represented?
+      satisfied_requires:
+        - seed or explicit not_applicable state
+        - derivation tree for worker, rank, replica, fold, or trial seeds when used
+        - stochastic algorithm and nondeterministic operator disclosure
+      rule: A single top-level seed is partial when downstream random states can diverge.
+    replay_verification:
+      question: Was the recipe rerun and compared under the declared comparator?
+      satisfied_requires:
+        - completed replay event
+        - input and recipe identity match or differences are declared
+        - comparator was fixed before result comparison
+        - outcome satisfies comparator
+    independent_computational_reproduction:
+      question: Did an independent actor or implementation reproduce the computational conclusion from the declared boundary?
+      satisfied_requires:
+        - independence assessment
+        - independent environment or implementation boundary
+        - declared allowed shared inputs
+        - result comparison under a predefined comparator
+    independent_experimental_replication:
+      question: Did an independent experimental unit repeat the empirical work under a declared protocol and independence boundary?
+      satisfied_requires:
+        - biological or experimental independence assessment
+        - material and protocol correspondence
+        - predefined comparison criterion
+        - complete outcome record including failures
+    claim_and_output_coverage:
+      question: What fraction of declared critical claims and outputs does this unit cover?
+      satisfied_requires:
+        - explicit covered identifiers
+        - numerator and denominator
+        - no unlisted critical target within the unit boundary
+
+historical_invocation_and_recipe:
+  historical_invocation:
+    definition: Evidence of what actually ran or was performed.
+    minimum_fields:
+      - invocation_id
+      - command_or_protocol_steps state
+      - parameter_values state
+      - start_and_end state
+      - exit_or_completion state
+      - environment_binding state
+      - input_bindings state
+      - output_bindings state
+  recipe:
+    definition: A maintained instruction set intended for replay.
+    minimum_fields:
+      - recipe_id
+      - entrypoint_or_protocol state
+      - parameter_values state
+      - environment_binding state
+      - required_inputs state
+      - expected_outputs state
+      - verification_steps state
+  normalized_difference_classes:
+    - identical
+    - nonmaterial_declared
+    - material_declared_and_justified
+    - material_unresolved
+    - comparison_impossible
+    - unknown
+  rule: A material unresolved difference caps recipe_fidelity at partial and caps conservative_level below R1.
+
+access_assessment:
+  values:
+    available_now: Required material is included or reachable and access was checked for the scoped actor.
+    verified_procedure: A tested access procedure exists, although material is not bundled.
+    controlled_access: Access requires approval or credentials and has not been verified for every intended actor.
+    unavailable: One or more required items cannot be accessed.
+    unknown: Access has not been established.
+    not_applicable: No external access is required for this unit.
+    withheld: Access details are known but restricted in this projection.
+  rule: Credentials, secrets, personal data, and restricted raw values must not be embedded in a recipe or public bundle.
+
+comparison_specification:
+  required_before_verified_replay:
+    - comparator_id
+    - timing_classification
+    - targets
+    - equivalence_definition
+    - tolerances
+    - allowed_nondeterminism
+    - failure_conditions
+  comparator_types:
+    - byte_identical
+    - canonical_record_identical
+    - numeric_tolerance
+    - distributional_equivalence
+    - scientific_acceptance_bounds
+    - manual_protocol_criteria
+  rule: A comparator chosen after seeing replay output is post_hoc and cannot establish R2 without explicit qualification.
+
+levels:
+  order_low_to_high:
+    - not_assessed
+    - R0_documented
+    - R1_replay_ready
+    - R2_verified_replay
+    - R3_independent_reproduction
+  ordering_rule: Levels are ordinal summaries of prerequisites, not numeric scores; the per-axis assessments remain authoritative.
+  not_assessed:
+    meaning: The unit has not been assessed or required records are absent.
+  R0_documented:
+    meaning: The unit is identifiable and its known provenance, historical procedure, outputs, and gaps are recorded, but it is not replay-ready.
+    all_required:
+      - unit boundary is known
+      - provenance_closure is satisfied, partial, or unsatisfied with every known gap explicitly recorded
+      - missing and access states are explicit
+  R1_replay_ready:
+    meaning: A scoped actor can replay the unit using a faithful recipe under declared conditions; no successful rerun is implied.
+    all_required:
+      - provenance_closure is satisfied
+      - recipe_fidelity is satisfied
+      - data_and_artifact_access is satisfied
+      - environment_capture is satisfied
+      - random_state_capture is satisfied or not_applicable
+      - comparison specification is predefined or adaptive under a valid rule
+  R2_verified_replay:
+    meaning: An actual rerun completed and met the declared comparator for the scoped environment and inputs.
+    all_required:
+      - all R1 requirements
+      - replay_verification is satisfied
+      - replay event evidence and outputs are integrity-bound
+    rule: R2 is not an independent reproduction claim.
+  R3_independent_reproduction:
+    meaning: A declared independent computational reproduction or independent experimental replication met its predefined criterion.
+    all_required:
+      - all R1 requirements
+      - at least one of independent_computational_reproduction or independent_experimental_replication is satisfied
+      - independence boundary and shared dependencies are explicit
+      - claim_and_output_coverage is satisfied for the asserted scope
+    rule: R3 must be labelled computational reproduction, experimental replication, or both; the categories are not interchangeable.
+  derivation_rule: Assign the highest level whose requirements are all satisfied; unknown, partial, unsatisfied, or verification-preventing withheld requirements cap the level below that threshold.
+
+summary_policy:
+  critical_unit_set:
+    rule: Critical units are selected by a predefined, adaptive, post_hoc, missing, or not_applicable decision record.
+    default_when_timing_missing: Selection remains visible as timing missing and summary wording is qualified.
+  required_summary:
+    - number of critical units by conservative_level
+    - conservative lower bound across critical units
+    - count of critical claims covered / total critical claims
+    - count of critical outputs covered / total critical outputs
+    - access-condition distribution
+    - independent computational and experimental results shown separately
+    - unknown, withheld, and not-assessed counts
+  conservative_lower_bound:
+    derivation: Minimum level among all in-scope critical units.
+    zero_units: unknown unless critical units are proven not_applicable.
+  prohibitions:
+    - no weighted or averaged reproducibility score
+    - no fully reproducible wording based only on code, recipe, container, or one successful run
+    - no omission of unavailable, unknown, withheld, failed, or noncritical-but-claimed units from denominators
+
+replay_event:
+  required_fields:
+    - replay_event_id
+    - executor
+    - execution_time
+    - recipe_version
+    - environment_binding
+    - input_bindings
+    - actual_invocation
+    - exit_or_completion_status
+    - output_bindings
+    - comparator_id
+    - comparison_result
+    - deviations
+  comparison_result_values:
+    - met
+    - did_not_meet
+    - inconclusive
+    - not_run
+    - unknown
+    - withheld
+  rule: Failed and inconclusive replay events remain in history after a later successful replay.
+
+conformance_rules:
+  REP001:
+    condition: A level is assigned despite an unknown, partial, unsatisfied, or material withheld prerequisite for that level.
+    outcome: blocker
+  REP002:
+    condition: Recipe fidelity is asserted without comparing the recipe to historical invocation evidence.
+    outcome: blocker
+  REP003:
+    condition: R2 is asserted without a completed replay and predefined or valid adaptive comparator.
+    outcome: blocker
+  REP004:
+    condition: R3 is asserted without an explicit and adequate independence assessment.
+    outcome: blocker
+  REP005:
+    condition: Computational reproduction and experimental replication are collapsed into one unlabeled state.
+    outcome: error
+  REP006:
+    condition: A summary hides critical units, uses an average score, or omits its coverage denominator.
+    outcome: blocker

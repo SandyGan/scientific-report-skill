@@ -1,0 +1,62 @@
+{
+  "response_id": "response:cannot-complete-example-001",
+  "response_version": "1.0.0",
+  "schema_version": "1.0.0",
+  "request_id": "request:cannot-complete-example-001",
+  "request_contract_hash": "sha256:975c15722b7a735b511420a74d5a6c0bbb5afc22fe0be36aaa9e0a28a372490b",
+  "prompt_id": "report_prompt.bundle",
+  "prompt_version": "0.3.0",
+  "prompt_contracts_hash": "sha256:0fade6a346be87dbb11851e7a171aff5212b2be2c63c79b8fe599989a9b34a18",
+  "target_schema_id": "https://schemas.report-prompt.org/v1/scientific-report.schema.json",
+  "target_schema_version": "1.0.0",
+  "authorized_patch_roots": [
+    "/review_tasks"
+  ],
+  "accepted_state_hash": null,
+  "stage": "S2_atomic_fact_extraction",
+  "status": "cannot_complete",
+  "cannot_complete_reason": "The supplied content has no stable source snapshot or content hash, so candidate scientific operations cannot be provenance-bound.",
+  "candidate_operations": [],
+  "source_bindings": [],
+  "processed_unit_ids": [],
+  "excluded_items": [],
+  "unreadable_items": [],
+  "conflicts": [],
+  "missingness": [],
+  "review_tasks": [
+    {
+      "review_task_id": "review:cannot-complete-example:request-contract",
+      "category": "other",
+      "description": "Provide a stable source snapshot ID and content hash for chunk:unbound-0, then submit a new request.",
+      "severity": "blocking",
+      "affected_object_ids": [
+        "chunk:unbound-0"
+      ],
+      "required_reviewer_role": "source inventory owner",
+      "status": "open"
+    }
+  ],
+  "forbidden_inferences_detected": [
+    {
+      "detection_id": "forbidden:cannot-complete:unbound-content",
+      "inference_kind": "unsupported_claim",
+      "description": "Unbound content cannot support a candidate scientific patch or a claim that its source was processed.",
+      "affected_operation_ids": [],
+      "source_item_ids": [],
+      "disposition": "response_blocked"
+    }
+  ],
+  "reproducibility_coverage": null,
+  "continuation": {
+    "state": "complete",
+    "omitted_unit_ids": [],
+    "next_cursor": null,
+    "orchestrator_verification": null
+  },
+  "created_at": "2026-05-13T00:00:00Z",
+  "extensions": {
+    "candidate_only": true,
+    "source_content_inspected": false,
+    "downstream_validation_claim": "not_run"
+  }
+}

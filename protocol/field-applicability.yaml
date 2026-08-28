@@ -1,0 +1,255 @@
+protocol: field-applicability
+version: 1.0.0
+status: normative
+
+purpose: Decide whether fields and sections apply without using emptiness as a proxy and without collapsing unknown, not_applicable, or withheld.
+
+applicability_model:
+  evaluation_values:
+    applicable:
+      meaning: The field or section is relevant under the recorded report, object, or domain context.
+    not_applicable:
+      meaning: A rule proves the field or section is irrelevant for this scope.
+    undetermined:
+      meaning: Required context is missing or conflicting, so applicability cannot be decided.
+  rule: withheld is a disclosure state, not an applicability evaluation.
+  default: undetermined
+  fail_closed_behavior:
+    field: Represent the field with state unknown and a missing reason that identifies the undetermined applicability context.
+    section: Represent SectionCoverage as unknown or partial; do not omit it.
+    release: A required applicability decision that remains undetermined blocks release.
+
+applicability_decision_record:
+  required_fields:
+    - applicability_decision_id
+    - target_pointer_or_section_id
+    - rule_id
+    - result
+    - evaluated_context
+    - evidence_bindings
+    - decision_time
+  result_values:
+    - applicable
+    - not_applicable
+    - undetermined
+  invariants:
+    - not_applicable requires a named rule whose predicate evaluated false for relevance using known context.
+    - Absence of data, an empty collection, a parser failure, access restriction, or lack of author response never establishes not_applicable.
+    - A known protected value may be withheld after applicability is established; the applicability decision itself remains traceable at an allowed disclosure level.
+    - Applicability decisions are versioned and recomputed when scope, enabled modules, entity types, work kinds, or disclosure decisions change.
+
+field_state_mapping:
+  when_applicable:
+    value_present_and_proven: known
+    value_absent_or_unestablished: unknown
+    value_protected_for_projection: withheld
+    not_applicable_allowed: false
+  when_not_applicable:
+    required_state: not_applicable
+    value: null
+    requirements:
+      - missing_reason identifies applicability rule and decision
+      - provenance binds the applicability decision
+  when_undetermined:
+    required_state: unknown
+    value: null
+    requirements:
+      - missing_reason identifies missing applicability inputs
+  mapping_invariants:
+    - unknown does not become not_applicable solely to satisfy a required field.
+    - withheld does not become unknown in a less-authorized projection.
+    - not_applicable does not become a zero, false, empty string, empty object, or empty array unless the schema field itself is a literal applicability flag.
+
+context_inputs:
+  root:
+    - report scope and cutoff
+    - report mode
+    - enabled module manifest
+    - source-universe classes
+    - declared research questions
+    - disclosure profile
+  object:
+    - object type and version
+    - work-unit kind and execution scope
+    - result and claim type
+    - entity and material types
+    - analysis or procedure kind
+  domain:
+    wet_lab:
+      trigger_any:
+        - wet_lab_experiment work unit
+        - biological sample, cell, organism, reagent, assay, or instrument entity
+        - wet_lab domain module explicitly enabled
+    ai_ml:
+      trigger_any:
+        - model_training or model_inference work unit
+        - dataset split, label, model, checkpoint, or prediction entity
+        - ai_ml domain module explicitly enabled
+    molecular_dynamics:
+      trigger_any:
+        - molecular simulation or trajectory-analysis work unit
+        - simulation system, force field, trajectory, restart, or replica entity
+        - molecular_dynamics domain module explicitly enabled
+    cross_domain:
+      trigger_any:
+        - claim uses evidence from more than one domain
+        - entity identity or effect is transferred across representations or domains
+        - cross_domain module explicitly enabled
+  domain_rule: A detected domain trigger makes its module applicable even when it was not enabled; the module manifest must be corrected rather than silently ignoring the records.
+
+core_field_rules:
+  FA001:
+    target: /**/source_derived_field
+    applies_when: The field can contain a source-derived scientific value.
+    requirement: missing_value_envelope
+  FA002:
+    target: /source_coverage
+    applies_when: always
+    requirement: required
+  FA003:
+    target: /section_coverage
+    applies_when: always
+    requirement: required
+  FA004:
+    target: /module_manifest
+    applies_when: always
+    requirement: required
+  FA005:
+    target: /work_units/*/completion_criteria
+    applies_when: Work-unit state is planned, attempted, or completed.
+    not_applicable_when: Work-unit state is not_performed and no completion criterion was ever defined.
+    undetermined_when: Work-unit state is unknown.
+  FA006:
+    target: /work_units/*/attempt_ids
+    applies_when: Work-unit state is attempted or completed.
+    not_applicable_when: Work-unit state is planned or not_performed and non-execution is established.
+    undetermined_when: Work-unit state is unknown.
+  FA007:
+    target: /results/*/statistical_decision
+    applies_when: A formal or potentially formal inferential procedure is within the result scope.
+    not_applicable_when: The result is proven purely descriptive and no statistical decision was intended.
+    undetermined_when: Analysis intent or procedure is unknown.
+  FA008:
+    target: /results/*/uncertainty
+    applies_when: A quantitative estimate, comparison, prediction, or decision requiring uncertainty is reported.
+    not_applicable_when: The record is a nonquantitative categorical observation for which uncertainty is not scientifically meaningful.
+    undetermined_when: Result type is unknown.
+  FA009:
+    target: /results/*/failure_event_ids
+    applies_when: always
+    requirement: Collection may be empty only after in-scope failure accounting is evaluated.
+  FA010:
+    target: /claims/*/decision_timing
+    applies_when: Claim strength depends on a selection, hypothesis, criterion, or analysis decision.
+    not_applicable_when: A background claim only restates a cited source without project-specific selection.
+    undetermined_when: Claim type or decision lineage is unknown.
+  FA011:
+    target: /reproducibility_units
+    applies_when: At least one project work unit, derivation, analysis, or artifact-generating procedure is in scope.
+    not_applicable_when: Report scope is proven to contain external background claims only.
+    undetermined_when: Work scope is unknown.
+  FA012:
+    target: /revision_events
+    applies_when: always
+    requirement: Empty is allowed only when revision-history inspection is recorded and found no events.
+
+wet_lab_field_rules:
+  WFA001:
+    target: /entities/*/species
+    applies_when: Entity is a biological organism, tissue, cell, sample, construct hosted in a biological system, or derived material whose species affects interpretation.
+    not_applicable_when: Entity is proven wholly nonbiological and no biological correspondence is claimed.
+  WFA002:
+    target: /entities/*/donor_id
+    applies_when: Human, animal, or donor-derived biological material is used and donor dependence is material.
+    not_applicable_when: Material is a clonal line or non-donor-derived system and donor grouping has no meaning.
+  WFA003:
+    target: /entities/*/passage
+    applies_when: A passaged cell culture is used.
+    not_applicable_when: Entity is not a passaged cell culture.
+  WFA004:
+    target: /methods/*/randomization
+    applies_when: Allocation or processing order could affect comparison.
+    not_applicable_when: No comparative allocation or order-sensitive sampling exists and rationale is recorded.
+  WFA005:
+    target: /methods/*/blinding
+    applies_when: Human or process knowledge could influence measurement, selection, or interpretation.
+    not_applicable_when: The complete procedure is objectively automated and no discretionary step exists.
+  WFA006:
+    target: /results/*/assay_sensitivity
+    applies_when: A negative, null, absence, equivalence, noninferiority, or detection-limit claim is made.
+    not_applicable_when: No such claim or interpretation is in scope.
+
+ai_ml_field_rules:
+  AFA001:
+    target: /entities/*/split_manifest
+    applies_when: Data are partitioned for training, selection, calibration, validation, or testing.
+    not_applicable_when: No data partition or generalization claim exists.
+  AFA002:
+    target: /entities/*/group_key
+    applies_when: Rows share donor, patient, sequence cluster, structure template, trajectory, batch, or another leakage-relevant ancestor.
+    not_applicable_when: Independence of every row is established and no grouping variable exists.
+  AFA003:
+    target: /methods/*/test_access_log
+    applies_when: A held-out test resource or final evaluation set exists.
+    not_applicable_when: No held-out test claim or resource exists.
+  AFA004:
+    target: /methods/*/random_state
+    applies_when: Training, selection, sampling, initialization, augmentation, or evaluation is stochastic or nondeterministic.
+    not_applicable_when: All applicable operations are deterministically proven and no random state is consumed.
+  AFA005:
+    target: /results/*/calibration
+    applies_when: Probabilities, risks, or confidence values are interpreted quantitatively.
+    not_applicable_when: Outputs are not probabilistic and no calibration claim is made.
+
+molecular_dynamics_field_rules:
+  MFA001:
+    target: /entities/*/protonation_state
+    applies_when: The simulated system includes ionizable sites whose state affects the model.
+    not_applicable_when: No ionizable modeled entity exists.
+  MFA002:
+    target: /methods/*/periodic_boundary_conditions
+    applies_when: The simulated system uses a periodic box.
+    not_applicable_when: A nonperiodic method is established.
+  MFA003:
+    target: /methods/*/random_state
+    applies_when: Initialization, thermostat, enhanced sampling, replica generation, or another operation is stochastic.
+    not_applicable_when: The full procedure is deterministically proven.
+  MFA004:
+    target: /results/*/correlation_time_and_effective_sample_size
+    applies_when: Frames or time-correlated observations support uncertainty, convergence, or independent-sample claims.
+    not_applicable_when: No time-series inferential or convergence claim is made.
+  MFA005:
+    target: /attempts/*/restart_lineage
+    applies_when: An attempt has multiple segments, checkpoint continuation, or restart.
+    not_applicable_when: A single uninterrupted segment is established.
+
+collection_semantics:
+  empty_allowed_only_if:
+    - Applicability is evaluated.
+    - Source accounting for the collection is complete within its declared boundary.
+    - A no_records coverage status and evidence are present.
+  empty_forbidden_as_signal_for:
+    - unknown
+    - not_applicable
+    - withheld
+    - inaccessible
+    - unreadable
+    - unprocessed
+  rule: Required section and field coverage is represented explicitly even when the corresponding object collection is empty.
+
+conformance_rules:
+  APP001:
+    condition: not_applicable lacks a satisfied applicability rule and traceable decision.
+    outcome: blocker
+  APP002:
+    condition: Unknown or absent context is converted to not_applicable.
+    outcome: blocker
+  APP003:
+    condition: A withheld value is converted to unknown, not_applicable, zero, false, or empty.
+    outcome: blocker
+  APP004:
+    condition: A domain trigger exists while the corresponding module is omitted or marked not_applicable.
+    outcome: blocker
+  APP005:
+    condition: An empty collection is used as the only evidence of no records or inapplicability.
+    outcome: blocker

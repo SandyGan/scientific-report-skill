@@ -1,0 +1,902 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.report-prompt.org/v1/packs/wet-lab.schema.json",
+  "title": "Wet-lab domain payload",
+  "description": "A provider-neutral extension payload for wet-lab facts. It supplements, and never weakens, the core scientific-report contract.",
+  "$comment": "Instances are identifiable domain payload objects stored under the core /extensions/domain_payloads collection; the domain discriminator selects this schema.",
+  "type": "object",
+  "required": [
+    "payload_id",
+    "domain",
+    "pack_version",
+    "applies_to",
+    "section_coverage",
+    "specimen_records",
+    "material_records",
+    "replicate_designs",
+    "control_records",
+    "protocol_records",
+    "imaging_records",
+    "analysis_contexts",
+    "qc_events"
+  ],
+  "properties": {
+    "payload_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "domain": {
+      "const": "wet_lab"
+    },
+    "pack_version": {
+      "$ref": "../defs/common.schema.json#/$defs/Version"
+    },
+    "applies_to": {
+      "$ref": "#/$defs/appliesTo"
+    },
+    "section_coverage": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/sectionCoverage"
+      },
+      "minItems": 9,
+      "allOf": [
+        {
+          "contains": {
+            "properties": {
+              "section_id": {
+                "const": "specimens_and_lineage"
+              }
+            },
+            "required": [
+              "section_id"
+            ]
+          },
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "section_id": {
+                "const": "materials_and_identity"
+              }
+            },
+            "required": [
+              "section_id"
+            ]
+          },
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "section_id": {
+                "const": "replicates_and_units"
+              }
+            },
+            "required": [
+              "section_id"
+            ]
+          },
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "section_id": {
+                "const": "allocation_and_blinding"
+              }
+            },
+            "required": [
+              "section_id"
+            ]
+          },
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "section_id": {
+                "const": "controls_and_sensitivity"
+              }
+            },
+            "required": [
+              "section_id"
+            ]
+          },
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "section_id": {
+                "const": "protocol_and_calibration"
+              }
+            },
+            "required": [
+              "section_id"
+            ]
+          },
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "section_id": {
+                "const": "imaging_and_roi"
+              }
+            },
+            "required": [
+              "section_id"
+            ]
+          },
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "section_id": {
+                "const": "analysis_population"
+              }
+            },
+            "required": [
+              "section_id"
+            ]
+          },
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "section_id": {
+                "const": "quality_failures_and_exclusions"
+              }
+            },
+            "required": [
+              "section_id"
+            ]
+          },
+          "minContains": 1
+        }
+      ]
+    },
+    "specimen_records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/specimenRecord"
+      }
+    },
+    "material_records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/materialRecord"
+      }
+    },
+    "replicate_designs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/replicateDesign"
+      }
+    },
+    "control_records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/controlRecord"
+      }
+    },
+    "protocol_records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/protocolRecord"
+      }
+    },
+    "imaging_records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/imagingRecord"
+      }
+    },
+    "analysis_contexts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/analysisContext"
+      }
+    },
+    "qc_events": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/qcEvent"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "identifier": {
+      "$ref": "../defs/common.schema.json#/$defs/Identifier"
+    },
+    "identifierList": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/identifier"
+      },
+      "uniqueItems": true
+    },
+    "sourceBindings": {
+      "type": "array",
+      "items": {
+        "$ref": "../defs/common.schema.json#/$defs/SourceBinding"
+      },
+      "uniqueItems": true
+    },
+    "scientificValue": {
+      "description": "Core explicit-missingness and provenance envelope; domain packs do not weaken it.",
+      "$ref": "../defs/common.schema.json#/$defs/KnownValue"
+    },
+    "appliesTo": {
+      "type": "object",
+      "required": [
+        "work_unit_ids",
+        "attempt_ids",
+        "result_ids",
+        "entity_ids"
+      ],
+      "properties": {
+        "work_unit_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "attempt_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "result_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "entity_ids": {
+          "$ref": "#/$defs/identifierList"
+        }
+      },
+      "additionalProperties": false
+    },
+    "sectionCoverage": {
+      "allOf": [
+        {
+          "$ref": "../defs/common.schema.json#/$defs/SectionCoverage"
+        },
+        {
+          "properties": {
+            "section_id": {
+              "enum": [
+                "specimens_and_lineage",
+                "materials_and_identity",
+                "replicates_and_units",
+                "allocation_and_blinding",
+                "controls_and_sensitivity",
+                "protocol_and_calibration",
+                "imaging_and_roi",
+                "analysis_population",
+                "quality_failures_and_exclusions"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "specimenRecord": {
+      "type": "object",
+      "required": [
+        "specimen_id",
+        "kind",
+        "parent_specimen_ids",
+        "source_bindings",
+        "organism",
+        "cell_line",
+        "donor",
+        "sample_identity",
+        "batch",
+        "well_or_container",
+        "pool_members",
+        "collection_context",
+        "disposition"
+      ],
+      "properties": {
+        "specimen_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "kind": {
+          "enum": [
+            "organism",
+            "donor",
+            "primary_sample",
+            "cell_line",
+            "culture",
+            "aliquot",
+            "well",
+            "pool",
+            "batch",
+            "other",
+            "unknown"
+          ]
+        },
+        "parent_specimen_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "organism": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "cell_line": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "donor": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "sample_identity": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "batch": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "well_or_container": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "pool_members": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "collection_context": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "disposition": {
+          "$ref": "#/$defs/scientificValue"
+        }
+      },
+      "additionalProperties": false
+    },
+    "materialRecord": {
+      "type": "object",
+      "required": [
+        "material_id",
+        "kind",
+        "source_bindings",
+        "name",
+        "supplier",
+        "catalog_number",
+        "lot_number",
+        "rrid",
+        "sequence_version",
+        "sequence_hash",
+        "passage",
+        "authentication",
+        "mycoplasma_status",
+        "storage_and_handling",
+        "equipment_calibration"
+      ],
+      "properties": {
+        "material_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "kind": {
+          "enum": [
+            "construct",
+            "primer",
+            "antibody",
+            "reagent",
+            "cell_line",
+            "kit",
+            "equipment",
+            "consumable",
+            "other",
+            "unknown"
+          ]
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "name": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "supplier": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "catalog_number": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "lot_number": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "rrid": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "sequence_version": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "sequence_hash": {
+          "$ref": "#/$defs/scientificHash"
+        },
+        "passage": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "authentication": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "mycoplasma_status": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "storage_and_handling": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "equipment_calibration": {
+          "$ref": "#/$defs/scientificValue"
+        }
+      },
+      "additionalProperties": false
+    },
+    "replicateDesign": {
+      "type": "object",
+      "required": [
+        "design_id",
+        "work_unit_id",
+        "specimen_ids",
+        "source_bindings",
+        "biological_unit",
+        "technical_unit",
+        "experimental_unit",
+        "observational_unit",
+        "analysis_unit",
+        "biological_n",
+        "technical_n",
+        "pool_counting_policy",
+        "randomization",
+        "batch_balance",
+        "blinding",
+        "unblinding",
+        "dropout_policy"
+      ],
+      "properties": {
+        "design_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "work_unit_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "specimen_ids": {
+          "type": "array",
+          "$ref": "#/$defs/identifierList",
+          "minItems": 1
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "biological_unit": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "technical_unit": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "experimental_unit": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "observational_unit": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "analysis_unit": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "biological_n": {
+          "$ref": "#/$defs/scientificInteger"
+        },
+        "technical_n": {
+          "$ref": "#/$defs/scientificInteger"
+        },
+        "pool_counting_policy": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "randomization": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "batch_balance": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "blinding": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "unblinding": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "dropout_policy": {
+          "$ref": "#/$defs/scientificValue"
+        }
+      },
+      "additionalProperties": false
+    },
+    "controlRecord": {
+      "type": "object",
+      "required": [
+        "control_id",
+        "work_unit_id",
+        "kind",
+        "source_bindings",
+        "expected_behavior",
+        "observed_behavior",
+        "acceptance_criterion",
+        "status",
+        "assay_sensitivity",
+        "detection_limit",
+        "minimum_detectable_effect",
+        "equivalence_bounds"
+      ],
+      "properties": {
+        "control_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "work_unit_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "kind": {
+          "enum": [
+            "positive",
+            "negative",
+            "vehicle",
+            "sham",
+            "vector",
+            "blank",
+            "reference",
+            "other",
+            "unknown"
+          ]
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "expected_behavior": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "observed_behavior": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "acceptance_criterion": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "status": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "assay_sensitivity": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "detection_limit": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "minimum_detectable_effect": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "equivalence_bounds": {
+          "$ref": "#/$defs/scientificValue"
+        }
+      },
+      "additionalProperties": false
+    },
+    "protocolRecord": {
+      "type": "object",
+      "required": [
+        "protocol_id",
+        "work_unit_id",
+        "version",
+        "source_bindings",
+        "steps",
+        "deviations"
+      ],
+      "properties": {
+        "protocol_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "work_unit_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "version": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/protocolStep"
+          }
+        },
+        "deviations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/deviation"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "protocolStep": {
+      "type": "object",
+      "required": [
+        "step_id",
+        "order",
+        "source_bindings",
+        "action",
+        "duration",
+        "temperature",
+        "volume",
+        "equipment_ids",
+        "calibration_status"
+      ],
+      "properties": {
+        "step_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "action": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "duration": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "temperature": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "volume": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "equipment_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "calibration_status": {
+          "$ref": "#/$defs/scientificValue"
+        }
+      },
+      "additionalProperties": false
+    },
+    "deviation": {
+      "type": "object",
+      "required": [
+        "deviation_id",
+        "step_id",
+        "source_bindings",
+        "description",
+        "impact_assessment",
+        "disposition"
+      ],
+      "properties": {
+        "deviation_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "step_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "description": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "impact_assessment": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "disposition": {
+          "$ref": "#/$defs/scientificValue"
+        }
+      },
+      "additionalProperties": false
+    },
+    "imagingRecord": {
+      "type": "object",
+      "required": [
+        "imaging_id",
+        "work_unit_id",
+        "source_bindings",
+        "instrument",
+        "acquisition_parameters",
+        "processing_history",
+        "roi_definition",
+        "roi_decision_timing",
+        "representative_image_selection",
+        "raw_artifact_ids",
+        "processed_artifact_ids"
+      ],
+      "properties": {
+        "imaging_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "work_unit_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "instrument": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "acquisition_parameters": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "processing_history": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "roi_definition": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "roi_decision_timing": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "representative_image_selection": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "raw_artifact_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "processed_artifact_ids": {
+          "$ref": "#/$defs/identifierList"
+        }
+      },
+      "additionalProperties": false
+    },
+    "analysisContext": {
+      "type": "object",
+      "required": [
+        "analysis_context_id",
+        "analysis_run_id",
+        "source_bindings",
+        "population_definition",
+        "included_specimen_ids",
+        "excluded_specimen_ids",
+        "exclusion_reasons",
+        "estimand",
+        "interval_method",
+        "detection_limit",
+        "minimum_detectable_effect",
+        "equivalence_bounds"
+      ],
+      "properties": {
+        "analysis_context_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "analysis_run_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "population_definition": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "included_specimen_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "excluded_specimen_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "exclusion_reasons": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "estimand": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "interval_method": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "detection_limit": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "minimum_detectable_effect": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "equivalence_bounds": {
+          "$ref": "#/$defs/scientificValue"
+        }
+      },
+      "additionalProperties": false
+    },
+    "qcEvent": {
+      "type": "object",
+      "required": [
+        "qc_event_id",
+        "work_unit_id",
+        "attempt_id",
+        "kind",
+        "source_bindings",
+        "observed",
+        "criterion",
+        "outcome",
+        "affected_ids",
+        "action_taken"
+      ],
+      "properties": {
+        "qc_event_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "work_unit_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "attempt_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "kind": {
+          "enum": [
+            "contamination",
+            "identity",
+            "control_failure",
+            "calibration",
+            "dropout",
+            "protocol_deviation",
+            "image_quality",
+            "other",
+            "unknown"
+          ]
+        },
+        "source_bindings": {
+          "type": "array",
+          "$ref": "#/$defs/sourceBindings",
+          "minItems": 1
+        },
+        "observed": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "criterion": {
+          "$ref": "#/$defs/scientificValue"
+        },
+        "outcome": {
+          "enum": [
+            "pass",
+            "fail",
+            "indeterminate",
+            "not_evaluated"
+          ]
+        },
+        "affected_ids": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "action_taken": {
+          "$ref": "#/$defs/scientificValue"
+        }
+      },
+      "additionalProperties": false
+    },
+    "scientificString": {
+      "$ref": "../defs/common.schema.json#/$defs/StringField"
+    },
+    "scientificNumber": {
+      "$ref": "../defs/common.schema.json#/$defs/NumberField"
+    },
+    "scientificInteger": {
+      "$ref": "../defs/common.schema.json#/$defs/IntegerField"
+    },
+    "scientificBoolean": {
+      "$ref": "../defs/common.schema.json#/$defs/BooleanField"
+    },
+    "scientificHash": {
+      "$ref": "../defs/common.schema.json#/$defs/HashField"
+    },
+    "scientificStringArray": {
+      "$ref": "../defs/common.schema.json#/$defs/StringArrayField"
+    }
+  }
+}

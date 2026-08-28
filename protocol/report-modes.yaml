@@ -1,0 +1,203 @@
+protocol: report-modes
+version: 1.0.0
+status: normative
+
+purpose: Define lifecycle and presentation modes without allowing mode changes to alter scientific truth.
+
+invariants:
+  - report_mode changes validation and release requirements, not scientific facts.
+  - No mode may suppress in-scope failures, counterevidence, null effects, exclusions, conflicts, corrections, retractions, unknowns, not_applicable states, or withheld placeholders.
+  - A less restrictive mode must not be described as satisfying a more restrictive mode.
+  - A filtered or summary view is a view of a complete payload, not a new complete report.
+  - Validation state comes only from a matching attestation and is displayed independently of report mode.
+
+report_modes:
+  working_copy:
+    purpose: Active authoring and normalization before formal scientific review.
+    allowed:
+      - partial source accounting
+      - unresolved references and review tasks
+      - not_evaluated gates
+      - internal_authorized or controlled_share disclosure profile
+    required:
+      - prominent working_copy label on every rendered page and export
+      - visible cutoff and source-universe status
+      - explicit unknown and incomplete section coverage
+      - no release or validation-passed wording
+    prohibited:
+      - public_release label
+      - absolute completeness wording
+      - omission of known blockers
+  review_package:
+    purpose: Bounded package for scientific, provenance, disclosure, or reproducibility review.
+    allowed:
+      - unresolved scientific conflicts and blockers when listed in the review ledger
+      - internal_authorized, controlled_share, or candidate public projection
+      - validation gates in pass, fail, not_evaluated, not_applicable, or unknown state
+    required:
+      - frozen source and payload snapshot for the review cycle
+      - section coverage manifest
+      - gate results with evidence or not_evaluated state
+      - review tasks, conflicts, and limitations visible
+      - validation status labelled candidate unless a matching attestation exists
+    prohibited:
+      - use as a release artifact without release transition
+  release:
+    purpose: Approved dissemination package for its declared audience.
+    allowed:
+      - internal_authorized, controlled_share, or public_release disclosure profile
+    required:
+      - immutable report version and cutoff
+      - every release-required gate is accepted by the release profile as pass, not_applicable, or fail_due_only_to_validly_waived_error_checks
+      - every conditionally accepted failed gate and waiver remains visible; it must not be described as passed
+      - matching validation attestation
+      - no blocker-severity unresolved issue
+      - audience and disclosure profile declared
+      - complete package manifest and integrity bindings
+      - known limitations and unresolved scientific questions retained
+    prohibited:
+      - failed release-required gate that is not accepted solely through valid in-scope waivable error findings
+      - unknown or not_evaluated release-required gate
+      - stale or digest-mismatched attestation
+      - silent post-release mutation
+  archival_record:
+    purpose: Frozen long-term record of a release and its verification materials.
+    allowed:
+      - a superseded or retracted status when the historical record remains intact
+    required:
+      - all release requirements at time of release
+      - immutable package identity and digests
+      - preservation metadata and format version
+      - revision-chain link to any successor, correction, or retraction
+      - offline readable full archive view
+    prohibited:
+      - replacement in place; corrections require a successor archive record
+
+mode_transitions:
+  - from: working_copy
+    to: review_package
+    requires:
+      - frozen review snapshot
+      - section manifest present
+      - all known blockers listed
+  - from: review_package
+    to: working_copy
+    requires:
+      - revision event explaining reopened authoring
+  - from: review_package
+    to: release
+    requires:
+      - release gate set accepted under the release profile
+      - approval decision event
+      - matching attestation
+  - from: release
+    to: archival_record
+    requires:
+      - archive packaging and integrity verification
+  - from: release
+    to: working_copy
+    allowed: false
+    reason: Create a new report version and link it as a successor.
+  - from: archival_record
+    to: any
+    allowed: false
+    reason: Archive records are immutable; create a linked successor or retraction event.
+
+presentation_modes:
+  summary:
+    purpose: Thirty-second overview of questions, bounded answers, resolution, strongest support and counterevidence, work counts, coverage, and reproducibility.
+    minimum_content:
+      - report identity, version, cutoff, mode, and validation status
+      - source completeness class and limitations
+      - each critical research question and resolution status
+      - bounded answer and critical claims
+      - strongest material counterevidence or explicit unknown state
+      - project work-unit and failed-attempt counts with denominators
+      - critical reproducibility-unit distribution and conservative lower bound
+      - disclosure and withheld-state summary
+    rule: Summary may shorten detail but must link to and remain semantically consistent with the full archive.
+  full_archive:
+    purpose: Complete linearly readable scientific record for the projected disclosure level.
+    minimum_content:
+      - every applicable section in section-manifests.yaml
+      - all in-scope scientific records and historical dispositions
+      - source, decision, derivation, argument, revision, and reproducibility records
+      - static navigation and no-script access
+    rule: This is the only presentation mode eligible to be the canonical offline reading view.
+  filtered_working_view:
+    purpose: User-selected subset for exploration during authoring or review.
+    required:
+      - persistent filtered label
+      - active filter description
+      - displayed count / total count for each filtered collection
+      - one-step route to clear filters
+      - failures and excluded records indicator even when filtered out
+    prohibited:
+      - export or print labelled complete, full, release, or archival
+      - replacing canonical payload or full archive
+  print_summary:
+    purpose: Static summary print matching summary semantics.
+  print_full_archive:
+    purpose: Static complete print of all projected scientific content.
+    required:
+      - expanded details or equivalent linear text
+      - visible URLs or safe locators where meaningful
+      - repeated identity and page context
+  print_filtered_working_copy:
+    purpose: Static print of an explicitly filtered subset.
+    required:
+      - filtered working copy watermark or repeated label
+      - filter description and subset denominators on every page group
+
+view_requirements:
+  javascript_disabled:
+    - All scientific content in full_archive remains accessible.
+    - Navigation degrades to ordinary links and document order.
+    - Interactive-only state must have a static equivalent.
+  search_and_filter:
+    - Search indexes are deterministic derivatives of the projected public payload.
+    - Records with failure, negative, excluded, superseded, retracted, conflict, unknown, or withheld states remain discoverable where disclosure permits.
+    - Empty search results must not imply absence outside the active projection and filters.
+  accessibility:
+    - Status is conveyed by text and structure, not color alone.
+    - Keyboard and linear reading order expose the same scientific facts.
+  wording:
+    - working_copy, review_package, release, and archival_record labels are visible and unambiguous.
+    - report completeness and validation status are separate labels.
+
+mode_gate_sets:
+  working_copy:
+    required_gate_outcomes:
+      G00_package_identity: [pass, fail, not_evaluated, unknown]
+      G01_schema_missingness_applicability: [pass, fail, not_evaluated, unknown]
+    release_eligible: false
+  review_package:
+    required_gate_outcomes:
+      G00_package_identity: [pass]
+      G01_schema_missingness_applicability: [pass]
+      G02_source_coverage: [pass, fail]
+      G03_identifier_reference_graph: [pass, fail]
+    release_eligible: false
+  release:
+    required_gate_profile: release
+    release_eligible: true
+  archival_record:
+    required_gate_profile: archival
+    release_eligible: true
+
+conformance_rules:
+  MOD001:
+    condition: A report mode is absent or not visibly labelled.
+    outcome: error
+  MOD002:
+    condition: A working copy, review package, summary, or filtered view is represented as a complete release.
+    outcome: blocker
+  MOD003:
+    condition: Release has an unknown or not_evaluated required gate, an unaccepted failed required gate, or a stale attestation.
+    outcome: blocker
+  MOD004:
+    condition: A mode or filter suppresses a material scientific state without a visible subset indicator and full-view route.
+    outcome: blocker
+  MOD005:
+    condition: An archival record is modified in place.
+    outcome: blocker

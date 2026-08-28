@@ -1,0 +1,248 @@
+protocol: source-coverage
+version: 1.0.0
+status: normative
+
+purpose: Define what source completeness means and prevent registered-source accounting from being presented as universal completeness.
+
+source_universe:
+  required_fields:
+    - universe_id
+    - title
+    - scope_statement
+    - inclusion_boundary
+    - exclusion_boundary
+    - cutoff
+    - authority_basis
+    - enumeration_status
+    - snapshot_bindings
+    - item_ids
+  cutoff:
+    required_components:
+      - effective_time
+      - timezone_or_offset
+      - event_semantics
+    rule: A report must not imply coverage after the cutoff.
+  authority_basis_values:
+    authoritative_registry:
+      definition: A designated system or signed inventory is accepted as exhaustive for the declared boundary at the cutoff.
+      required_evidence:
+        - registry identity and owner
+        - snapshot identifier or immutable digest
+        - scope match
+        - cutoff binding
+    reconciled_authoritative_registries:
+      definition: Multiple designated registries jointly exhaust the declared boundary and have a recorded reconciliation.
+      required_evidence:
+        - each registry snapshot
+        - reconciliation method
+        - unresolved duplicate and gap record
+    declared_inventory:
+      definition: A contributor-supplied list is processed, but its exhaustiveness is not established.
+      required_evidence:
+        - declarant identity or role
+        - declaration time
+    discovery_process:
+      definition: Search or collection procedures found sources, but no authoritative exhaustive register exists.
+      required_evidence:
+        - procedures
+        - locations searched
+        - search time
+        - limitations
+    none:
+      definition: No bounded inventory is available.
+      required_evidence:
+        - missing reason
+  enumeration_status_values:
+    - authoritative_exhaustive
+    - registered_not_proven_exhaustive
+    - open_ended
+    - unknown
+  authority_invariant: Only an authority basis with evidence of exhaustiveness may use authoritative_exhaustive.
+
+source_item:
+  required_fields:
+    - source_item_id
+    - universe_id
+    - source_kind
+    - identity
+    - revision_or_snapshot
+    - disposition
+    - disposition_reason
+    - content_access
+  identity_requirements:
+    - Stable identifier must not be derived from a secret or path that cannot be disclosed at the applicable level.
+    - Mutable sources require a captured revision, content digest, or explicit unknown revision state.
+    - A container and each independently processable in-scope member must be enumerable when omission of a member could change scientific conclusions.
+  dispositions:
+    included:
+      terminal: true
+      requirements:
+        - At least one extraction, mapping, or explicit no-relevant-content record is bound to the item.
+    excluded_with_reason:
+      terminal: true
+      requirements:
+        - A non-empty reason code and decision event are bound.
+        - Exclusion must be allowed by the declared boundary; otherwise it remains a coverage limitation.
+    unreadable:
+      terminal: true
+      requirements:
+        - Parser or inspection attempts and failure details are recorded.
+        - The potential scientific impact is assessed as known, unknown, or not_applicable.
+    inaccessible:
+      terminal: true
+      requirements:
+        - Access condition, attempt, and responsible owner or unavailable owner state are recorded.
+        - The potential scientific impact is assessed as known, unknown, or not_applicable.
+    duplicate:
+      terminal: true
+      requirements:
+        - canonical_source_item_id is present
+        - equivalence basis is recorded
+      rule: Similar titles or filenames alone are insufficient to establish a duplicate.
+    unmapped:
+      terminal: true
+      requirements:
+        - Mapping target or missing mapping knowledge is recorded.
+        - A review task is open unless the item is proven scientifically irrelevant.
+      rule: unmapped completes inventory disposition but not scientific incorporation.
+  nonterminal_state: pending
+  invariant: Every registered item has exactly one current disposition; changes are append-only disposition events.
+  disclosure_projection:
+    rules:
+      - withheld is not a source disposition; it records that a known source field, item, count, or coverage assessment cannot be disclosed to the audience.
+      - A protected known disposition must not be converted to unreadable, inaccessible, unmapped, pending, or unknown.
+      - If source existence or membership is protected, use disclosure-safe aliases where permitted; otherwise preserve the gap through withheld section coverage and withhold or safely coarsen affected counts.
+      - A projection unable to expose the evidence for authoritative exhaustiveness must not use absolute public completeness wording, even when an authorized internal report proves it.
+
+coverage_axes:
+  enumeration:
+    values:
+      - authoritative_exhaustive
+      - registered_not_proven_exhaustive
+      - open_ended
+      - unknown
+  inventory_accounting:
+    values:
+      - complete
+      - incomplete
+      - unknown
+    complete_when: Every item in the bound snapshot has a terminal disposition.
+  accessibility:
+    values:
+      - all_accessible
+      - limitations_present
+      - unknown
+    limitations_present_when: Any item is unreadable or inaccessible.
+  scientific_incorporation:
+    values:
+      - complete_within_boundary
+      - partial
+      - none
+      - unknown
+    complete_when:
+      - Inventory accounting is complete.
+      - Every included item has extraction or a justified no-relevant-content record.
+      - No item remains unmapped.
+      - Every exclusion is within the declared boundary and has a decision event.
+      - No unreadable or inaccessible item has unknown or potentially material impact.
+  report_completeness:
+    values:
+      - proven_within_declared_universe
+      - registered_sources_accounted_for
+      - partial
+      - cannot_be_established
+    derivation_precedence:
+      - cannot_be_established
+      - partial
+      - registered_sources_accounted_for
+      - proven_within_declared_universe
+    precedence_rule: Evaluate candidate states from highest to lowest precedence and assign the first satisfied state; this prevents an open-ended or unknown universe from being labelled merely partial or registered-complete.
+    derivation:
+      proven_within_declared_universe:
+        all:
+          - enumeration is authoritative_exhaustive
+          - inventory_accounting is complete
+          - scientific_incorporation is complete_within_boundary
+          - cutoff and snapshots are valid
+      registered_sources_accounted_for:
+        all:
+          - enumeration is registered_not_proven_exhaustive
+          - inventory_accounting is complete
+        note: This state never establishes overall completeness.
+      partial:
+        any:
+          - inventory_accounting is incomplete
+          - scientific_incorporation is partial
+          - material accessibility limitations are present
+      cannot_be_established:
+        any:
+          - enumeration is open_ended
+          - enumeration is unknown
+          - required snapshots are missing or unverifiable
+
+metrics:
+  registered_count:
+    denominator: count of unique source_item_id values in the bound universe snapshot
+  terminally_disposed_count:
+    numerator: source items with a terminal disposition
+    denominator: registered_count
+  included_mapped_count:
+    numerator: included items with extraction or justified no-relevant-content records
+    denominator: included source items
+  inaccessible_or_unreadable_count:
+    numerator: source items disposed as inaccessible or unreadable
+    denominator: registered_count
+  unmapped_count:
+    numerator: source items disposed as unmapped
+    denominator: registered_count
+  rules:
+    - Always display numerator, denominator, cutoff, and universe identifier together.
+    - A zero denominator is reported as not_applicable only when the source class is proven inapplicable; otherwise it is unknown.
+    - Duplicate items remain visible in disposition counts but must not inflate unique scientific-source counts.
+
+allowed_wording:
+  proven_within_declared_universe:
+    permitted: Source coverage is complete within the declared authoritative universe and cutoff.
+    required_qualifiers:
+      - universe title or identifier
+      - cutoff
+      - declared exclusions
+  registered_sources_accounted_for:
+    permitted: All registered sources were dispositioned; overall source completeness cannot be proven.
+    prohibited:
+      - complete report
+      - all available evidence
+      - exhaustive review
+  partial:
+    permitted: Source coverage is partial within the declared boundary.
+    required_qualifiers:
+      - missing, inaccessible, unreadable, unmapped, or pending counts
+  cannot_be_established:
+    permitted: Overall source completeness cannot be established.
+
+late_arriving_sources:
+  rule: A source discovered after snapshot freeze creates a new universe snapshot or a documented out-of-scope event; it must not be inserted invisibly.
+  effects:
+    - Recompute coverage axes.
+    - Re-evaluate claims potentially affected by the source.
+    - Issue a new scientific payload version when incorporated.
+
+conformance_rules:
+  COV001:
+    condition: An authoritative universe snapshot contains any pending item.
+    outcome: blocker
+  COV002:
+    condition: Absolute completeness wording is used when report_completeness is not proven_within_declared_universe.
+    outcome: blocker
+  COV003:
+    condition: A source item lacks exactly one current disposition.
+    outcome: blocker
+  COV004:
+    condition: A duplicate lacks a canonical source and equivalence basis.
+    outcome: blocker
+  COV005:
+    condition: An unmapped item is treated as scientifically incorporated.
+    outcome: blocker
+  COV006:
+    condition: A late-arriving source changes a frozen snapshot without a revision event.
+    outcome: blocker

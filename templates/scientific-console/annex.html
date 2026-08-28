@@ -1,0 +1,241 @@
+<!doctype html>
+<!--
+  Static annex contract: every rendered locator and value is disclosure-safe inert text.
+  Unknown, not_applicable, and withheld remain explicit states; grouped presentation data
+  must preserve canonical identifiers, dispositions, revision links, and denominators.
+-->
+<html lang="{{#if language}}{{language}}{{else}}en{{/if}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' data:; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'; connect-src 'none'">
+  <meta name="referrer" content="no-referrer">
+  <title>{{#if title}}{{title}}{{else}}Scientific report{{/if}} · Static annex</title>
+  <link rel="stylesheet" href="../assets/report.css">
+  <link rel="stylesheet" href="../assets/print.css" media="print">
+  <script src="../assets/report.js" defer></script>
+</head>
+<body class="annex-page" data-report-view="annex" data-print-mode="full">
+  <a class="skip-link" href="#annex-main">Skip to annex content</a>
+
+  <header class="annex-header">
+    <div>
+      <p class="console-kicker">Scientific record / static annex</p>
+      <h1>{{#if title}}{{title}}{{else}}Untitled scientific report{{/if}}</h1>
+      <p class="annex-subtitle">Complete disclosure-safe catalogs, locators, revisions, and field-state records</p>
+    </div>
+    <dl class="annex-identity">
+      <div><dt>Report</dt><dd><code>{{report_id}}</code></dd></div>
+      <div><dt>Version</dt><dd><code>{{report_version}}</code></dd></div>
+      <div><dt>Payload</dt><dd><code class="hash empty-fallback">{{payload_hash}}</code></dd></div>
+      <div><dt>Cut-off</dt><dd class="empty-fallback">{{cutoff.display_text}}</dd></div>
+    </dl>
+    <div class="annex-actions">
+      <a class="button button--quiet" href="../report.html">Return to command console</a>
+      <div data-js-only hidden>
+        <button class="button button--quiet" type="button" data-expand-all>Expand all</button>
+        <button class="button button--quiet" type="button" data-collapse-all>Collapse all</button>
+        <button class="button button--primary" type="button" data-print-report>Print full annex</button>
+      </div>
+    </div>
+  </header>
+
+  <noscript><div class="noscript-note" role="note"><strong>Static annex mode.</strong> Every catalog is present in this file. Use each section’s disclosure control to inspect records; printing expands all sections.</div></noscript>
+
+  <nav class="annex-index" aria-label="Annex sections">
+    <a href="#annex-coverage">Section coverage</a>
+    <a href="#annex-sources">Source inventory</a>
+    <a href="#annex-evidence">Evidence catalog</a>
+    <a href="#annex-entities">Entity registry</a>
+    <a href="#annex-artifacts">Artifact catalog</a>
+    <a href="#annex-revisions">Revision history</a>
+    <a href="#annex-limitations">Limitations</a>
+  </nav>
+
+  <div class="print-context" aria-hidden="true"><span class="print-context__identity">{{title}} · annex · {{report_id}} · {{report_version}}</span><span class="print-context__mode"></span></div>
+
+  <main id="annex-main" class="annex-main" tabindex="-1">
+    <section id="annex-coverage" class="annex-section" aria-labelledby="annex-coverage-title">
+      <header class="section-heading"><div><p class="section-code">A1 / applicability ledger</p><h2 id="annex-coverage-title">Section coverage and missingness</h2></div><p class="section-purpose">A section that is unknown, not applicable, withheld, or not recorded is stated explicitly rather than omitted.</p></header>
+      <div class="table-scroll">
+        <table class="data-table">
+          <caption>Coverage state for every registered report section</caption>
+          <thead><tr><th scope="col">Section</th><th scope="col">Applicability</th><th scope="col">Coverage state</th><th scope="col">Reason</th><th scope="col">Rule / evidence</th></tr></thead>
+          <tbody>
+            {{#each section_coverage_records}}
+            <tr data-record data-kind="section-coverage" data-domain="{{domain}}" data-state="{{state}}" data-safety-record="{{safety_relevance}}">
+              <th scope="row" data-label="Section"><code>{{section_id}}</code><span class="cell-secondary">{{label}}</span></th>
+              <td data-label="Applicability" class="empty-fallback">{{applicability}}</td>
+              <td data-label="Coverage state"><span class="state-chip" data-state="{{state}}"><span class="empty-fallback">{{state}}</span></span></td>
+              <td data-label="Reason" class="empty-fallback">{{reason}}</td>
+              <td data-label="Rule / evidence"><code class="wrap-code empty-fallback">{{basis}}</code></td>
+            </tr>
+            {{else}}
+            <tr><td colspan="5" class="missing-entry">No section-coverage rows supplied.</td></tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="annex-sources" class="annex-section" aria-labelledby="annex-sources-title">
+      <header class="section-heading"><div><p class="section-code">A2 / source universe</p><h2 id="annex-sources-title">Source inventory and disposition</h2></div><p class="section-purpose">The declared source universe is the denominator for coverage claims; inaccessible and unreadable sources remain listed.</p></header>
+      <div class="annex-verdict" data-status="{{source_coverage.completeness_state}}">
+        <div><span class="field-label">Universe authority</span><strong class="empty-fallback">{{source_coverage.universe_authority_state}}</strong></div>
+        <div><span class="field-label">Completeness</span><strong class="empty-fallback">{{source_coverage.completeness_state}}</strong></div>
+        <p class="empty-fallback">{{source_coverage.statement}}</p>
+      </div>
+      <div class="table-scroll">
+        <table class="data-table">
+          <caption>All registered sources and disclosure-safe locators</caption>
+          <thead><tr><th scope="col">Source</th><th scope="col">Type / domain</th><th scope="col">Disposition</th><th scope="col">Reason</th><th scope="col">Content identity</th><th scope="col">Locator</th><th scope="col">Parser / revision</th></tr></thead>
+          <tbody>
+            {{#each sources}}
+            <tr data-record data-kind="source {{disposition}}" data-domain="{{domain}}" data-state="{{disposition}}" data-safety-record="{{safety_relevance}}">
+              <th scope="row" data-label="Source"><code>{{source_id}}</code><span class="cell-secondary empty-fallback">{{label}}</span></th>
+              <td data-label="Type / domain"><span class="empty-fallback">{{source_type}}</span><span class="cell-secondary empty-fallback">{{domain}}</span></td>
+              <td data-label="Disposition"><span class="status-chip status-chip--small" data-status="{{disposition}}"><span class="empty-fallback">{{disposition}}</span></span></td>
+              <td data-label="Reason" class="empty-fallback">{{disposition_reason}}</td>
+              <td data-label="Content identity"><code class="wrap-code empty-fallback">{{snapshot_or_content_id}}</code></td>
+              <td data-label="Locator"><code class="wrap-code empty-fallback">{{locator}}</code></td>
+              <td data-label="Parser / revision"><span class="empty-fallback">{{parser_version}}</span><code class="wrap-code empty-fallback">{{revision_id}}</code></td>
+            </tr>
+            {{else}}
+            <tr><td colspan="7" class="missing-entry">No registered source rows supplied.</td></tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="annex-evidence" class="annex-section" aria-labelledby="annex-evidence-title">
+      <header class="section-heading"><div><p class="section-code">A3 / evidence register</p><h2 id="annex-evidence-title">Evidence items and claim bindings</h2></div><p class="section-purpose">Each evidence item retains its source locator, role, disposition, and dependency class.</p></header>
+      <div class="annex-record-list">
+        {{#each evidence_items}}
+        <details class="annex-record disclosure" open data-disclosure data-record data-kind="evidence" data-domain="{{domain}}" data-state="{{status}}" data-safety-record="{{safety_relevance}}">
+          <summary><span><code>{{evidence_id}}</code> <strong class="empty-fallback">{{label}}</strong></span><span class="status-chip status-chip--small" data-status="{{status}}"><span class="empty-fallback">{{status}}</span></span></summary>
+          <div class="disclosure__body annex-record__body">
+            <p class="empty-fallback">{{summary}}</p>
+            <dl class="key-value-list key-value-list--horizontal">
+              <div><dt>Evidence role</dt><dd class="empty-fallback">{{role}}</dd></div>
+              <div><dt>Disposition</dt><dd class="empty-fallback">{{disposition}}</dd></div>
+              <div><dt>Independence</dt><dd class="empty-fallback">{{independence_class}}</dd></div>
+              <div><dt>Source</dt><dd><code class="empty-fallback">{{source_id}}</code></dd></div>
+              <div><dt>Locator</dt><dd><code class="wrap-code empty-fallback">{{source_locator}}</code></dd></div>
+              <div><dt>Bound claims</dt><dd class="empty-fallback">{{claim_ids}}</dd></div>
+              <div><dt>Derivation</dt><dd><code class="wrap-code empty-fallback">{{derivation_id}}</code></dd></div>
+              <div><dt>Object version</dt><dd><code>{{object_version}}</code></dd></div>
+            </dl>
+          </div>
+        </details>
+        {{else}}
+        <div class="section-empty"><div><h3>No evidence items rendered</h3><p>Consult section coverage; absence is not evidence of an empty evidence universe.</p></div></div>
+        {{/each}}
+      </div>
+    </section>
+
+    <section id="annex-entities" class="annex-section" aria-labelledby="annex-entities-title">
+      <header class="section-heading"><div><p class="section-code">A4 / identity registry</p><h2 id="annex-entities-title">Entities, materials, datasets, and systems</h2></div><p class="section-purpose">Identifiers and versioned mappings keep biological materials, computational objects, and cross-domain bridges distinct.</p></header>
+      <div class="table-scroll">
+        <table class="data-table">
+          <caption>Disclosure-safe entity registry</caption>
+          <thead><tr><th scope="col">Entity</th><th scope="col">Class</th><th scope="col">Display name</th><th scope="col">Version / identity</th><th scope="col">Parent / source</th><th scope="col">Field state</th><th scope="col">Notes</th></tr></thead>
+          <tbody>
+            {{#each entities}}
+            <tr data-record data-kind="entity" data-domain="{{domain}}" data-state="{{state}}" data-safety-record="{{safety_relevance}}">
+              <th scope="row" data-label="Entity"><code>{{entity_id}}</code></th>
+              <td data-label="Class" class="empty-fallback">{{entity_class}}</td>
+              <td data-label="Display name" class="empty-fallback">{{display_name}}</td>
+              <td data-label="Version / identity"><code class="wrap-code empty-fallback">{{version_or_identity}}</code></td>
+              <td data-label="Parent / source"><code class="wrap-code empty-fallback">{{parent_or_source_id}}</code></td>
+              <td data-label="Field state"><span class="state-chip" data-state="{{state}}"><span class="empty-fallback">{{state}}</span></span></td>
+              <td data-label="Notes" class="empty-fallback">{{notes}}</td>
+            </tr>
+            {{else}}
+            <tr><td colspan="7" class="missing-entry">No entity rows supplied.</td></tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="annex-artifacts" class="annex-section" aria-labelledby="annex-artifacts-title">
+      <header class="section-heading"><div><p class="section-code">A5 / artifact register</p><h2 id="annex-artifacts-title">Artifacts, access, and integrity</h2></div><p class="section-purpose">References are inert disclosure-safe text. Withheld values are not embedded in this document, its markup, or filenames.</p></header>
+      <div class="table-scroll">
+        <table class="data-table">
+          <caption>Input, checkpoint, output, log, and recipe artifacts</caption>
+          <thead><tr><th scope="col">Artifact</th><th scope="col">Role / media</th><th scope="col">Access state</th><th scope="col">Access conditions</th><th scope="col">Integrity</th><th scope="col">Reference</th><th scope="col">Revision</th></tr></thead>
+          <tbody>
+            {{#each artifacts}}
+            <tr data-record data-kind="artifact" data-domain="{{domain}}" data-state="{{access_state}} {{integrity_state}}" data-safety-record="{{safety_relevance}}">
+              <th scope="row" data-label="Artifact"><code>{{artifact_id}}</code><span class="cell-secondary empty-fallback">{{label}}</span></th>
+              <td data-label="Role / media"><span class="empty-fallback">{{role}}</span><span class="cell-secondary empty-fallback">{{media_type}}</span></td>
+              <td data-label="Access state"><span class="state-chip" data-state="{{access_state}}"><span class="empty-fallback">{{access_state}}</span></span></td>
+              <td data-label="Access conditions" class="empty-fallback">{{access_conditions}}</td>
+              <td data-label="Integrity"><span class="empty-fallback">{{integrity_algorithm}}</span><code class="wrap-code hash empty-fallback">{{integrity_display}}</code></td>
+              <td data-label="Reference"><code class="wrap-code empty-fallback">{{reference_display}}</code></td>
+              <td data-label="Revision" class="empty-fallback">{{revision_state}}</td>
+            </tr>
+            {{else}}
+            <tr><td colspan="7" class="missing-entry">No artifact rows supplied.</td></tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="annex-revisions" class="annex-section" aria-labelledby="annex-revisions-title">
+      <header class="section-heading"><div><p class="section-code">A6 / change and invalidation ledger</p><h2 id="annex-revisions-title">Revisions, corrections, and downstream impact</h2></div><p class="section-purpose">Corrections and retractions retain affected objects and propagation state.</p></header>
+      <ol class="revision-timeline">
+        {{#each revision_events}}
+        <li data-record data-kind="revision {{event_type}}" data-domain="{{domain}}" data-state="{{status}}" data-safety-record="{{safety_relevance}}">
+          <div class="timeline-node" aria-hidden="true"></div>
+          <article>
+            <header><div class="record-id-block"><span class="record-type">{{event_type}}</span><code>{{revision_event_id}}</code></div><span class="status-chip status-chip--small" data-status="{{status}}"><span class="empty-fallback">{{status}}</span></span></header>
+            <h3 class="empty-fallback">{{title}}</h3>
+            <p class="empty-fallback">{{summary}}</p>
+            <dl class="key-value-list key-value-list--horizontal">
+              <div><dt>Effective time</dt><dd class="empty-fallback">{{effective_time}}</dd></div>
+              <div><dt>Triggering source</dt><dd><code>{{triggering_source_id}}</code></dd></div>
+              <div><dt>Affected objects</dt><dd class="empty-fallback">{{affected_object_ids}}</dd></div>
+              <div><dt>Propagation</dt><dd class="empty-fallback">{{propagation_status}}</dd></div>
+              <div><dt>Supersedes</dt><dd><code class="empty-fallback">{{supersedes_id}}</code></dd></div>
+            </dl>
+          </article>
+        </li>
+        {{else}}
+        <li class="missing-entry">No revision events supplied. Consult revision section coverage before interpreting this as no revisions.</li>
+        {{/each}}
+      </ol>
+    </section>
+
+    <section id="annex-limitations" class="annex-section" aria-labelledby="annex-limitations-title">
+      <header class="section-heading"><div><p class="section-code">A7 / unresolved boundaries</p><h2 id="annex-limitations-title">Limitations, access constraints, and open review tasks</h2></div><p class="section-purpose">Limitations remain first-class records with affected claims, evidence, and resolution status.</p></header>
+      <div class="limitation-grid">
+        {{#each limitations}}
+        <article class="limitation-card" data-record data-kind="limitation" data-domain="{{domain}}" data-state="{{status}}" data-safety-record="true">
+          <header><div class="record-id-block"><span class="record-type">Limitation</span><code>{{limitation_id}}</code></div><span class="status-chip status-chip--small" data-status="{{status}}"><span class="empty-fallback">{{status}}</span></span></header>
+          <h3 class="empty-fallback">{{title}}</h3>
+          <p class="empty-fallback">{{statement}}</p>
+          <dl class="key-value-list key-value-list--compact">
+            <div><dt>Class</dt><dd class="empty-fallback">{{limitation_class}}</dd></div>
+            <div><dt>Affected records</dt><dd class="empty-fallback">{{affected_record_ids}}</dd></div>
+            <div><dt>Mitigation / next step</dt><dd class="empty-fallback">{{mitigation}}</dd></div>
+            <div><dt>Provenance</dt><dd class="empty-fallback">{{provenance_status}}</dd></div>
+          </dl>
+        </article>
+        {{else}}
+        <div class="section-empty"><div><h3>No limitation records rendered</h3><p>Consult section coverage; a blank limitation list is not a declaration of no limitations.</p></div></div>
+        {{/each}}
+      </div>
+    </section>
+  </main>
+
+  <footer class="report-footer">
+    <div><span class="meta-label">Scientific payload</span><code class="hash empty-fallback">{{payload_hash}}</code></div>
+    <div><span class="meta-label">Attestation binding</span><code class="hash empty-fallback">{{validation.payload_hash}}</code></div>
+    <p class="footer-note">End of static scientific annex. Generation-process audit material is intentionally peripheral and is not required for scientific interpretation.</p>
+  </footer>
+</body>
+</html>

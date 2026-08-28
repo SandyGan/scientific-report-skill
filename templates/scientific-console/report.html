@@ -1,0 +1,194 @@
+<!doctype html>
+<!--
+  Rendering contract: context is a deterministic, disclosure-safe view of the public
+  scientific payload plus separately bound validation metadata. Fields named
+  display_text/display_value/reference_display are inert projections; templates never
+  receive or recover withheld values. Relational arrays may be grouped for presentation,
+  but their scientific values, states, identifiers, and denominators are unchanged.
+-->
+<html lang="{{#if language}}{{language}}{{else}}en{{/if}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' data:; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'; connect-src 'none'">
+  <meta name="referrer" content="no-referrer">
+  <title>{{#if title}}{{title}}{{else}}Scientific report{{/if}} · Scientific command console</title>
+  <link rel="stylesheet" href="assets/report.css">
+  <link rel="stylesheet" href="assets/print.css" media="print">
+  <script src="assets/report.js" defer></script>
+</head>
+<body data-report-view="console" data-print-mode="full">
+  <a class="skip-link" href="#report-main">Skip to scientific report</a>
+
+  <header class="console-header" aria-label="Report identity and controls">
+    <div class="console-header__identity">
+      <div class="console-kicker">Scientific record / command console</div>
+      <div class="console-title-row">
+        <div>
+          <h1>{{#if title}}{{title}}{{else}}Untitled scientific report{{/if}}</h1>
+          <p class="report-identity">
+            <span><span class="meta-label">Report</span> <code>{{report_id}}</code></span>
+            <span><span class="meta-label">Version</span> <code>{{report_version}}</code></span>
+            <span><span class="meta-label">Project</span> <code>{{project_id}}</code></span>
+          </p>
+        </div>
+        <div class="console-header__signals" aria-label="Top-level status">
+          <span class="status-chip" data-status="{{overview.resolution_status}}">
+            <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-question"></use></svg>
+            <span>Resolution: <strong class="empty-fallback">{{overview.resolution_status}}</strong></span>
+          </span>
+          <span class="status-chip" data-status="{{source_coverage.completeness_state}}">
+            <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-source"></use></svg>
+            <span>Coverage: <strong class="empty-fallback">{{source_coverage.completeness_state}}</strong></span>
+          </span>
+          <span class="status-chip" data-status="{{validation.status}}">
+            <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-shield"></use></svg>
+            <span>Attestation: <strong class="empty-fallback">{{validation.status}}</strong></span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="scope-ribbon" aria-label="Report boundary">
+      <span><span class="meta-label">Cut-off</span> <span class="empty-fallback">{{cutoff.display_text}}</span></span>
+      <span><span class="meta-label">Mode</span> <span class="empty-fallback">{{report_mode}}</span></span>
+      <span><span class="meta-label">Language</span> <span class="empty-fallback">{{language}}</span></span>
+      <span><span class="meta-label">Schema</span> <code>{{schema_version}}</code></span>
+    </div>
+
+    <form class="console-tools" data-console-controls data-js-only hidden role="search" aria-label="Search and filter the report">
+      <label class="search-field" for="report-search">
+        <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-search"></use></svg>
+        <span class="visually-hidden">Search report records</span>
+        <input id="report-search" type="search" name="q" autocomplete="off" placeholder="Search claims, failures, IDs, paths…" data-report-search>
+        <kbd aria-hidden="true">/</kbd>
+      </label>
+
+      <label class="tool-field" for="domain-filter">
+        <span>Domain</span>
+        <select id="domain-filter" data-filter="domain">
+          <option value="all">All domains</option>
+          {{#each filters.domains}}
+          <option value="{{value}}">{{label}}</option>
+          {{/each}}
+        </select>
+      </label>
+
+      <label class="tool-field" for="state-filter">
+        <span>State</span>
+        <select id="state-filter" data-filter="state">
+          <option value="all">All states</option>
+          {{#each filters.states}}
+          <option value="{{value}}">{{label}}</option>
+          {{/each}}
+        </select>
+      </label>
+
+      <label class="tool-field" for="kind-filter">
+        <span>Record</span>
+        <select id="kind-filter" data-filter="kind">
+          <option value="all">All records</option>
+          {{#each filters.kinds}}
+          <option value="{{value}}">{{label}}</option>
+          {{/each}}
+        </select>
+      </label>
+
+      <button class="button button--quiet" type="button" data-clear-filters>Clear</button>
+      <span class="tool-divider" aria-hidden="true"></span>
+      <button class="icon-button" type="button" data-expand-all title="Expand report details">
+        <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-expand"></use></svg>
+        <span class="visually-hidden">Expand all report details</span>
+      </button>
+      <button class="icon-button" type="button" data-collapse-all title="Collapse report details">
+        <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-collapse"></use></svg>
+        <span class="visually-hidden">Collapse all report details</span>
+      </button>
+
+      <label class="tool-field" for="print-mode">
+        <span>Print</span>
+        <select id="print-mode" data-print-mode-select>
+          <option value="summary">Summary</option>
+          <option value="full" selected>Full archive</option>
+          <option value="filtered">Filtered working copy</option>
+        </select>
+      </label>
+      <button class="button button--primary" type="button" data-print-report>
+        <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-print"></use></svg>
+        Print
+      </button>
+    </form>
+
+    <div class="filter-status" data-js-only hidden>
+      <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-filter"></use></svg>
+      <p data-filter-status role="status" aria-live="polite">No filters applied.</p>
+    </div>
+  </header>
+
+  <noscript>
+    <div class="noscript-note" role="note">
+      <strong>Static report mode.</strong> All scientific records remain available through the section navigation and native disclosure controls. Search and working-view filters require JavaScript; full printing does not.
+    </div>
+  </noscript>
+
+  <div class="print-context" aria-hidden="true">
+    <span class="print-context__identity">{{title}} · {{report_id}} · {{report_version}}</span>
+    <span class="print-context__filter-warning" data-print-filter-warning>Safety check: no filters have hidden disclosures.</span>
+    <span class="print-context__mode"></span>
+  </div>
+
+  <div class="console-layout">
+    <aside class="section-rail" aria-label="Report sections">
+      <p class="section-rail__label">Scientific ledger</p>
+      <nav>
+        <ol>
+          <li><a href="#overview"><svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-overview"></use></svg><span>Global overview</span></a></li>
+          <li><a href="#resolution"><svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-question"></use></svg><span>Resolution ledger</span></a></li>
+          <li><a href="#arguments"><svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-evidence"></use></svg><span>Claims &amp; evidence</span></a></li>
+          <li><a href="#execution"><svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-execution"></use></svg><span>Execution history</span></a></li>
+          <li><a href="#results"><svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-result"></use></svg><span>Results &amp; failures</span></a></li>
+          <li><a href="#methods"><svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-method"></use></svg><span>Methods &amp; parameters</span></a></li>
+          <li><a href="#provenance"><svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-provenance"></use></svg><span>Provenance &amp; replay</span></a></li>
+        </ol>
+      </nav>
+      <div class="rail-boundary">
+        <span class="meta-label">Declared boundary</span>
+        <p class="empty-fallback">{{scope.boundary_statement}}</p>
+      </div>
+      <a class="annex-link" href="annex/index.html">
+        <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-annex"></use></svg>
+        Open static annex
+      </a>
+    </aside>
+
+    <main id="report-main" class="report-main" tabindex="-1">
+      {{> global-overview}}
+      {{> resolution-ledger}}
+      {{> argument-inspector}}
+      {{> execution-history}}
+      {{> results-and-failures}}
+      {{> methods-and-parameters}}
+      {{> provenance-and-reproduction}}
+    </main>
+  </div>
+
+  <footer class="report-footer">
+    <div>
+      <span class="meta-label">Scientific payload</span>
+      <code class="hash empty-fallback">{{payload_hash}}</code>
+    </div>
+    <div>
+      <span class="meta-label">Attestation binding</span>
+      <code class="hash empty-fallback">{{validation.payload_hash}}</code>
+    </div>
+    <div>
+      <span class="meta-label">Disclosure projection</span>
+      <span class="empty-fallback">{{disclosure_state}}</span>
+    </div>
+    <p class="footer-note">This console displays the disclosure-safe scientific payload. Empty values are not silently interpreted; inspect the field state and provenance shown with each record.</p>
+  </footer>
+
+  {{> supplemental-ai-audit}}
+</body>
+</html>

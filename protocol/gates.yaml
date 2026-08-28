@@ -1,0 +1,662 @@
+protocol: gates
+version: 1.0.0
+status: normative
+
+purpose: Define ordered conformance gates and release aggregation without treating an unrun check as a pass.
+
+authority_boundary:
+  rule_registry: rules/registry.yaml is the operational authority for individual rule codes, predicates, severities, pointers, and waiver metadata.
+  this_file: Defines gate membership, ordering, outcomes, evidence requirements, and release profiles.
+  precedence: A gate must not downgrade an individual rule's severity or permit a waiver prohibited by the rule registry.
+
+outcome_model:
+  values:
+    pass:
+      meaning: Every applicable check executed against the identified input and met its criterion.
+    fail:
+      meaning: At least one applicable check executed and failed.
+    not_evaluated:
+      meaning: One or more required checks did not run or produced no usable result.
+    not_applicable:
+      meaning: Every check in the gate is proven inapplicable by recorded applicability decisions.
+    unknown:
+      meaning: Results exist but their identity, integrity, completeness, or interpretation cannot be established.
+  aggregation_order:
+    - fail
+    - unknown
+    - not_evaluated
+    - pass
+    - not_applicable
+  aggregation_rules:
+    - If any applicable blocker check fails, gate outcome is fail.
+    - If no check fails but any required result is unknown, gate outcome is unknown.
+    - If no check fails or is unknown but any required check did not run, gate outcome is not_evaluated.
+    - Gate outcome is pass only when all applicable required checks ran and passed.
+    - Gate outcome is not_applicable only when no check applies and every non-applicability decision is valid.
+    - Skipped, timeout, crashed, unavailable, withheld-for-validator, and parser-error states are not_evaluated or unknown, never pass.
+
+check_result_contract:
+  required_fields:
+    - check_id
+    - rule_code
+    - gate_id
+    - outcome
+    - severity
+    - evaluated_input_pointers
+    - evaluated_input_digests
+    - evidence_refs
+    - validator_component
+    - started_at
+    - completed_at
+  conditional_fields:
+    pass:
+      - criterion_version
+      - observed_summary
+    fail:
+      - failure_locations
+      - remediation
+    not_evaluated:
+      - reason
+    not_applicable:
+      - applicability_decision_ids
+    unknown:
+      - uncertainty_reason
+  rules:
+    - Check evidence must identify the exact payload, package, or artifact digest evaluated.
+    - A check may report counts and safe summaries but must not leak protected values.
+    - A prior check result cannot be reused after its bound input digest changes unless the check is proven unaffected and the attestation records that proof.
+
+severity:
+  blocker:
+    release_effect: always blocks release
+    waivable: false
+  error:
+    release_effect: blocks release unless the rule registry explicitly permits a waiver and an approved waiver is bound
+  warning:
+    release_effect: does not block by default but remains visible
+  information:
+    release_effect: does not block
+
+waiver_contract:
+  required_fields:
+    - waiver_id
+    - rule_code
+    - affected_object_ids
+    - rationale
+    - scope
+    - expiration_or_review_time
+    - accountable_approver
+    - evidence_bindings
+  rules:
+    - Blocker rules cannot be waived.
+    - A waiver never changes a failed check or gate to pass; human presentation may say fail_with_accepted_waivers only while displaying the machine outcome.
+    - A release profile may accept a failed gate only when every failed check is severity error, every corresponding registry rule is explicitly waivable, and every failure has a valid in-scope unexpired waiver.
+    - Warning and information findings remain visible and do not need waivers for release.
+    - Unknown, not_evaluated, blocker, disclosure, security, and attestation-binding outcomes cannot be waived.
+  release_acceptance:
+    accepted_without_waiver:
+      - pass
+      - not_applicable
+    conditionally_accepted: fail_due_only_to_validly_waived_error_checks
+    conditional_acceptance_requirements:
+      - Every failed check has severity error and no blocker check failed.
+      - Every failed rule is marked waivable by the rule registry.
+      - Each waiver is current and covers the exact rule, object scope, evaluated input digest, and release audience.
+      - Every waiver prerequisite is satisfied and evidence-bound.
+      - No failed check belongs to disclosure, security, attestation binding, or another profile-prohibited waiver class.
+      - No required gate outcome is unknown or not_evaluated.
+    conditional_acceptance_wording: Released with accepted waivers; all failed findings and waiver identifiers remain visible, and the gates must not be described as passed.
+    never_accepted:
+      - unknown
+      - not_evaluated
+      - fail_with_any_unwaived_error
+      - fail_with_any_blocker
+      - fail_in_disclosure_security_or_attestation_binding
+
+execution_order:
+  - G00_package_identity
+  - G01_schema_missingness_applicability
+  - G02_source_coverage
+  - G03_identifier_reference_graph
+  - G04_work_execution_and_counting
+  - G05_decision_material_and_population
+  - G06_quantitative_derivation
+  - G07_claim_argument_bridge_conflict
+  - G08_revision_invalidation
+  - G09_domain_overlays
+  - G10_access_permission_reproducibility
+  - G11_disclosure_security
+  - G12_offline_render_accessibility_print
+  - G13_attestation_binding
+  - G14_archive_preservation
+
+short_circuit_policy:
+  - A gate may stop unsafe downstream processing, but every unrun downstream gate must be recorded as not_evaluated.
+  - Validation summaries must list all gates, including those not evaluated.
+  - A failed early gate cannot make later gates appear passed from a previous run.
+
+attestation_boundary:
+  attested_gate_ids:
+    - G00_package_identity
+    - G01_schema_missingness_applicability
+    - G02_source_coverage
+    - G03_identifier_reference_graph
+    - G04_work_execution_and_counting
+    - G05_decision_material_and_population
+    - G06_quantitative_derivation
+    - G07_claim_argument_bridge_conflict
+    - G08_revision_invalidation
+    - G09_domain_overlays
+    - G10_access_permission_reproducibility
+    - G11_disclosure_security
+    - G12_offline_render_accessibility_print
+  external_verification_gate_id: G13_attestation_binding
+  archive_gate_id: G14_archive_preservation
+  rules:
+    - The attestation must not include its own G13 result or its own digest; that would be self-referential.
+    - G13 runs after the final attestation and manifest exist; its result is a detached release-verification record or a consumer verification result, never a field appended to either file it evaluated.
+    - No bundle member may change after a passing G13 result; any change requires rebuilding the affected layers and rerunning G13.
+    - G14 runs after the final release bundle exists and is recorded outside the validation attestation.
+    - A release claim requires both an acceptable attestation for all applicable attested gates and a passing external G13 result.
+
+gates:
+  G00_package_identity:
+    title: Package and identity
+    inputs:
+      - scientific payload
+      - pre-attestation package-member inventory when packaging is evaluated
+    required_checks:
+      - parseability and canonical encoding
+      - report, project, schema, and protocol identity
+      - version and cutoff presence
+      - duplicate package-member and unsafe-path detection
+      - digest algorithm and digest format support
+    blocker_conditions:
+      - ambiguous payload identity
+      - duplicate or path-traversing package member
+      - unsupported or malformed canonical scientific payload
+    finalization_note: The final manifest and validation-attestation member do not yet exist during attested G00; G13 validates their schema, paths, and digest links after finalization.
+    required_for:
+      - review
+      - release
+      - archival
+
+  G01_schema_missingness_applicability:
+    title: Schema, missingness, applicability, and section manifest
+    depends_on:
+      - G00_package_identity
+    inputs:
+      - canonical scientific payload
+      - field-applicability.yaml
+      - section-manifests.yaml
+    required_checks:
+      - schema conformance
+      - missing-value envelope invariants
+      - unknown, not_applicable, and withheld semantics
+      - module-trigger evaluation
+      - section-manifest completeness and valid coverage combinations
+      - empty-collection semantics
+    core_rule_codes:
+      - EPI003
+      - APP001
+      - APP002
+      - APP003
+      - APP004
+      - APP005
+      - MNF001
+      - MNF002
+      - MNF003
+      - MNF005
+    required_for:
+      - review
+      - release
+      - archival
+
+  G02_source_coverage:
+    title: Source universe and coverage
+    depends_on:
+      - G01_schema_missingness_applicability
+    inputs:
+      - source universes
+      - source snapshots
+      - source item dispositions
+      - extraction and mapping records
+    required_checks:
+      - cutoff and boundary definition
+      - authority and exhaustiveness evidence
+      - exactly one current disposition per registered source
+      - duplicate equivalence and canonical links
+      - unreadable, inaccessible, excluded, and unmapped impact
+      - completeness-axis derivation
+      - wording compatibility with completeness class
+      - late-arriving source revisions
+    core_rule_codes:
+      - COV001
+      - COV002
+      - COV003
+      - COV004
+      - COV005
+      - COV006
+      - NEG001
+    release_note: A bounded release may report partial or unprovable completeness, but it must pass this gate by stating the limitation correctly and must not leave registered items pending when its declared boundary requires disposition.
+    required_for:
+      - release
+      - archival
+
+  G03_identifier_reference_graph:
+    title: Stable identifiers, references, and graph integrity
+    depends_on:
+      - G01_schema_missingness_applicability
+    inputs:
+      - all canonical object collections
+      - identifier registry and alias mapping at authorized level
+    required_checks:
+      - identifier syntax, uniqueness, type compatibility, and non-reuse
+      - object version and revision-chain validity
+      - referential integrity
+      - no orphan active references
+      - claim-argument DAG acyclicity
+      - dependency and conflict-set membership integrity
+      - public alias consistency without protected-value leakage
+    core_rule_codes:
+      - CLM002
+      - RED003
+    required_for:
+      - review
+      - release
+      - archival
+
+  G04_work_execution_and_counting:
+    title: Work execution state, scope, history, and counting
+    depends_on:
+      - G03_identifier_reference_graph
+    inputs:
+      - campaigns
+      - work units
+      - attempts
+      - segments
+      - completion assessments
+      - rendered summary counts when available
+    required_checks:
+      - legal state transitions
+      - execution evidence for attempted and completed
+      - completion criteria and assessment
+      - execution-scope separation
+      - append-only retry and failure history
+      - metric units, numerators, denominators, scopes, and cutoffs
+      - no independence or biological-unit inflation
+    core_rule_codes:
+      - WRK001
+      - WRK002
+      - WRK003
+      - WRK004
+      - WRK005
+      - WRK006
+    required_for:
+      - release
+      - archival
+
+  G05_decision_material_and_population:
+    title: Decision timing, material lineage, and analysis population
+    depends_on:
+      - G03_identifier_reference_graph
+      - G04_work_execution_and_counting
+    inputs:
+      - decision events
+      - material and data lineage
+      - inclusion, exclusion, pooling, grouping, and population records
+    required_checks:
+      - predefined, adaptive, post-hoc, missing, and not-applicable timing evidence
+      - preservation of material decision revisions
+      - sample, donor, dataset-row, construct, and system lineage closure
+      - biological, technical, observational, experimental, and analysis unit separation
+      - population and exclusion accounting
+      - pool and grouping consistency
+    core_rule_codes:
+      - TIM001
+      - TIM002
+      - TIM003
+      - TIM004
+      - TIM005
+      - MAT001
+    required_for:
+      - release
+      - archival
+
+  G06_quantitative_derivation:
+    title: Quantitative derivation closure
+    depends_on:
+      - G03_identifier_reference_graph
+      - G05_decision_material_and_population
+    inputs:
+      - data slices
+      - derivation records
+      - analysis runs
+      - artifacts
+      - evidence items
+      - quantitative claims
+    required_checks:
+      - source and input snapshot identity
+      - row, column, frame, or query selection traceability
+      - filtering and transformation order
+      - unit and denominator propagation
+      - invocation, environment, random-state, exit, and output bindings
+      - evidence and claim closure
+      - derivation-digest invalidation after upstream change
+    core_rule_codes:
+      - DER001
+      - REV001
+    applicability: Quantitative records exist within the declared report scope.
+    required_for:
+      - release
+      - archival
+
+  G07_claim_argument_bridge_conflict:
+    title: Claims, evidence, arguments, bridges, dependence, and conflict
+    depends_on:
+      - G03_identifier_reference_graph
+      - G06_quantitative_derivation
+    inputs:
+      - claims
+      - evidence items
+      - argument steps
+      - dependency groups
+      - cross-domain bridges
+      - conflict sets
+      - result axes
+    required_checks:
+      - support path for non-background claims
+      - wording strength and claim type
+      - counterevidence and alternative explanations
+      - negative-result qualification
+      - evidence independence
+      - cross-domain alignment and bridge validity
+      - conflict versus heterogeneity classification
+      - result-axis orthogonality
+    core_rule_codes:
+      - CLM001
+      - BRG001
+      - DEP001
+      - CNF001
+      - NUL001
+      - RES001
+      - RES002
+    required_for:
+      - release
+      - archival
+
+  G08_revision_invalidation:
+    title: Revision, correction, retraction, and invalidation propagation
+    depends_on:
+      - G03_identifier_reference_graph
+      - G07_claim_argument_bridge_conflict
+    inputs:
+      - revision events
+      - dependency graph
+      - current and historical object versions
+      - summaries and question resolutions
+    required_checks:
+      - append-only revision history
+      - correction, supersession, and retraction propagation
+      - invalidated derivation and evidence status
+      - downstream claim and question-resolution recomputation
+      - summary consistency with current graph
+    core_rule_codes:
+      - REV001
+      - EPI009
+    required_for:
+      - release
+      - archival
+
+  G09_domain_overlays:
+    title: Applicable scientific-domain overlays
+    depends_on:
+      - G01_schema_missingness_applicability
+      - G05_decision_material_and_population
+      - G07_claim_argument_bridge_conflict
+    inputs:
+      - enabled domain modules
+      - domain-specific fields and records
+      - domain rule overlays
+    required_checks:
+      wet_lab:
+        - sample and replicate identity
+        - controls, sensitivity, QC, randomization, blinding, and protocol deviations
+      ai_ml:
+        - split-group leakage, label lineage, train-only fitting, all-trial accounting, test access, and dependency
+      molecular_dynamics:
+        - system construction, parameter provenance, replica and restart lineage, frame slicing, correlation, and convergence evidence
+      cross_domain:
+        - entity, construct, condition, dose, temporal, and spatial alignment
+    rule: Only enabled modules run; an undetermined material module yields unknown, not not_applicable.
+    applicability: At least one scientific-domain module is enabled.
+    required_for:
+      - release
+      - archival
+
+  G10_access_permission_reproducibility:
+    title: Access, permission, and reproducibility
+    depends_on:
+      - G03_identifier_reference_graph
+      - G06_quantitative_derivation
+      - G09_domain_overlays
+    inputs:
+      - artifacts and access assessments
+      - licenses, ethics, and permission records
+      - reproducibility units
+      - historical invocations and recipes
+      - environments and random states
+      - replay and independent reproduction events
+    required_checks:
+      - provenance and artifact closure
+      - recipe-to-invocation comparison
+      - access conditions and integrity verification
+      - environment and random-state completeness
+      - predefined or valid adaptive comparators
+      - replay-event outcomes
+      - independence assessment
+      - conservative level derivation and critical-unit summary
+    core_rule_codes:
+      - REP001
+      - REP002
+      - REP003
+      - REP004
+      - REP005
+      - REP006
+    release_note: Low reproducibility levels may be reported honestly, but level inflation, hidden unknowns, or missing critical-unit denominators fail the gate.
+    required_for:
+      - release
+      - archival
+
+  G11_disclosure_security:
+    title: Disclosure, redaction, and package security
+    depends_on:
+      - G00_package_identity
+      - G03_identifier_reference_graph
+    inputs:
+      - canonical source payload at authorized level
+      - disclosure projection
+      - every projected content-package byte and member path, excluding the not-yet-created final attestation and manifest
+      - disclosure manifest
+    required_checks:
+      - profile and decision authorization
+      - epistemic-state-preserving projection
+      - secret and protected-value scan
+      - absolute path, internal host, dangerous URL, and path traversal scan
+      - safe alias and reference verification
+      - index, metadata, image, SVG, source-map, print, and log inspection
+      - active-content and injection defenses
+      - no remote dependency or telemetry
+    core_rule_codes:
+      - RED001
+      - RED002
+      - RED003
+      - RED004
+      - RED005
+      - RED006
+    waiver_policy: No failure, unknown, or not_evaluated outcome is waivable for release.
+    required_for:
+      - release
+      - archival
+
+  G12_offline_render_accessibility_print:
+    title: Deterministic rendering, offline operation, accessibility, and print
+    depends_on:
+      - G11_disclosure_security
+    inputs:
+      - projected scientific payload
+      - rendered report and annexes
+      - static assets and indexes
+      - print views
+    required_checks:
+      - rendered scientific semantics equal payload semantics
+      - no renderer-created fact, citation, number, or conclusion
+      - file-scheme and moved-directory operation
+      - all scientific content available without scripts
+      - no network requests
+      - keyboard and linear-reading access
+      - responsive reflow, reduced motion, forced colors, and status redundancy
+      - summary, full-archive, and filtered-print labeling
+      - failures, negatives, exclusions, conflicts, and retractions searchable and printable
+    core_rule_codes:
+      - EPI011
+      - MNF004
+      - SEC001
+      - A11Y001
+      - RED005
+      - MOD004
+    required_for:
+      - release
+      - archival
+
+  G13_attestation_binding:
+    title: Validation attestation binding and package finalization
+    depends_on:
+      - G00_package_identity
+      - G01_schema_missingness_applicability
+      - G02_source_coverage
+      - G03_identifier_reference_graph
+      - G04_work_execution_and_counting
+      - G05_decision_material_and_population
+      - G06_quantitative_derivation
+      - G07_claim_argument_bridge_conflict
+      - G08_revision_invalidation
+      - G09_domain_overlays
+      - G10_access_permission_reproducibility
+      - G11_disclosure_security
+      - G12_offline_render_accessibility_print
+    inputs:
+      - scientific payload digest
+      - validation attestation
+      - final package manifest
+      - final attestation and manifest bytes and member paths
+      - validator and rule-set identity
+      - gate results
+    required_checks:
+      - attestation schema and identity
+      - canonicalization and scientific-payload digest match
+      - evaluated non-attestation artifact digests match when rendering or packaging was evaluated
+      - package manifest excludes itself and its attestation-member digest matches the final attestation
+      - final attestation and manifest pass path, secret, protected-value, active-content, remote-dependency, and disclosure scans
+      - digest links follow payload and evaluated members to attestation to manifest without a self-reference
+      - rule-set and protocol version match
+      - complete listing of every attested gate in attestation_boundary, including valid not_applicable outcomes
+      - no G13 or G14 result embedded in the attestation
+      - no unaccepted failed, unknown, or not_evaluated release-required gate
+      - attestation time and optional expiry policy
+      - separation from generation audit
+    core_rule_codes:
+      - ATT001
+      - EPI010
+      - RED001
+      - RED005
+      - SEC001
+    required_for:
+      - release
+      - archival
+
+  G14_archive_preservation:
+    title: Archive preservation and successor integrity
+    depends_on:
+      - G13_attestation_binding
+    inputs:
+      - release bundle
+      - preservation metadata
+      - revision and successor chain
+    required_checks:
+      - immutable archive identity and digest
+      - full package manifest and member integrity
+      - format and protocol version preservation
+      - offline full-archive readability
+      - correction, retraction, and successor links
+      - no in-place mutation
+    required_for:
+      - archival
+
+profiles:
+  authoring:
+    required_gates:
+      - G00_package_identity
+      - G01_schema_missingness_applicability
+    allowed_outcomes:
+      - pass
+      - fail
+      - unknown
+      - not_evaluated
+      - not_applicable
+    release_eligible: false
+  review:
+    required_gates:
+      - G00_package_identity
+      - G01_schema_missingness_applicability
+      - G02_source_coverage
+      - G03_identifier_reference_graph
+    allowed_outcomes:
+      - pass
+      - fail
+      - unknown
+      - not_evaluated
+      - not_applicable
+    release_eligible: false
+  release:
+    required_gates:
+      - G00_package_identity
+      - G01_schema_missingness_applicability
+      - G02_source_coverage
+      - G03_identifier_reference_graph
+      - G04_work_execution_and_counting
+      - G05_decision_material_and_population
+      - G06_quantitative_derivation
+      - G07_claim_argument_bridge_conflict
+      - G08_revision_invalidation
+      - G09_domain_overlays
+      - G10_access_permission_reproducibility
+      - G11_disclosure_security
+      - G12_offline_render_accessibility_print
+      - G13_attestation_binding
+    accepted_machine_outcomes:
+      - pass
+      - not_applicable
+    conditional_acceptance: fail_due_only_to_validly_waived_error_checks
+    release_eligible: true
+  archival:
+    inherits: release
+    additional_required_gates:
+      - G14_archive_preservation
+    accepted_machine_outcomes:
+      - pass
+      - not_applicable
+    conditional_acceptance: fail_due_only_to_validly_waived_error_checks
+    release_eligible: true
+
+attestation_summary_requirements:
+  - scientific payload digest and canonicalization identifier
+  - projected payload digest when disclosure projection applies
+  - digests of evaluated package members, excluding the attestation and manifest themselves, when package rendering is evaluated
+  - protocol, schema, and rule-set versions
+  - validator component identities and versions
+  - each attested gate outcome and check counts by outcome
+  - start and completion times
+  - environment identity sufficient to interpret validator behavior
+  - explicit statement that not_evaluated and unknown are not passes
+  - no claim that tests or gates passed unless corresponding executed results are present

@@ -1,0 +1,516 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.report-prompt.org/v1/disclosure-projection.schema.json",
+  "title": "Disclosure projection",
+  "description": "Hash-bound mapping from a canonical scientific report to a disclosure-safe projection. The mapping records actions and hashes, never withheld raw values.",
+  "$defs": {
+    "FieldAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action_id",
+        "source_object_id",
+        "source_pointer",
+        "target_object_id",
+        "target_pointer",
+        "action",
+        "source_epistemic_state",
+        "projected_epistemic_state",
+        "source_value_hash",
+        "projected_value_hash",
+        "reason",
+        "policy_rule_id",
+        "review_status"
+      ],
+      "properties": {
+        "action_id": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "source_object_id": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "source_pointer": {
+          "$ref": "./defs/common.schema.json#/$defs/JsonPointer"
+        },
+        "target_object_id": {
+          "oneOf": [
+            {
+              "$ref": "./defs/common.schema.json#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "target_pointer": {
+          "oneOf": [
+            {
+              "$ref": "./defs/common.schema.json#/$defs/JsonPointer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "action": {
+          "enum": [
+            "retained",
+            "withheld_envelope",
+            "omitted_object",
+            "generalized",
+            "replaced_with_public_identifier",
+            "hash_only"
+          ]
+        },
+        "source_epistemic_state": {
+          "enum": [
+            "known",
+            "unknown",
+            "not_applicable",
+            "withheld",
+            "not_enveloped",
+            "not_present"
+          ]
+        },
+        "projected_epistemic_state": {
+          "enum": [
+            "known",
+            "unknown",
+            "not_applicable",
+            "withheld",
+            "not_enveloped",
+            "not_present"
+          ]
+        },
+        "source_value_hash": {
+          "$ref": "./defs/common.schema.json#/$defs/Hash"
+        },
+        "projected_value_hash": {
+          "oneOf": [
+            {
+              "$ref": "./defs/common.schema.json#/$defs/Hash"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reason": {
+          "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+        },
+        "policy_rule_id": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "review_status": {
+          "enum": [
+            "not_reviewed",
+            "approved",
+            "changes_requested",
+            "not_required"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "action": {
+                "const": "omitted_object"
+              }
+            },
+            "required": [
+              "action"
+            ]
+          },
+          "then": {
+            "properties": {
+              "target_object_id": {
+                "type": "null"
+              },
+              "target_pointer": {
+                "type": "null"
+              },
+              "projected_value_hash": {
+                "type": "null"
+              },
+              "projected_epistemic_state": {
+                "const": "not_present"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "target_object_id": {
+                "$ref": "./defs/common.schema.json#/$defs/Identifier"
+              },
+              "target_pointer": {
+                "$ref": "./defs/common.schema.json#/$defs/JsonPointer"
+              },
+              "projected_value_hash": {
+                "$ref": "./defs/common.schema.json#/$defs/Hash"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "action": { "const": "withheld_envelope" } },
+            "required": ["action"]
+          },
+          "then": {
+            "properties": {
+              "projected_epistemic_state": { "const": "withheld" },
+              "source_epistemic_state": {
+                "enum": ["known", "unknown", "not_applicable", "withheld"]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ProjectionCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "retained",
+        "withheld_envelope",
+        "omitted_object",
+        "generalized",
+        "replaced_with_public_identifier",
+        "hash_only"
+      ],
+      "properties": {
+        "retained": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "withheld_envelope": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "omitted_object": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "generalized": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "replaced_with_public_identifier": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "hash_only": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "DisclosureCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "check_id",
+        "check_kind",
+        "status",
+        "finding_count",
+        "executed_at",
+        "tool_name",
+        "tool_version",
+        "details_artifact_id"
+      ],
+      "properties": {
+        "check_id": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "check_kind": {
+          "enum": [
+            "secret_scan",
+            "absolute_path_scan",
+            "remote_dependency_scan",
+            "dangerous_url_scan",
+            "filename_scan",
+            "withheld_value_leak_scan",
+            "other"
+          ]
+        },
+        "status": {
+          "enum": [
+            "pass",
+            "fail",
+            "not_run",
+            "error",
+            "not_applicable"
+          ]
+        },
+        "finding_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "executed_at": {
+          "oneOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tool_name": {
+          "oneOf": [
+            {
+              "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tool_version": {
+          "oneOf": [
+            {
+              "$ref": "./defs/common.schema.json#/$defs/Version"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "details_artifact_id": {
+          "oneOf": [
+            {
+              "$ref": "./defs/common.schema.json#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "not_run"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "executed_at": {
+                "type": "null"
+              },
+              "tool_name": {
+                "type": "null"
+              },
+              "tool_version": {
+                "type": "null"
+              },
+              "finding_count": {
+                "const": 0
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "executed_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tool_name": {
+                "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+              },
+              "tool_version": {
+                "$ref": "./defs/common.schema.json#/$defs/Version"
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "projection_id",
+    "projection_version",
+    "schema_version",
+    "source_report_id",
+    "source_report_version",
+    "source_payload_hash",
+    "projected_report_id",
+    "projected_report_version",
+    "projected_payload_hash",
+    "source_disclosure_level",
+    "target_disclosure_level",
+    "policy_id",
+    "policy_version",
+    "policy_hash",
+    "created_at",
+    "projection_status",
+    "field_actions",
+    "counts",
+    "disclosure_checks",
+    "unresolved_review_task_ids",
+    "extensions"
+  ],
+  "properties": {
+    "projection_id": {
+      "$ref": "./defs/common.schema.json#/$defs/Identifier"
+    },
+    "projection_version": {
+      "$ref": "./defs/common.schema.json#/$defs/Version"
+    },
+    "schema_version": {
+      "$ref": "./defs/common.schema.json#/$defs/Version"
+    },
+    "source_report_id": {
+      "$ref": "./defs/common.schema.json#/$defs/Identifier"
+    },
+    "source_report_version": {
+      "$ref": "./defs/common.schema.json#/$defs/Version"
+    },
+    "source_payload_hash": {
+      "$ref": "./defs/common.schema.json#/$defs/Hash"
+    },
+    "projected_report_id": {
+      "$ref": "./defs/common.schema.json#/$defs/Identifier"
+    },
+    "projected_report_version": {
+      "$ref": "./defs/common.schema.json#/$defs/Version"
+    },
+    "projected_payload_hash": {
+      "$ref": "./defs/common.schema.json#/$defs/Hash"
+    },
+    "source_disclosure_level": {
+      "enum": [
+        "public",
+        "internal",
+        "restricted"
+      ]
+    },
+    "target_disclosure_level": {
+      "enum": [
+        "public",
+        "internal",
+        "restricted"
+      ]
+    },
+    "policy_id": {
+      "$ref": "./defs/common.schema.json#/$defs/Identifier"
+    },
+    "policy_version": {
+      "$ref": "./defs/common.schema.json#/$defs/Version"
+    },
+    "policy_hash": {
+      "$ref": "./defs/common.schema.json#/$defs/Hash"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "projection_status": {
+      "enum": [
+        "complete",
+        "incomplete",
+        "failed"
+      ]
+    },
+    "field_actions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/FieldAction"
+      }
+    },
+    "counts": {
+      "$ref": "#/$defs/ProjectionCounts"
+    },
+    "disclosure_checks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/DisclosureCheck"
+      },
+      "allOf": [
+        {
+          "contains": {
+            "properties": { "check_kind": { "const": "secret_scan" } },
+            "required": ["check_kind"]
+          }
+        },
+        {
+          "contains": {
+            "properties": { "check_kind": { "const": "absolute_path_scan" } },
+            "required": ["check_kind"]
+          }
+        },
+        {
+          "contains": {
+            "properties": { "check_kind": { "const": "dangerous_url_scan" } },
+            "required": ["check_kind"]
+          }
+        },
+        {
+          "contains": {
+            "properties": { "check_kind": { "const": "withheld_value_leak_scan" } },
+            "required": ["check_kind"]
+          }
+        }
+      ]
+    },
+    "unresolved_review_task_ids": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/common.schema.json#/$defs/Identifier"
+      },
+      "uniqueItems": true
+    },
+    "extensions": {
+      "$ref": "./defs/common.schema.json#/$defs/ExtensionMap"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "projection_status": {
+            "const": "complete"
+          }
+        },
+        "required": [
+          "projection_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "unresolved_review_task_ids": {
+            "maxItems": 0
+          },
+          "disclosure_checks": {
+            "not": {
+              "contains": {
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "fail",
+                      "error",
+                      "not_run"
+                    ]
+                  }
+                },
+                "required": [
+                  "status"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,159 @@
+<section id="results" class="report-section" aria-labelledby="results-title" data-print-summary="true">
+  <header class="section-heading">
+    <div>
+      <p class="section-code">L2 / result and failure ledger</p>
+      <h2 id="results-title">Results, negative findings, exclusions, and failures</h2>
+    </div>
+    <p class="section-purpose">Effect, statistical decision, interpretability, and disposition are separate axes. Technical failure is recorded independently.</p>
+  </header>
+
+  <div class="coverage-banner" data-status="{{section_coverage.results.state}}">
+    <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-coverage"></use></svg>
+    <span><strong>Results coverage:</strong> <span class="empty-fallback">{{section_coverage.results.state}}</span></span>
+    <span class="coverage-banner__reason empty-fallback">{{section_coverage.results.reason}}</span>
+  </div>
+
+  <div class="axis-key" aria-label="Result interpretation axes">
+    <div><span class="axis-key__symbol">E</span><span><strong>Effect</strong><small>scientific direction or class</small></span></div>
+    <div><span class="axis-key__symbol">S</span><span><strong>Decision</strong><small>statistical decision</small></span></div>
+    <div><span class="axis-key__symbol">I</span><span><strong>Interpretability</strong><small>what evidence permits</small></span></div>
+    <div><span class="axis-key__symbol">D</span><span><strong>Disposition</strong><small>how the record is used</small></span></div>
+  </div>
+
+  <div class="result-list">
+    {{#each results}}
+    <article class="result-card" data-record data-kind="result {{record_disposition}} {{scientific_effect_class}}" data-domain="{{domain}}" data-state="{{interpretability_status}} {{record_disposition}}" data-safety-record="{{safety_relevance}}">
+      <header class="result-card__header">
+        <div>
+          <div class="record-id-block"><span class="record-type">Result</span><code>{{result_id}}</code></div>
+          <h3 class="empty-fallback">{{title}}</h3>
+        </div>
+        <span class="status-chip" data-status="{{interpretability_status}}"><span class="status-marker" aria-hidden="true"></span><span class="empty-fallback">{{interpretability_status}}</span></span>
+      </header>
+
+      <p class="result-summary empty-fallback">{{summary}}</p>
+
+      <dl class="result-axis-matrix">
+        <div data-axis="effect"><dt><span aria-hidden="true">E</span> Scientific effect</dt><dd class="empty-fallback">{{scientific_effect_class}}</dd></div>
+        <div data-axis="decision"><dt><span aria-hidden="true">S</span> Statistical decision</dt><dd class="empty-fallback">{{statistical_decision}}</dd></div>
+        <div data-axis="interpretability"><dt><span aria-hidden="true">I</span> Interpretability</dt><dd class="empty-fallback">{{interpretability_status}}</dd></div>
+        <div data-axis="disposition"><dt><span aria-hidden="true">D</span> Record disposition</dt><dd class="empty-fallback">{{record_disposition}}</dd></div>
+      </dl>
+
+      {{#if negative_result_note}}
+      <aside class="negative-result-note" data-safety-record="true">
+        <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-info"></use></svg>
+        <div><strong>Negative-result qualification</strong><p>{{negative_result_note}}</p></div>
+      </aside>
+      {{/if}}
+
+      <details class="disclosure" data-disclosure>
+        <summary>
+          <span>Inspect estimates, controls, and derivation</span>
+          <span class="summary-meta"><span class="empty-fallback">{{estimate_count}}</span> estimates · closure <span class="empty-fallback">{{derivation_status}}</span></span>
+        </summary>
+        <div class="disclosure__body result-detail-grid">
+          <div class="table-scroll">
+            <table class="data-table estimate-table">
+              <caption>Quantitative estimates and intervals</caption>
+              <thead><tr><th scope="col">Estimand / measure</th><th scope="col">Estimate</th><th scope="col">Interval</th><th scope="col">Unit</th><th scope="col">Independent N</th><th scope="col">Analysis population</th></tr></thead>
+              <tbody>
+                {{#each estimates}}
+                <tr data-record data-kind="estimate" data-domain="{{domain}}" data-state="{{state}}">
+                  <th scope="row" data-label="Estimand / measure">{{label}}</th>
+                  <td data-label="Estimate" class="numeric empty-fallback">{{display_estimate}}</td>
+                  <td data-label="Interval" class="numeric empty-fallback">{{display_interval}}</td>
+                  <td data-label="Unit" class="empty-fallback">{{unit}}</td>
+                  <td data-label="Independent N" class="numeric empty-fallback">{{independent_n}}</td>
+                  <td data-label="Analysis population" class="empty-fallback">{{analysis_population}}</td>
+                </tr>
+                {{else}}
+                <tr><td colspan="6" class="missing-entry">No quantitative estimate rows supplied. This may be appropriate for qualitative or failed results; inspect the result axes.</td></tr>
+                {{/each}}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="result-qualifiers">
+            <h4>Controls and interpretability</h4>
+            <dl class="key-value-list">
+              <div><dt>Control status</dt><dd class="empty-fallback">{{control_status}}</dd></div>
+              <div><dt>Assay / evaluation sensitivity</dt><dd class="empty-fallback">{{sensitivity_status}}</dd></div>
+              <div><dt>Detection limit or MDE</dt><dd class="empty-fallback">{{detection_limit_or_mde}}</dd></div>
+              <div><dt>Equivalence boundary</dt><dd class="empty-fallback">{{equivalence_boundary}}</dd></div>
+              <div><dt>Multiplicity handling</dt><dd class="empty-fallback">{{multiplicity_handling}}</dd></div>
+            </dl>
+          </div>
+
+          <div class="derivation-chain" aria-label="Quantitative derivation chain">
+            <h4>Derivation closure</h4>
+            <ol>
+              <li><span>Data slice</span><code class="empty-fallback">{{derivation.data_slice_id}}</code></li>
+              <li><span>Derivation record</span><code class="empty-fallback">{{derivation.derivation_id}}</code></li>
+              <li><span>Analysis run</span><code class="empty-fallback">{{derivation.analysis_run_id}}</code></li>
+              <li><span>Output artifact</span><code class="empty-fallback">{{derivation.output_artifact_id}}</code></li>
+              <li><span>Evidence item</span><code class="empty-fallback">{{derivation.evidence_id}}</code></li>
+            </ol>
+            <span class="status-chip" data-status="{{derivation_status}}">Closure: <strong class="empty-fallback">{{derivation_status}}</strong></span>
+          </div>
+
+          {{#if disposition_reason}}
+          <div class="disposition-note" data-status="{{record_disposition}}">
+            <span class="field-label">Disposition rationale</span>
+            <p>{{disposition_reason}}</p>
+          </div>
+          {{/if}}
+        </div>
+      </details>
+    </article>
+    {{else}}
+    <div class="section-empty" data-state="{{section_coverage.results.state}}">
+      <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-unknown"></use></svg>
+      <div><h3>No result records rendered</h3><p>Consult section coverage. Empty is not equivalent to no effect, not performed, or not applicable.</p></div>
+    </div>
+    {{/each}}
+  </div>
+
+  <section class="failure-ledger" aria-labelledby="failure-ledger-title">
+    <header class="subsection-heading">
+      <div>
+        <p class="section-code">Protected visibility</p>
+        <h3 id="failure-ledger-title">Technical failures and interrupted work</h3>
+      </div>
+      <span class="status-chip" data-status="{{section_coverage.failures.state}}">Coverage: <strong class="empty-fallback">{{section_coverage.failures.state}}</strong></span>
+    </header>
+    <p class="subsection-note">These records remain part of the full archive after successful retries. A filtered working view reports when failure records are outside the current view.</p>
+
+    <div class="failure-list">
+      {{#each failures}}
+      <article class="failure-card" data-record data-kind="failure" data-domain="{{domain}}" data-state="{{status}}" data-safety-record="true">
+        <header>
+          <div class="record-id-block"><span class="record-type">Failure</span><code>{{failure_id}}</code></div>
+          <span class="status-chip" data-status="{{status}}"><svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-failure"></use></svg><span class="empty-fallback">{{status}}</span></span>
+        </header>
+        <h4 class="empty-fallback">{{title}}</h4>
+        <p class="empty-fallback">{{summary}}</p>
+        <dl class="key-value-list key-value-list--horizontal">
+          <div><dt>Work / attempt</dt><dd><code>{{work_unit_id}}</code> / <code>{{attempt_id}}</code></dd></div>
+          <div><dt>Failure class</dt><dd class="empty-fallback">{{failure_class}}</dd></div>
+          <div><dt>Stage</dt><dd class="empty-fallback">{{stage}}</dd></div>
+          <div><dt>Partial result disposition</dt><dd class="empty-fallback">{{partial_result_disposition}}</dd></div>
+          <div><dt>Recovery</dt><dd><code class="empty-fallback">{{recovery_attempt_id}}</code></dd></div>
+        </dl>
+        <details class="nested-disclosure" data-disclosure>
+          <summary>Failure evidence and impact</summary>
+          <div class="nested-disclosure__body two-column-detail">
+            <div><h5>Observed evidence</h5><p class="empty-fallback">{{observed_evidence}}</p><p class="locator">Locator: <code class="wrap-code empty-fallback">{{source_locator}}</code></p></div>
+            <div><h5>Scientific impact</h5><p class="empty-fallback">{{scientific_impact}}</p><p><span class="meta-label">Affected records</span> <span class="empty-fallback">{{affected_record_ids}}</span></p></div>
+          </div>
+        </details>
+      </article>
+      {{else}}
+      <div class="section-empty section-empty--compact" data-state="{{section_coverage.failures.state}}">
+        <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-unknown"></use></svg>
+        <div><h4>No failure records rendered</h4><p>Use the failures coverage state to distinguish a reviewed zero from missing or inaccessible failure history.</p></div>
+      </div>
+      {{/each}}
+    </div>
+  </section>
+</section>

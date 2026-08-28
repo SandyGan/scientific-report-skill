@@ -1,0 +1,529 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.report-prompt.org/v1/defs/claim-argument.schema.json",
+  "title": "Claims, evidence, argument, bridges, conflicts, and revisions",
+  "description": "Protocol-aligned versioned claim graph with explicit evidence and argument edges, dependency groups, cross-domain bridges, conflicts, and revision propagation.",
+  "$defs": {
+    "ResearchQuestion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "research_question_id",
+        "research_question_version",
+        "question",
+        "rationale",
+        "resolution_criterion_timing",
+        "resolution_criteria",
+        "resolution_status",
+        "qualified_answer",
+        "claim_ids",
+        "limitation_ids",
+        "source_bindings",
+        "extensions"
+      ],
+      "properties": {
+        "research_question_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "research_question_version": { "$ref": "./common.schema.json#/$defs/Version" },
+        "question": { "$ref": "./common.schema.json#/$defs/NonEmptyString" },
+        "rationale": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "resolution_criterion_timing": { "enum": ["predefined", "adaptive", "post_hoc", "missing", "not_applicable"] },
+        "resolution_criteria": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "resolution_status": { "enum": ["resolved", "partially_resolved", "unresolved", "not_addressed", "not_evaluable"] },
+        "qualified_answer": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "claim_ids": {
+          "type": "array",
+          "items": { "$ref": "./common.schema.json#/$defs/Identifier" },
+          "uniqueItems": true
+        },
+        "resolution_criterion_assessments": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ResolutionCriterionAssessment" }
+        },
+        "revision_event_ids": {
+          "type": "array",
+          "items": { "$ref": "./common.schema.json#/$defs/Identifier" },
+          "uniqueItems": true
+        },
+        "limitation_ids": {
+          "type": "array",
+          "items": { "$ref": "./common.schema.json#/$defs/Identifier" },
+          "uniqueItems": true
+        },
+        "source_bindings": {
+          "type": "array",
+          "items": { "$ref": "./common.schema.json#/$defs/SourceBinding" }
+        },
+        "extensions": { "$ref": "./common.schema.json#/$defs/ExtensionMap" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "resolution_status": { "const": "resolved" } }, "required": ["resolution_status"] },
+          "then": {
+            "properties": {
+              "resolution_criterion_timing": { "enum": ["predefined", "adaptive", "post_hoc"] },
+              "resolution_criteria": { "properties": { "state": { "const": "known" } } },
+              "qualified_answer": { "properties": { "state": { "const": "known" } } },
+              "claim_ids": { "minItems": 1 },
+              "resolution_criterion_assessments": { "minItems": 1 }
+            },
+            "required": ["resolution_criterion_assessments"]
+          }
+        }
+      ]
+    },
+    "ResolutionCriterionAssessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "criterion_assessment_id",
+        "criterion",
+        "assessment_status",
+        "satisfying_claim_ids",
+        "unresolved_blocker_ids",
+        "rationale",
+        "assessed_at",
+        "assessment_revision_event_ids",
+        "source_bindings"
+      ],
+      "properties": {
+        "criterion_assessment_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "criterion": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "assessment_status": { "enum": ["satisfied", "partially_satisfied", "not_satisfied", "not_assessable", "unknown", "withheld"] },
+        "satisfying_claim_ids": {
+          "type": "array",
+          "items": { "$ref": "./common.schema.json#/$defs/Identifier" },
+          "uniqueItems": true
+        },
+        "unresolved_blocker_ids": {
+          "type": "array",
+          "items": { "$ref": "./common.schema.json#/$defs/Identifier" },
+          "uniqueItems": true
+        },
+        "rationale": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "assessed_at": { "$ref": "./common.schema.json#/$defs/DateTimeField" },
+        "assessment_revision_event_ids": {
+          "type": "array",
+          "items": { "$ref": "./common.schema.json#/$defs/Identifier" },
+          "uniqueItems": true
+        },
+        "source_bindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "./common.schema.json#/$defs/SourceBinding" }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "assessment_status": { "const": "satisfied" } }, "required": ["assessment_status"] },
+          "then": {
+            "properties": {
+              "satisfying_claim_ids": { "minItems": 1 },
+              "unresolved_blocker_ids": { "maxItems": 0 }
+            }
+          }
+        }
+      ]
+    },
+    "EvidenceItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_item_id",
+        "evidence_item_version",
+        "evidence_kind",
+        "summary",
+        "result_ids",
+        "artifact_ids",
+        "data_slice_ids",
+        "derivation_ids",
+        "analysis_run_ids",
+        "source_item_ids",
+        "evidence_status",
+        "quality_assessment",
+        "dependency_group_ids",
+        "source_bindings",
+        "extensions"
+      ],
+      "properties": {
+        "evidence_item_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "evidence_item_version": { "$ref": "./common.schema.json#/$defs/Version" },
+        "evidence_kind": { "enum": ["result", "observation", "artifact", "source_statement", "derived_value", "method_validation", "external_evidence", "counterevidence", "other"] },
+        "summary": { "$ref": "./common.schema.json#/$defs/NonEmptyString" },
+        "result_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "artifact_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "data_slice_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "derivation_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "analysis_run_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "source_item_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "evidence_status": { "enum": ["active", "qualified", "invalidated", "retracted", "superseded", "review_required", "unknown", "withheld"] },
+        "quality_assessment": { "enum": ["high", "moderate", "low", "not_assessed", "unknown", "withheld"] },
+        "dependency_group_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "source_bindings": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/SourceBinding" } },
+        "extensions": { "$ref": "./common.schema.json#/$defs/ExtensionMap" }
+      },
+      "anyOf": [
+        { "properties": { "result_ids": { "minItems": 1 } } },
+        { "properties": { "artifact_ids": { "minItems": 1 } } },
+        { "properties": { "derivation_ids": { "minItems": 1 } } },
+        { "properties": { "source_item_ids": { "minItems": 1 } } },
+        { "properties": { "source_bindings": { "minItems": 1 } } }
+      ]
+    },
+    "EvidenceEdge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidence_edge_id", "evidence_item_id", "claim_id", "relationship", "dependency_group_id", "weighting_note", "source_bindings"],
+      "properties": {
+        "evidence_edge_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "evidence_item_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "claim_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "relationship": { "enum": ["supports", "contradicts", "qualifies"] },
+        "dependency_group_id": {
+          "oneOf": [
+            { "$ref": "./common.schema.json#/$defs/Identifier" },
+            { "type": "null" }
+          ]
+        },
+        "weighting_note": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "source_bindings": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/SourceBinding" } }
+      }
+    },
+    "ArgumentEdge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["argument_edge_id", "source_type", "source_id", "target_type", "target_id"],
+      "properties": {
+        "argument_edge_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "source_type": { "enum": ["claim", "evidence_item", "argument_step"] },
+        "source_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "target_type": { "enum": ["argument_step", "claim"] },
+        "target_id": { "$ref": "./common.schema.json#/$defs/Identifier" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "target_type": { "const": "argument_step" } }, "required": ["target_type"] },
+          "then": { "properties": { "source_type": { "enum": ["claim", "evidence_item"] } } }
+        },
+        {
+          "if": { "properties": { "target_type": { "const": "claim" } }, "required": ["target_type"] },
+          "then": { "properties": { "source_type": { "const": "argument_step" } } }
+        }
+      ]
+    },
+    "EvidenceDependencyGroup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dependency_group_id", "dependency_basis", "shared_ancestor_ids", "assessment_state", "evidence_item_ids", "source_bindings"],
+      "properties": {
+        "dependency_group_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "dependency_basis": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "shared_ancestor_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "assessment_state": { "enum": ["independent", "partially_dependent", "dependent", "unknown", "not_applicable", "withheld"] },
+        "evidence_item_ids": { "type": "array", "minItems": 1, "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "source_bindings": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/SourceBinding" } }
+      }
+    },
+    "Claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "claim_id",
+        "object_version",
+        "proposition",
+        "claim_type",
+        "subject_bindings",
+        "context",
+        "scope",
+        "decision_timing",
+        "support_status",
+        "evidence_edge_ids",
+        "dependency_edge_ids",
+        "counterevidence_edge_ids",
+        "argument_step_ids",
+        "cross_domain_bridge_ids",
+        "conflict_set_ids",
+        "limitation_ids",
+        "revision_event_ids",
+        "source_bindings",
+        "extensions"
+      ],
+      "properties": {
+        "claim_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "object_version": { "$ref": "./common.schema.json#/$defs/Version" },
+        "proposition": { "$ref": "./common.schema.json#/$defs/NonEmptyString" },
+        "claim_type": { "enum": ["background", "descriptive", "quantitative", "comparative", "associational", "predictive", "causal", "mechanistic", "methodological", "negative_or_absence", "resolution"] },
+        "subject_bindings": { "type": "array", "minItems": 1, "items": { "$ref": "./common.schema.json#/$defs/ObjectReference" } },
+        "context": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "scope": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "decision_timing": { "enum": ["predefined", "adaptive", "post_hoc", "missing", "not_applicable"] },
+        "support_status": { "enum": ["supported", "qualified", "contested", "unsupported", "invalidated", "review_required", "unknown", "withheld"] },
+        "evidence_edge_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "dependency_edge_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "counterevidence_edge_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "argument_step_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "cross_domain_bridge_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "conflict_set_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "limitation_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "revision_event_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "source_bindings": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/SourceBinding" } },
+        "extensions": { "$ref": "./common.schema.json#/$defs/ExtensionMap" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "claim_type": { "not": { "const": "background" } },
+              "support_status": { "enum": ["supported", "qualified"] }
+            },
+            "required": ["claim_type", "support_status"]
+          },
+          "then": {
+            "anyOf": [
+              { "properties": { "evidence_edge_ids": { "minItems": 1 } } },
+              { "properties": { "argument_step_ids": { "minItems": 1 } } }
+            ]
+          }
+        },
+        {
+          "if": { "properties": { "support_status": { "const": "invalidated" } }, "required": ["support_status"] },
+          "then": { "properties": { "revision_event_ids": { "minItems": 1 } } }
+        }
+      ]
+    },
+    "ArgumentStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["argument_step_id", "object_version", "rule_or_rationale", "premise_edge_ids", "conclusion_edge_ids", "assumption_states", "alternative_explanations", "validity_status", "bridge_ids", "source_bindings", "extensions"],
+      "properties": {
+        "argument_step_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "object_version": { "$ref": "./common.schema.json#/$defs/Version" },
+        "rule_or_rationale": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "premise_edge_ids": { "type": "array", "minItems": 1, "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "conclusion_edge_ids": { "type": "array", "minItems": 1, "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "assumption_states": { "$ref": "./common.schema.json#/$defs/StringArrayField" },
+        "alternative_explanations": { "$ref": "./common.schema.json#/$defs/StringArrayField" },
+        "validity_status": { "enum": ["valid_for_scope", "qualified", "invalid", "review_required", "unknown", "withheld"] },
+        "bridge_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "source_bindings": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/SourceBinding" } },
+        "extensions": { "$ref": "./common.schema.json#/$defs/ExtensionMap" }
+      }
+    },
+    "ClaimDependency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claim_dependency_id", "dependency_version", "upstream_claim_id", "upstream_claim_version", "downstream_claim_id", "downstream_claim_version", "dependency_kind", "propagation_policy", "dependency_status", "source_bindings"],
+      "properties": {
+        "claim_dependency_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "dependency_version": { "$ref": "./common.schema.json#/$defs/Version" },
+        "upstream_claim_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "upstream_claim_version": { "$ref": "./common.schema.json#/$defs/Version" },
+        "downstream_claim_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "downstream_claim_version": { "$ref": "./common.schema.json#/$defs/Version" },
+        "dependency_kind": { "enum": ["logical_prerequisite", "shared_data", "shared_material", "shared_method", "shared_checkpoint", "derived_from", "cross_domain", "other"] },
+        "propagation_policy": { "enum": ["invalidate_downstream", "require_review", "qualify_downstream", "no_automatic_change"] },
+        "dependency_status": { "enum": ["active", "broken", "invalidated", "review_required", "unknown"] },
+        "source_bindings": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/SourceBinding" } }
+      }
+    },
+    "CrossDomainBridge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bridge_id",
+        "object_version",
+        "source_domain",
+        "target_domain",
+        "source_entity_version_ids",
+        "target_entity_version_ids",
+        "mapping_type",
+        "identity_alignment",
+        "construct_alignment",
+        "condition_alignment",
+        "scale_alignment",
+        "transformation_or_mapping_evidence",
+        "assumptions",
+        "limitations",
+        "validity_status",
+        "reviewer_state",
+        "enabled_argument_step_ids",
+        "source_bindings",
+        "extensions"
+      ],
+      "properties": {
+        "bridge_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "object_version": { "$ref": "./common.schema.json#/$defs/Version" },
+        "source_domain": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "target_domain": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "source_entity_version_ids": { "type": "array", "minItems": 1, "items": { "$ref": "./common.schema.json#/$defs/ObjectReference" } },
+        "target_entity_version_ids": { "type": "array", "minItems": 1, "items": { "$ref": "./common.schema.json#/$defs/ObjectReference" } },
+        "mapping_type": { "enum": ["identity", "sequence_or_structure", "construct", "material_lineage", "condition", "temporal_scale", "spatial_scale", "computational_to_experimental_observable", "model_to_target_population", "other_declared"] },
+        "identity_alignment": { "$ref": "#/$defs/AlignmentState" },
+        "construct_alignment": { "$ref": "#/$defs/AlignmentState" },
+        "condition_alignment": { "$ref": "#/$defs/AlignmentState" },
+        "scale_alignment": { "$ref": "#/$defs/AlignmentState" },
+        "intervention_alignment": { "$ref": "#/$defs/ContextAlignment" },
+        "dose_alignment": { "$ref": "#/$defs/ContextAlignment" },
+        "endpoint_alignment": { "$ref": "#/$defs/ContextAlignment" },
+        "time_alignment": { "$ref": "#/$defs/ContextAlignment" },
+        "state_alignment": { "$ref": "#/$defs/ContextAlignment" },
+        "transformation_or_mapping_evidence": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "assumptions": { "$ref": "./common.schema.json#/$defs/StringArrayField" },
+        "limitations": { "$ref": "./common.schema.json#/$defs/StringArrayField" },
+        "validity_status": { "enum": ["valid", "qualified", "invalid", "unknown", "not_applicable", "withheld"] },
+        "reviewer_state": { "enum": ["reviewed", "review_required", "unknown", "withheld"] },
+        "enabled_argument_step_ids": { "type": "array", "minItems": 1, "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "source_bindings": { "type": "array", "minItems": 1, "items": { "$ref": "./common.schema.json#/$defs/SourceBinding" } },
+        "extensions": { "$ref": "./common.schema.json#/$defs/ExtensionMap" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "validity_status": { "const": "valid" } }, "required": ["validity_status"] },
+          "then": {
+            "required": [
+              "intervention_alignment",
+              "dose_alignment",
+              "endpoint_alignment",
+              "time_alignment",
+              "state_alignment"
+            ],
+            "properties": {
+              "identity_alignment": { "enum": ["matched", "not_applicable"] },
+              "construct_alignment": { "enum": ["matched", "not_applicable"] },
+              "condition_alignment": { "enum": ["matched", "not_applicable"] },
+              "scale_alignment": { "enum": ["matched", "not_applicable"] },
+              "intervention_alignment": { "$ref": "#/$defs/ContextAlignment" },
+              "dose_alignment": { "$ref": "#/$defs/ContextAlignment" },
+              "endpoint_alignment": { "$ref": "#/$defs/ContextAlignment" },
+              "time_alignment": { "$ref": "#/$defs/ContextAlignment" },
+              "state_alignment": { "$ref": "#/$defs/ContextAlignment" },
+              "transformation_or_mapping_evidence": { "properties": { "state": { "const": "known" } } },
+              "reviewer_state": { "const": "reviewed" }
+            }
+          }
+        }
+      ]
+    },
+    "AlignmentState": { "enum": ["matched", "partially_matched", "mismatched", "unknown", "not_applicable", "withheld"] },
+    "ContextAlignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "alignment",
+        "source_value",
+        "target_value",
+        "transformation",
+        "mapping_evidence_bindings"
+      ],
+      "properties": {
+        "alignment": { "enum": ["matched", "bounded", "transformed", "partially_matched", "mismatched", "unknown", "not_applicable", "withheld"] },
+        "source_value": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "target_value": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "transformation": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "mapping_evidence_bindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "./common.schema.json#/$defs/SourceBinding" }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "alignment": { "enum": ["matched", "bounded", "transformed"] } },
+            "required": ["alignment"]
+          },
+          "then": {
+            "properties": {
+              "source_value": { "properties": { "state": { "const": "known" } } },
+              "target_value": { "properties": { "state": { "const": "known" } } },
+              "transformation": { "properties": { "state": { "const": "known" } } }
+            }
+          }
+        }
+      ]
+    },
+    "ConflictMemberEdge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["conflict_member_edge_id", "conflict_set_id", "member_type", "member_id"],
+      "properties": {
+        "conflict_member_edge_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "conflict_set_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "member_type": { "enum": ["claim", "evidence_item"] },
+        "member_id": { "$ref": "./common.schema.json#/$defs/Identifier" }
+      }
+    },
+    "ConflictSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["conflict_set_id", "object_version", "matched_context", "member_edge_ids", "incompatibility_statement", "adjudication_status", "decision_event_id", "downstream_claim_ids", "source_bindings", "extensions"],
+      "properties": {
+        "conflict_set_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "object_version": { "$ref": "./common.schema.json#/$defs/Version" },
+        "matched_context": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "member_edge_ids": { "type": "array", "minItems": 2, "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "incompatibility_statement": { "$ref": "./common.schema.json#/$defs/NonEmptyString" },
+        "adjudication_status": { "enum": ["unresolved", "resolved_with_rationale", "retained_as_heterogeneity", "review_required", "unknown", "withheld"] },
+        "decision_event_id": {
+          "oneOf": [
+            { "$ref": "./common.schema.json#/$defs/Identifier" },
+            { "type": "null" }
+          ]
+        },
+        "downstream_claim_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "heterogeneity_context_differences": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/HeterogeneityContextDifference" }
+        },
+        "source_bindings": { "type": "array", "minItems": 1, "items": { "$ref": "./common.schema.json#/$defs/SourceBinding" } },
+        "extensions": { "$ref": "./common.schema.json#/$defs/ExtensionMap" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "adjudication_status": { "const": "resolved_with_rationale" } }, "required": ["adjudication_status"] },
+          "then": { "properties": { "decision_event_id": { "$ref": "./common.schema.json#/$defs/Identifier" } } }
+        },
+        {
+          "if": { "properties": { "adjudication_status": { "const": "retained_as_heterogeneity" } }, "required": ["adjudication_status"] },
+          "then": {
+            "required": ["heterogeneity_context_differences"],
+            "properties": { "heterogeneity_context_differences": { "minItems": 1 } }
+          }
+        }
+      ]
+    },
+    "HeterogeneityContextDifference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dimension", "left_result_id", "right_result_id", "left_value", "right_value", "materiality_assessment", "source_bindings"],
+      "properties": {
+        "dimension": { "enum": ["estimand", "population_or_system", "condition", "time_or_frame_scope", "analysis_population_id", "intervention", "dose", "endpoint", "system_state", "comparison_definition"] },
+        "left_result_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "right_result_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "left_value": { "$ref": "./common.schema.json#/$defs/KnownValue" },
+        "right_value": { "$ref": "./common.schema.json#/$defs/KnownValue" },
+        "materiality_assessment": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "source_bindings": { "type": "array", "minItems": 1, "items": { "$ref": "./common.schema.json#/$defs/SourceBinding" } }
+      }
+    },
+    "RevisionEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["revision_event_id", "revision_event_version", "event_kind", "occurred_at", "reason", "superseded_object_refs", "replacement_object_refs", "invalidated_object_ids", "review_required_object_ids", "impact_statement", "source_bindings", "extensions"],
+      "properties": {
+        "revision_event_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "revision_event_version": { "$ref": "./common.schema.json#/$defs/Version" },
+        "event_kind": { "enum": ["correction", "retraction", "supersession", "source_update", "entity_merge_or_split", "disclosure_change", "other"] },
+        "occurred_at": { "$ref": "./common.schema.json#/$defs/DateTimeField" },
+        "reason": { "$ref": "./common.schema.json#/$defs/NonEmptyString" },
+        "superseded_object_refs": { "type": "array", "minItems": 1, "items": { "$ref": "./common.schema.json#/$defs/ObjectReference" } },
+        "replacement_object_refs": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/ObjectReference" } },
+        "revalidated_object_refs": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/ObjectReference" } },
+        "invalidated_object_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "review_required_object_ids": { "type": "array", "items": { "$ref": "./common.schema.json#/$defs/Identifier" }, "uniqueItems": true },
+        "impact_statement": { "$ref": "./common.schema.json#/$defs/NonEmptyString" },
+        "source_bindings": { "type": "array", "minItems": 1, "items": { "$ref": "./common.schema.json#/$defs/SourceBinding" } },
+        "extensions": { "$ref": "./common.schema.json#/$defs/ExtensionMap" }
+      }
+    }
+  }
+}

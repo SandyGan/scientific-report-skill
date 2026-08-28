@@ -1,0 +1,125 @@
+<section id="methods" class="report-section" aria-labelledby="methods-title">
+  <header class="section-heading">
+    <div>
+      <p class="section-code">L3 / methods and parameters</p>
+      <h2 id="methods-title">Actual methods, planned recipes, and parameter state</h2>
+    </div>
+    <p class="section-purpose">Historical invocations and future recipes are displayed side by side and never treated as interchangeable.</p>
+  </header>
+
+  <div class="coverage-banner" data-status="{{section_coverage.methods.state}}">
+    <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-coverage"></use></svg>
+    <span><strong>Section coverage:</strong> <span class="empty-fallback">{{section_coverage.methods.state}}</span></span>
+    <span class="coverage-banner__reason empty-fallback">{{section_coverage.methods.reason}}</span>
+  </div>
+
+  <div class="method-list">
+    {{#each methods}}
+    <article class="method-card" data-record data-kind="method" data-domain="{{domain}}" data-state="{{state}}" data-safety-record="{{safety_relevance}}">
+      <header class="method-card__header">
+        <div>
+          <div class="record-id-block"><span class="record-type">Method</span><code>{{method_id}}</code></div>
+          <h3 class="empty-fallback">{{title}}</h3>
+        </div>
+        <div class="record-statuses">
+          <span class="status-chip" data-status="{{state}}"><span class="status-marker" aria-hidden="true"></span><span class="empty-fallback">{{state}}</span></span>
+          <span class="scope-chip empty-fallback">{{execution_scope}}</span>
+        </div>
+      </header>
+      <p class="method-summary empty-fallback">{{summary}}</p>
+
+      <details class="disclosure" data-disclosure>
+        <summary>
+          <span>Inspect parameters and invocation</span>
+          <span class="summary-meta"><span class="empty-fallback">{{known_parameter_count}}</span> known · <span class="empty-fallback">{{unknown_parameter_count}}</span> unknown · recipe comparison <span class="empty-fallback">{{recipe_comparison_status}}</span></span>
+        </summary>
+        <div class="disclosure__body">
+          <div class="actual-planned-grid">
+            <section class="method-plane method-plane--actual" aria-labelledby="actual-method-{{@index}}">
+              <header>
+                <span class="plane-label">Historical record</span>
+                <h4 id="actual-method-{{@index}}">Actual invocation</h4>
+                <span class="status-chip status-chip--small" data-status="{{actual.state}}">{{actual.state}}</span>
+              </header>
+              <p class="empty-fallback">{{actual.summary}}</p>
+              <div class="code-record">
+                <div class="code-record__label"><span>Recorded command or procedure</span><span>Display only</span></div>
+                <pre tabindex="0"><code class="empty-fallback">{{actual.invocation_display}}</code></pre>
+              </div>
+              <dl class="key-value-list">
+                <div><dt>Invocation ID</dt><dd><code>{{actual.invocation_id}}</code></dd></div>
+                <div><dt>Code / protocol reference</dt><dd><code class="wrap-code empty-fallback">{{actual.code_reference}}</code></dd></div>
+                <div><dt>Working context</dt><dd class="empty-fallback">{{actual.working_context}}</dd></div>
+                <div><dt>Exit / completion status</dt><dd class="empty-fallback">{{actual.exit_status}}</dd></div>
+              </dl>
+            </section>
+
+            <section class="method-plane method-plane--planned" aria-labelledby="planned-method-{{@index}}">
+              <header>
+                <span class="plane-label">Prospective artifact</span>
+                <h4 id="planned-method-{{@index}}">Replay recipe</h4>
+                <span class="status-chip status-chip--small" data-status="{{recipe.state}}">{{recipe.state}}</span>
+              </header>
+              <p class="empty-fallback">{{recipe.summary}}</p>
+              <div class="code-record">
+                <div class="code-record__label"><span>Recipe command or procedure</span><span>Display only</span></div>
+                <pre tabindex="0"><code class="empty-fallback">{{recipe.invocation_display}}</code></pre>
+              </div>
+              <dl class="key-value-list">
+                <div><dt>Recipe ID</dt><dd><code>{{recipe.recipe_id}}</code></dd></div>
+                <div><dt>Code / protocol reference</dt><dd><code class="wrap-code empty-fallback">{{recipe.code_reference}}</code></dd></div>
+                <div><dt>Declared environment</dt><dd><code class="wrap-code empty-fallback">{{recipe.environment_id}}</code></dd></div>
+                <div><dt>Smoke-test state</dt><dd class="empty-fallback">{{recipe.smoke_test_state}}</dd></div>
+              </dl>
+            </section>
+          </div>
+
+          <aside class="recipe-diff" data-status="{{recipe_comparison_status}}" data-safety-record="{{recipe_difference_safety_relevance}}">
+            <header><svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-compare"></use></svg><h4>Actual ↔ recipe comparison</h4><span class="status-chip status-chip--small" data-status="{{recipe_comparison_status}}">{{recipe_comparison_status}}</span></header>
+            <p class="empty-fallback">{{recipe_comparison_summary}}</p>
+            <ul class="compact-list">
+              {{#each recipe_differences}}
+              <li data-record data-kind="recipe-difference" data-domain="{{domain}}" data-state="{{status}}" data-safety-record="{{safety_relevance}}"><code>{{field}}</code> {{description}} <span class="status-chip status-chip--small" data-status="{{status}}">{{status}}</span></li>
+              {{else}}
+              <li class="missing-entry">No comparison rows supplied; do not infer equivalence from an empty list.</li>
+              {{/each}}
+            </ul>
+          </aside>
+
+          <div class="table-scroll">
+            <table class="data-table parameter-table">
+              <caption>Disclosure-safe method parameters. Withheld values remain withheld; blank values are not inferred.</caption>
+              <thead><tr><th scope="col">Parameter</th><th scope="col">Actual display value</th><th scope="col">State</th><th scope="col">Provenance</th><th scope="col">Planned display value</th><th scope="col">Difference</th></tr></thead>
+              <tbody>
+                {{#each parameters}}
+                <tr data-record data-kind="parameter" data-domain="{{domain}}" data-state="{{state}}" data-safety-record="{{safety_relevance}}">
+                  <th scope="row" data-label="Parameter"><code>{{name}}</code></th>
+                  <td data-label="Actual display value"><code class="wrap-code empty-fallback">{{actual_display_value}}</code></td>
+                  <td data-label="State"><span class="state-chip" data-state="{{state}}"><span class="empty-fallback">{{state}}</span></span>{{#if missing_reason}}<span class="missing-reason">{{missing_reason}}</span>{{/if}}</td>
+                  <td data-label="Provenance" class="empty-fallback">{{provenance_status}}</td>
+                  <td data-label="Planned display value"><code class="wrap-code empty-fallback">{{planned_display_value}}</code></td>
+                  <td data-label="Difference" class="empty-fallback">{{difference_status}}</td>
+                </tr>
+                {{else}}
+                <tr><td colspan="6" class="missing-entry">No parameter records supplied.</td></tr>
+                {{/each}}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="method-notes-grid">
+            <div><h4>Deviations</h4><ul class="compact-list">{{#each deviations}}<li data-safety-record="true"><code>{{deviation_id}}</code> {{summary}} <span class="state-label empty-fallback">{{status}}</span></li>{{else}}<li class="missing-entry">No deviations supplied.</li>{{/each}}</ul></div>
+            <div><h4>Calibration and controls</h4><ul class="compact-list">{{#each controls}}<li><code>{{control_id}}</code> {{summary}} <span class="state-label empty-fallback">{{status}}</span></li>{{else}}<li class="missing-entry">No calibration or control records supplied.</li>{{/each}}</ul></div>
+            <div><h4>Linked work and outputs</h4><ul class="compact-list">{{#each links}}<li><code>{{record_id}}</code> {{relationship}}</li>{{else}}<li class="missing-entry">No linked records supplied.</li>{{/each}}</ul></div>
+          </div>
+        </div>
+      </details>
+    </article>
+    {{else}}
+    <div class="section-empty" data-state="{{section_coverage.methods.state}}">
+      <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-unknown"></use></svg>
+      <div><h3>No method records rendered</h3><p>Consult section coverage. No method text must not be interpreted as not applicable.</p></div>
+    </div>
+    {{/each}}
+  </div>
+</section>

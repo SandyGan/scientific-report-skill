@@ -1,0 +1,55 @@
+{{#if ai_audit.present}}
+<aside class="ai-audit" aria-labelledby="ai-audit-title" data-ai-audit data-print-peripheral="true">
+  <details class="ai-audit__disclosure" data-disclosure>
+    <summary>
+      <span>
+        <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-peripheral"></use></svg>
+        <strong id="ai-audit-title">Supplemental generation-process audit</strong>
+      </span>
+      <span class="summary-meta">Peripheral · removable · excluded from summary print</span>
+    </summary>
+    <div class="ai-audit__body">
+      <div class="peripheral-warning" role="note">
+        <strong>Not scientific evidence.</strong>
+        <span>This optional audit describes assistance used while constructing the report. It does not contribute to claims, validation status, source coverage, or reproducibility level.</span>
+      </div>
+
+      <dl class="key-value-list key-value-list--horizontal">
+        <div><dt>Audit record</dt><dd><code>{{ai_audit.audit_id}}</code></dd></div>
+        <div><dt>Process class</dt><dd class="empty-fallback">{{ai_audit.process_class}}</dd></div>
+        <div><dt>Run count</dt><dd class="empty-fallback">{{ai_audit.run_count}}</dd></div>
+        <div><dt>Human review state</dt><dd class="empty-fallback">{{ai_audit.human_review_state}}</dd></div>
+        <div><dt>Removal check</dt><dd class="empty-fallback">{{ai_audit.removal_invariance_state}}</dd></div>
+      </dl>
+
+      <div class="ai-audit-grid">
+        <section>
+          <h3>Processing stages</h3>
+          <ol class="compact-timeline">
+            {{#each ai_audit.stages}}
+            <li>
+              <span class="step-index">{{sequence}}</span>
+              <div><strong>{{stage_label}}</strong><p>{{summary}}</p><span class="state-label empty-fallback">{{status}}</span></div>
+            </li>
+            {{else}}
+            <li class="missing-entry">No stage records supplied.</li>
+            {{/each}}
+          </ol>
+        </section>
+        <section>
+          <h3>Audit qualifications</h3>
+          <ul class="compact-list">
+            {{#each ai_audit.qualifications}}
+            <li>{{display_text}}</li>
+            {{else}}
+            <li class="missing-entry">No audit qualifications supplied.</li>
+            {{/each}}
+          </ul>
+          <h3>Forbidden-inference review</h3>
+          <p class="empty-fallback">{{ai_audit.forbidden_inference_review}}</p>
+        </section>
+      </div>
+    </div>
+  </details>
+</aside>
+{{/if}}

@@ -1,0 +1,404 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.report-prompt.org/v1/generation-audit.schema.json",
+  "title": "Generation audit",
+  "description": "Optional, removable, provider-neutral audit of generation-stage execution. It is peripheral to scientific facts and binds to request, response, and payload hashes without affecting scientific or reproducibility status.",
+  "$defs": {
+    "GeneratorDescriptor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "implementation_name",
+        "implementation_version",
+        "implementation_build_hash",
+        "engine_family",
+        "engine_revision",
+        "deployment_descriptor"
+      ],
+      "properties": {
+        "implementation_name": {
+          "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+        },
+        "implementation_version": {
+          "$ref": "./defs/common.schema.json#/$defs/Version"
+        },
+        "implementation_build_hash": {
+          "$ref": "./defs/common.schema.json#/$defs/Hash"
+        },
+        "engine_family": {
+          "$ref": "./defs/common.schema.json#/$defs/StringField"
+        },
+        "engine_revision": {
+          "$ref": "./defs/common.schema.json#/$defs/StringField"
+        },
+        "deployment_descriptor": {
+          "$ref": "./defs/common.schema.json#/$defs/StringField"
+        }
+      }
+    },
+    "UsageRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "unit",
+        "input_units",
+        "output_units",
+        "reused_input_units",
+        "measurement_status"
+      ],
+      "properties": {
+        "unit": {
+          "enum": [
+            "characters",
+            "bytes",
+            "estimated_tokens",
+            "reported_tokens",
+            "other"
+          ]
+        },
+        "input_units": {
+          "$ref": "./defs/common.schema.json#/$defs/IntegerField"
+        },
+        "output_units": {
+          "$ref": "./defs/common.schema.json#/$defs/IntegerField"
+        },
+        "reused_input_units": {
+          "$ref": "./defs/common.schema.json#/$defs/IntegerField"
+        },
+        "measurement_status": {
+          "enum": [
+            "measured",
+            "estimated",
+            "unavailable",
+            "unknown"
+          ]
+        }
+      }
+    },
+    "GenerationInvocation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "generation_invocation_id",
+        "attempt_number",
+        "started_at",
+        "ended_at",
+        "status",
+        "termination_reason",
+        "input_content_hash",
+        "output_content_hash",
+        "usage",
+        "generation_parameters",
+        "error_category",
+        "error_detail",
+        "retained_artifact_ids"
+      ],
+      "properties": {
+        "generation_invocation_id": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "attempt_number": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "ended_at": {
+          "oneOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "enum": [
+            "completed",
+            "failed",
+            "blocked",
+            "truncated",
+            "cancelled",
+            "unknown"
+          ]
+        },
+        "termination_reason": {
+          "enum": [
+            "completed",
+            "continuation_required",
+            "context_budget_exhausted",
+            "policy_block",
+            "invalid_output",
+            "transport_error",
+            "operator_cancelled",
+            "other",
+            "unknown"
+          ]
+        },
+        "input_content_hash": {
+          "$ref": "./defs/common.schema.json#/$defs/Hash"
+        },
+        "output_content_hash": {
+          "oneOf": [
+            {
+              "$ref": "./defs/common.schema.json#/$defs/Hash"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "usage": {
+          "$ref": "#/$defs/UsageRecord"
+        },
+        "generation_parameters": {
+          "type": "array",
+          "items": {
+            "$ref": "./defs/common.schema.json#/$defs/Parameter"
+          }
+        },
+        "error_category": {
+          "oneOf": [
+            {
+              "$ref": "./defs/common.schema.json#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "error_detail": {
+          "$ref": "./defs/common.schema.json#/$defs/StringField"
+        },
+        "retained_artifact_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./defs/common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "completed"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "ended_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "output_content_hash": {
+                "$ref": "./defs/common.schema.json#/$defs/Hash"
+              },
+              "error_category": {
+                "type": "null"
+              },
+              "error_detail": {
+                "properties": {
+                  "state": {
+                    "const": "not_applicable"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "AuditEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_id",
+        "event_kind",
+        "occurred_at",
+        "description",
+        "affected_object_ids",
+        "actor_kind"
+      ],
+      "properties": {
+        "event_id": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "event_kind": {
+          "enum": [
+            "request_created",
+            "generation_started",
+            "generation_retried",
+            "continuation_created",
+            "output_rejected",
+            "output_accepted_as_candidate",
+            "human_review_requested",
+            "human_decision_recorded",
+            "audit_redacted",
+            "other"
+          ]
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "description": {
+          "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+        },
+        "affected_object_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./defs/common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "actor_kind": {
+          "enum": [
+            "generator",
+            "orchestrator",
+            "validator",
+            "human",
+            "system",
+            "unknown"
+          ]
+        }
+      }
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "generation_audit_id",
+    "audit_version",
+    "schema_version",
+    "project_id",
+    "report_id",
+    "report_version",
+    "scientific_payload_hash",
+    "request_id",
+    "request_hash",
+    "response_id",
+    "response_hash",
+    "stage",
+    "generator",
+    "prompt_contract_hashes",
+    "generation_invocations",
+    "audit_events",
+    "overall_status",
+    "created_at",
+    "audit_disclosure_level",
+    "scientific_payload_impact",
+    "removable_without_scientific_change",
+    "extensions"
+  ],
+  "properties": {
+    "generation_audit_id": {
+      "$ref": "./defs/common.schema.json#/$defs/Identifier"
+    },
+    "audit_version": {
+      "$ref": "./defs/common.schema.json#/$defs/Version"
+    },
+    "schema_version": {
+      "$ref": "./defs/common.schema.json#/$defs/Version"
+    },
+    "project_id": {
+      "$ref": "./defs/common.schema.json#/$defs/Identifier"
+    },
+    "report_id": {
+      "$ref": "./defs/common.schema.json#/$defs/Identifier"
+    },
+    "report_version": {
+      "$ref": "./defs/common.schema.json#/$defs/Version"
+    },
+    "scientific_payload_hash": {
+      "$ref": "./defs/common.schema.json#/$defs/Hash"
+    },
+    "request_id": {
+      "$ref": "./defs/common.schema.json#/$defs/Identifier"
+    },
+    "request_hash": {
+      "$ref": "./defs/common.schema.json#/$defs/Hash"
+    },
+    "response_id": {
+      "$ref": "./defs/common.schema.json#/$defs/Identifier"
+    },
+    "response_hash": {
+      "$ref": "./defs/common.schema.json#/$defs/Hash"
+    },
+    "stage": {
+      "enum": [
+        "S0_source_universe_snapshot",
+        "S1_source_inventory",
+        "S2_atomic_fact_extraction",
+        "S3_normalization",
+        "S4_work_and_decision_modeling",
+        "S5_material_and_derivation_modeling",
+        "S6_argument_graph",
+        "S7_challenge_and_resolution",
+        "S8_controlled_wording"
+      ]
+    },
+    "generator": {
+      "$ref": "#/$defs/GeneratorDescriptor"
+    },
+    "prompt_contract_hashes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "./defs/common.schema.json#/$defs/Hash"
+      },
+      "uniqueItems": true
+    },
+    "generation_invocations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/GenerationInvocation"
+      }
+    },
+    "audit_events": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/AuditEvent"
+      }
+    },
+    "overall_status": {
+      "enum": [
+        "completed",
+        "completed_with_review",
+        "cannot_complete",
+        "failed",
+        "unknown"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "audit_disclosure_level": {
+      "enum": [
+        "public",
+        "internal",
+        "restricted"
+      ]
+    },
+    "scientific_payload_impact": {
+      "const": "none"
+    },
+    "removable_without_scientific_change": {
+      "const": true
+    },
+    "extensions": {
+      "$ref": "./defs/common.schema.json#/$defs/ExtensionMap"
+    }
+  }
+}

@@ -1,0 +1,536 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.report-prompt.org/v1/human-review-attestation.schema.json",
+  "title": "Human review attestation",
+  "description": "Hash-bound record of scientific, provenance, statistical, domain, and disclosure review performed by people. It does not replace machine validation.",
+  "$defs": {
+    "Reviewer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reviewer_id",
+        "display_name",
+        "role",
+        "affiliation",
+        "expertise",
+        "conflict_of_interest",
+        "identity_verification_status"
+      ],
+      "properties": {
+        "reviewer_id": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "display_name": {
+          "$ref": "./defs/common.schema.json#/$defs/StringField"
+        },
+        "role": {
+          "enum": [
+            "scientific_lead",
+            "domain_reviewer",
+            "statistical_reviewer",
+            "provenance_reviewer",
+            "reproducibility_reviewer",
+            "disclosure_reviewer",
+            "ethics_reviewer",
+            "other"
+          ]
+        },
+        "affiliation": {
+          "$ref": "./defs/common.schema.json#/$defs/StringField"
+        },
+        "expertise": {
+          "$ref": "./defs/common.schema.json#/$defs/StringArrayField"
+        },
+        "conflict_of_interest": {
+          "$ref": "./defs/common.schema.json#/$defs/StringField"
+        },
+        "identity_verification_status": {
+          "enum": [
+            "verified",
+            "self_declared",
+            "withheld",
+            "unknown"
+          ]
+        }
+      }
+    },
+    "ReviewCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "review_check_id",
+        "category",
+        "decision",
+        "reviewer_ids",
+        "affected_object_ids",
+        "comment",
+        "completed_at"
+      ],
+      "properties": {
+        "review_check_id": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "category": {
+          "enum": [
+            "scope_and_source_coverage",
+            "execution_and_completion",
+            "entity_and_material_identity",
+            "methods_and_decision_timing",
+            "results_and_quantitative_derivation",
+            "claims_and_argument",
+            "conflicts_and_counterevidence",
+            "cross_domain_bridges",
+            "revision_propagation",
+            "reproducibility",
+            "ethics_and_disclosure",
+            "other"
+          ]
+        },
+        "decision": {
+          "enum": [
+            "confirmed",
+            "confirmed_with_qualification",
+            "concern",
+            "unreviewed",
+            "not_applicable"
+          ]
+        },
+        "reviewer_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./defs/common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "affected_object_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./defs/common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "comment": {
+          "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+        },
+        "completed_at": {
+          "oneOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "decision": {
+                "const": "unreviewed"
+              }
+            },
+            "required": [
+              "decision"
+            ]
+          },
+          "then": {
+            "properties": {
+              "reviewer_ids": {
+                "maxItems": 0
+              },
+              "completed_at": {
+                "type": "null"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "reviewer_ids": {
+                "minItems": 1
+              },
+              "completed_at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ReviewerSignature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reviewer_id",
+        "signature_method",
+        "signature_value",
+        "signed_at"
+      ],
+      "properties": {
+        "reviewer_id": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "signature_method": {
+          "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+        },
+        "signature_value": {
+          "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+        },
+        "signed_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "human_review_attestation_id",
+    "attestation_version",
+    "schema_version",
+    "report_id",
+    "report_version",
+    "scientific_payload_hash",
+    "validation_attestation_id",
+    "validation_attestation_hash",
+    "validation_status_observed",
+    "review_scope",
+    "reviewers",
+    "review_checks",
+    "review_started_at",
+    "review_completed_at",
+    "overall_decision",
+    "conditions",
+    "unresolved_review_task_ids",
+    "signatures",
+    "extensions"
+  ],
+  "properties": {
+    "human_review_attestation_id": {
+      "$ref": "./defs/common.schema.json#/$defs/Identifier"
+    },
+    "attestation_version": {
+      "$ref": "./defs/common.schema.json#/$defs/Version"
+    },
+    "schema_version": {
+      "$ref": "./defs/common.schema.json#/$defs/Version"
+    },
+    "report_id": {
+      "$ref": "./defs/common.schema.json#/$defs/Identifier"
+    },
+    "report_version": {
+      "$ref": "./defs/common.schema.json#/$defs/Version"
+    },
+    "scientific_payload_hash": {
+      "$ref": "./defs/common.schema.json#/$defs/Hash"
+    },
+    "validation_attestation_id": {
+      "$ref": "./defs/common.schema.json#/$defs/Identifier"
+    },
+    "validation_attestation_hash": {
+      "$ref": "./defs/common.schema.json#/$defs/Hash"
+    },
+    "validation_status_observed": {
+      "enum": [
+        "valid",
+        "invalid",
+        "incomplete",
+        "error"
+      ]
+    },
+    "review_scope": {
+      "enum": [
+        "full_scientific_payload",
+        "selected_claims",
+        "selected_domains",
+        "disclosure_only",
+        "reproducibility_only"
+      ]
+    },
+    "reviewers": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Reviewer"
+      }
+    },
+    "review_checks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ReviewCheck"
+      }
+    },
+    "review_started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "review_completed_at": {
+      "oneOf": [
+        {
+          "type": "string",
+          "format": "date-time"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "overall_decision": {
+      "enum": [
+        "approve",
+        "approve_with_conditions",
+        "revise_and_resubmit",
+        "block_release",
+        "not_evaluable"
+      ]
+    },
+    "conditions": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+      }
+    },
+    "unresolved_review_task_ids": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/common.schema.json#/$defs/Identifier"
+      },
+      "uniqueItems": true
+    },
+    "signatures": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ReviewerSignature"
+      }
+    },
+    "extensions": {
+      "$ref": "./defs/common.schema.json#/$defs/ExtensionMap"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "overall_decision": {
+            "const": "approve"
+          }
+        },
+        "required": [
+          "overall_decision"
+        ]
+      },
+      "then": {
+        "properties": {
+          "validation_status_observed": {
+            "const": "valid"
+          },
+          "reviewers": {
+            "minItems": 1
+          },
+          "review_completed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "review_checks": {
+            "not": {
+              "contains": {
+                "properties": {
+                  "decision": {
+                    "enum": [
+                      "concern",
+                      "unreviewed"
+                    ]
+                  }
+                },
+                "required": [
+                  "decision"
+                ]
+              }
+            }
+          },
+          "conditions": {
+            "maxItems": 0
+          },
+          "unresolved_review_task_ids": {
+            "maxItems": 0
+          },
+          "signatures": {
+            "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "overall_decision": {
+            "const": "approve_with_conditions"
+          }
+        },
+        "required": [
+          "overall_decision"
+        ]
+      },
+      "then": {
+        "properties": {
+          "validation_status_observed": {
+            "const": "valid"
+          },
+          "reviewers": {
+            "minItems": 1
+          },
+          "review_completed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "review_checks": {
+            "not": {
+              "contains": {
+                "properties": {
+                  "decision": {
+                    "const": "unreviewed"
+                  }
+                },
+                "required": [
+                  "decision"
+                ]
+              }
+            }
+          },
+          "conditions": {
+            "minItems": 1
+          },
+          "signatures": {
+            "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "overall_decision": {
+            "const": "revise_and_resubmit"
+          }
+        },
+        "required": [
+          "overall_decision"
+        ]
+      },
+      "then": {
+        "properties": {
+          "reviewers": {
+            "minItems": 1
+          },
+          "review_completed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "review_checks": {
+            "contains": {
+              "properties": {
+                "decision": {
+                  "const": "concern"
+                }
+              },
+              "required": [
+                "decision"
+              ]
+            }
+          },
+          "unresolved_review_task_ids": {
+            "minItems": 1
+          },
+          "signatures": {
+            "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "overall_decision": {
+            "const": "block_release"
+          }
+        },
+        "required": [
+          "overall_decision"
+        ]
+      },
+      "then": {
+        "properties": {
+          "reviewers": {
+            "minItems": 1
+          },
+          "review_completed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "review_checks": {
+            "contains": {
+              "properties": {
+                "decision": {
+                  "const": "concern"
+                }
+              },
+              "required": [
+                "decision"
+              ]
+            }
+          },
+          "unresolved_review_task_ids": {
+            "minItems": 1
+          },
+          "signatures": {
+            "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "overall_decision": {
+            "const": "not_evaluable"
+          }
+        },
+        "required": [
+          "overall_decision"
+        ]
+      },
+      "then": {
+        "properties": {
+          "reviewers": {
+            "minItems": 1
+          },
+          "review_completed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "review_checks": {
+            "contains": {
+              "properties": {
+                "decision": {
+                  "const": "unreviewed"
+                }
+              },
+              "required": [
+                "decision"
+              ]
+            }
+          },
+          "conditions": {
+            "minItems": 1
+          },
+          "signatures": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ]
+}

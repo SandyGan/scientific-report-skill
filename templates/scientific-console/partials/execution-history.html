@@ -1,0 +1,149 @@
+<section id="execution" class="report-section" aria-labelledby="execution-title">
+  <header class="section-heading">
+    <div>
+      <p class="section-code">L2 / immutable execution ledger</p>
+      <h2 id="execution-title">Work units, attempts, segments, and decisions</h2>
+    </div>
+    <p class="section-purpose">Performed, planned, external, inferred, and unknown work remain distinct. Later success never overwrites an earlier failure.</p>
+  </header>
+
+  <div class="coverage-banner" data-status="{{section_coverage.execution.state}}">
+    <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-coverage"></use></svg>
+    <span><strong>Section coverage:</strong> <span class="empty-fallback">{{section_coverage.execution.state}}</span></span>
+    <span class="coverage-banner__reason empty-fallback">{{section_coverage.execution.reason}}</span>
+  </div>
+
+  <div class="state-legend" aria-label="Work-state legend">
+    <span class="state-legend__label">Work state</span>
+    <span data-status="planned"><span class="status-marker" aria-hidden="true"></span>planned</span>
+    <span data-status="attempted"><span class="status-marker" aria-hidden="true"></span>attempted</span>
+    <span data-status="completed"><span class="status-marker" aria-hidden="true"></span>completed</span>
+    <span data-status="not_performed"><span class="status-marker" aria-hidden="true"></span>not performed</span>
+    <span data-status="unknown"><span class="status-marker" aria-hidden="true"></span>unknown</span>
+  </div>
+
+  <div class="work-unit-list">
+    {{#each work_units}}
+    <article class="work-unit" data-record data-kind="work-unit" data-domain="{{domain}}" data-state="{{work_state}}" data-safety-record="{{safety_relevance}}">
+      <header class="work-unit__header">
+        <div>
+          <div class="record-id-block"><span class="record-type">Work unit</span><code>{{work_unit_id}}</code></div>
+          <h3 class="empty-fallback">{{title}}</h3>
+        </div>
+        <div class="record-statuses">
+          <span class="status-chip" data-status="{{work_state}}"><span class="status-marker" aria-hidden="true"></span><span class="empty-fallback">{{work_state}}</span></span>
+          <span class="scope-chip empty-fallback">{{execution_scope}}</span>
+        </div>
+      </header>
+
+      <div class="work-unit__summary">
+        <p class="empty-fallback">{{objective}}</p>
+        <dl class="key-value-list key-value-list--horizontal">
+          <div><dt>Campaign</dt><dd><code>{{campaign_id}}</code></dd></div>
+          <div><dt>Execution scope</dt><dd class="empty-fallback">{{execution_scope}}</dd></div>
+          <div><dt>Completion criteria</dt><dd class="empty-fallback">{{completion_criteria}}</dd></div>
+          <div><dt>Completion evidence</dt><dd class="empty-fallback">{{completion_evidence}}</dd></div>
+          <div><dt>Attempts</dt><dd class="empty-fallback">{{attempt_count}}</dd></div>
+        </dl>
+      </div>
+
+      <details class="disclosure" data-disclosure>
+        <summary>
+          <span>Inspect attempt history</span>
+          <span class="summary-meta"><span class="empty-fallback">{{failed_attempt_count}}</span> failed · <span class="empty-fallback">{{completed_attempt_count}}</span> completed · <span class="empty-fallback">{{unknown_attempt_count}}</span> unknown</span>
+        </summary>
+        <div class="disclosure__body">
+          <ol class="attempt-timeline">
+            {{#each attempts}}
+            <li class="attempt-record" data-record data-kind="attempt" data-domain="{{domain}}" data-state="{{status}}" data-safety-record="{{safety_relevance}}">
+              <div class="timeline-node" aria-hidden="true"></div>
+              <article>
+                <header class="attempt-record__header">
+                  <div class="record-id-block"><span class="record-type">Attempt {{sequence}}</span><code>{{attempt_id}}</code></div>
+                  <div class="record-statuses">
+                    <span class="status-chip" data-status="{{status}}"><span class="status-marker" aria-hidden="true"></span><span class="empty-fallback">{{status}}</span></span>
+                    <span class="disposition-label empty-fallback">{{record_disposition}}</span>
+                  </div>
+                </header>
+
+                <p class="attempt-purpose empty-fallback">{{purpose}}</p>
+                <dl class="key-value-list key-value-list--horizontal">
+                  <div><dt>Actual start</dt><dd class="empty-fallback">{{actual_start}}</dd></div>
+                  <div><dt>Actual end</dt><dd class="empty-fallback">{{actual_end}}</dd></div>
+                  <div><dt>Actor / system</dt><dd class="empty-fallback">{{performed_by}}</dd></div>
+                  <div><dt>Invocation</dt><dd><code class="wrap-code empty-fallback">{{invocation_id}}</code></dd></div>
+                </dl>
+
+                {{#if failure}}
+                <aside class="failure-callout" data-record data-kind="failure" data-domain="{{failure.domain}}" data-state="{{failure.status}}" data-safety-record="true">
+                  <header>
+                    <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-failure"></use></svg>
+                    <strong>Failure retained</strong>
+                    <code>{{failure.failure_id}}</code>
+                    <span class="status-chip status-chip--small" data-status="{{failure.status}}">{{failure.status}}</span>
+                  </header>
+                  <p>{{failure.summary}}</p>
+                  <dl class="key-value-list key-value-list--compact">
+                    <div><dt>Stage</dt><dd class="empty-fallback">{{failure.stage}}</dd></div>
+                    <div><dt>Observed at</dt><dd class="empty-fallback">{{failure.observed_at}}</dd></div>
+                    <div><dt>Partial output</dt><dd class="empty-fallback">{{failure.partial_output_disposition}}</dd></div>
+                    <div><dt>Recovery link</dt><dd><code>{{failure.recovery_attempt_id}}</code></dd></div>
+                  </dl>
+                </aside>
+                {{/if}}
+
+                <details class="nested-disclosure" data-disclosure>
+                  <summary>Segments, changes, and decisions</summary>
+                  <div class="nested-disclosure__body">
+                    <div class="segment-table-wrap">
+                      <table class="data-table segment-table">
+                        <caption>Immutable segment history for attempt <code>{{attempt_id}}</code></caption>
+                        <thead><tr><th scope="col">Segment</th><th scope="col">Range / phase</th><th scope="col">Status</th><th scope="col">Checkpoint / input</th><th scope="col">Output</th><th scope="col">Notes</th></tr></thead>
+                        <tbody>
+                          {{#each segments}}
+                          <tr data-record data-kind="segment" data-domain="{{domain}}" data-state="{{status}}" data-safety-record="{{safety_relevance}}">
+                            <th scope="row" data-label="Segment"><code>{{segment_id}}</code></th>
+                            <td data-label="Range / phase" class="empty-fallback">{{range_or_phase}}</td>
+                            <td data-label="Status"><span class="status-chip status-chip--small" data-status="{{status}}">{{status}}</span></td>
+                            <td data-label="Checkpoint / input"><code class="wrap-code empty-fallback">{{input_reference}}</code></td>
+                            <td data-label="Output"><code class="wrap-code empty-fallback">{{output_reference}}</code></td>
+                            <td data-label="Notes" class="empty-fallback">{{notes}}</td>
+                          </tr>
+                          {{else}}
+                          <tr><td colspan="6" class="missing-entry">No segment records supplied for this attempt.</td></tr>
+                          {{/each}}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <h5>Decision events</h5>
+                    <ol class="decision-list">
+                      {{#each decisions}}
+                      <li data-record data-kind="decision" data-domain="{{domain}}" data-state="{{timing_status}}" data-safety-record="{{safety_relevance}}">
+                        <div><code>{{decision_id}}</code><span class="state-label empty-fallback">{{timing_status}}</span></div>
+                        <p>{{decision_text}}</p>
+                        <span class="muted">Evidence of timing: <span class="empty-fallback">{{timing_evidence}}</span></span>
+                      </li>
+                      {{else}}
+                      <li class="missing-entry">No decision events supplied.</li>
+                      {{/each}}
+                    </ol>
+                  </div>
+                </details>
+              </article>
+            </li>
+            {{else}}
+            <li class="missing-entry">No attempts supplied. Work-unit state remains as recorded above.</li>
+            {{/each}}
+          </ol>
+        </div>
+      </details>
+    </article>
+    {{else}}
+    <div class="section-empty" data-state="{{section_coverage.execution.state}}">
+      <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-unknown"></use></svg>
+      <div><h3>No work-unit records rendered</h3><p>Do not infer “not performed” from an empty list; consult section coverage and source coverage.</p></div>
+    </div>
+    {{/each}}
+  </div>
+</section>

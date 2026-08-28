@@ -1,0 +1,268 @@
+overlay_version: 1.0.0
+schema_version: report-domain-overlay/v1
+overlay_id: ai-ml-1
+registry: ../registry.yaml
+domain: ai_ml
+payload_schema: ../../schemas/packs/ai-ml.schema.json
+payload_schema_id: https://schemas.report-prompt.org/v1/packs/ai-ml.schema.json
+description: Activates AI/ML semantic checks for dataset lineage, leakage, train-only fitting, complete trial
+  history, evaluation independence, and reproducible inference. Provider APIs and provider-specific invocation
+  fields are outside this overlay.
+applicability:
+  module_manifest_token: ai_ml
+  payload_collection_pointer: /extensions/domain_payloads
+  payload_discriminator_pointer: /domain
+  payload_discriminator_value: ai_ml
+  behavior:
+    enabled_without_payload: finding
+    payload_without_manifest_entry: finding
+    multiple_payloads: allowed_if_payload_id_unique
+missingness_contract:
+  state_pointer_suffix: /state
+  value_pointer_suffix: /value
+  source_bindings_pointer_suffix: /source_bindings
+  missing_reason_pointer_suffix: /missing_reason
+  provenance_status_pointer_suffix: /provenance_status
+  states:
+    - known
+    - unknown
+    - not_applicable
+    - withheld
+  forbid_implicit_sentinels:
+    - ""
+    - TBD
+    - N/A
+    - NA
+    - unknown_string
+  withheld_value_must_be_null: true
+  unknown_value_must_be_null: true
+  not_applicable_requires_basis: true
+required_sections:
+  - datasets_and_licenses
+  - splits_and_grouping
+  - row_lineage
+  - labels_and_raters
+  - leakage_assessment
+  - preprocessing_fit_scope
+  - implementation_and_weights
+  - search_trials_and_selection
+  - randomness_and_nondeterminism
+  - evaluation_and_uncertainty
+  - test_access
+  - inference_and_smoke_test
+enabled_rule_ids:
+  - COV001
+  - COV002
+  - WRK001
+  - WRK002
+  - WRK003
+  - TIM001
+  - MAT001
+  - DER001
+  - CLM001
+  - BRG001
+  - DEP001
+  - CNF001
+  - NEG001
+  - REV001
+  - REP001
+  - ATT001
+  - RED001
+  - SEC001
+  - A11Y001
+  - APP001
+  - APP002
+  - APP003
+  - APP004
+  - APP005
+  - MNF001
+  - MNF002
+  - MNF003
+  - MNF004
+  - MNF005
+  - AFA001
+  - AFA002
+  - AFA003
+  - AFA004
+  - AFA005
+  - AIM001
+  - AIM002
+  - AIM003
+  - AIM004
+  - AIM005
+evaluation_bindings:
+  APP004:
+    module_manifest: /module_manifest
+    domain_trigger_sources:
+      - /entities/*/entity_kind
+      - /work_units/*/domain
+      - /extensions/domain_payloads/*/domain
+    expected_module_token: ai_ml
+  MNF001:
+    section_manifest: $overlay.required_sections
+    section_coverage: /extensions/domain_payloads/*[domain=ai_ml]/section_coverage
+  MNF002:
+    section_coverage: /extensions/domain_payloads/*[domain=ai_ml]/section_coverage
+  MNF003:
+    source_accounting: /extensions/domain_payloads/*[domain=ai_ml]/section_coverage/*/source_item_ids
+  MNF004:
+    static_section_output: /render_validation/sections/*[domain=ai_ml]
+  MNF005:
+    domain_trigger_sources:
+      - /entities/*/entity_kind
+      - /work_units/*/domain
+    expected_sections: $overlay.required_sections
+  AFA001:
+    target: /extensions/domain_payloads/*[domain=ai_ml]/split_records
+  AFA002:
+    target: /extensions/domain_payloads/*[domain=ai_ml]/split_records/*/group_key
+    group_source: /extensions/domain_payloads/*[domain=ai_ml]/dataset_records/*/group_keys
+  AFA003:
+    target: /extensions/domain_payloads/*[domain=ai_ml]/test_access_events
+  AFA004:
+    target: /extensions/domain_payloads/*[domain=ai_ml]/randomness_records
+  AFA005:
+    target: /extensions/domain_payloads/*[domain=ai_ml]/evaluation_records/*/calibration_assessment
+  MAT001:
+    payload_pointer: /extensions/domain_payloads/*[domain=ai_ml]
+    input_nodes:
+      - /dataset_records
+      - /lineage_records/*/upstream_entity_ids
+    transformation_edges: /lineage_records/*/transformation_ids
+    row_outputs: /lineage_records/*/derived_row_ids
+    split_manifests: /split_records/*/manifest_artifact_id
+    split_counts: /split_records/*/partition_counts
+  DER001:
+    quantitative_fields:
+      - /dataset_records/*/row_count
+      - /split_records/*/partition_counts
+      - /evaluation_records/*/estimate
+      - /evaluation_records/*/interval
+      - /evaluation_records/*/sample_count
+      - /label_records/*/agreement_result
+    analysis_run_links: /evaluation_records/*/analysis_run_id
+    result_links: /evaluation_records/*/result_id
+  DEP001:
+    declared_independent_unit: /dataset_records/*/independent_unit
+    group_keys: /dataset_records/*/group_keys
+    dependency_sources:
+      - /lineage_records/*/upstream_entity_ids
+      - /label_records/*/label_source
+      - /model_records/*/initialization_or_pretraining
+      - /model_records/*/weight_artifact_ids
+      - /trial_records/*/checkpoint_artifact_ids
+      - /split_records/*/trajectory_boundary
+  NEG001:
+    adverse_record_collections:
+      - /trial_records/*[status=failed]
+      - /trial_records/*[status=cancelled]
+      - /trial_records/*/failure_event_ids
+      - /leakage_assessments/*[result=detected]
+      - /inference_recipes/*/smoke_test[status=failed]
+    source_reconciliation_keys:
+      - work_unit_id
+      - attempt_id
+      - trial_id
+      - split_id
+      - evaluation_id
+  REP001:
+    recipe_records: /inference_recipes
+    actual_invocations:
+      - /trial_records/*/training_invocation_id
+      - /inference_recipes/*/invocation_id
+    environment_links:
+      - /inference_recipes/*/environment_id
+    random_state_links:
+      - /trial_records/*/randomness_record_ids
+      - /randomness_records
+    access_fields:
+      - /dataset_records/*/access_conditions
+      - /dataset_records/*/license
+      - /model_records/*/weight_artifact_ids
+    rerun_evidence: /inference_recipes/*/smoke_test
+  AIM001:
+    datasets: /dataset_records
+    splits: /split_records
+    split_manifest: /split_records/*/manifest_artifact_id
+    declared_group_keys:
+      - /dataset_records/*/group_keys
+      - /split_records/*/group_key
+      - /split_records/*/cluster_boundary
+      - /split_records/*/time_boundary
+    leakage_assessments: /leakage_assessments
+    applicable_leakage_kinds:
+      - donor
+      - patient
+      - sequence_cluster
+      - homology
+      - structure_template
+      - batch
+      - time
+      - pretraining
+  AIM002:
+    frame_lineage: /lineage_records
+    trajectory_boundary: /split_records/*/trajectory_boundary
+    trajectory_assessments: /leakage_assessments/*[leakage_kind=trajectory]
+    partition_manifest: /split_records/*/manifest_artifact_id
+  AIM003:
+    preprocessors: /preprocessing_records
+    stateful_flag: /preprocessing_records/*/stateful
+    fit_partition: /preprocessing_records/*/fit_partition
+    fit_selector: /preprocessing_records/*/fit_row_selector
+    fitted_state_hash: /preprocessing_records/*/fit_artifact_hash
+    application_partitions: /preprocessing_records/*/application_partitions
+    code_artifacts: /preprocessing_records/*/code_artifact_ids
+  AIM004:
+    search_records: /search_records
+    trial_records: /trial_records
+    all_trial_links: /search_records/*/trial_ids
+    failed_trial_links: /search_records/*/failed_trial_ids
+    selected_trial_links: /search_records/*/selected_trial_ids
+    selected_trial_models: /trial_records/*/model_record_id
+    selected_role_models: /model_records/*[role=selected]/model_record_id
+    selection_derivation: /search_records/*/selection_derivation
+    selection_derivation_fields:
+      - /search_records/*/selection_derivation/mode
+      - /search_records/*/selection_derivation/input_selected_trial_ids
+      - /search_records/*/selection_derivation/input_model_record_ids
+      - /search_records/*/selection_derivation/output_model_record_ids
+      - /search_records/*/selection_derivation/rule_or_rationale
+    selection_fields:
+      - /search_records/*/search_space
+      - /search_records/*/budget
+      - /search_records/*/selection_metric
+      - /search_records/*/selection_rule
+      - /search_records/*/selection_partition
+    selected_outputs:
+      - /trial_records/*/checkpoint_artifact_ids
+      - /trial_records/*/metric_result_ids
+  AIM005:
+    access_events: /test_access_events
+    access_time: /test_access_events/*/timestamp
+    affected_decisions: /test_access_events/*/affected_decision_ids
+    split_identity: /test_access_events/*/split_id
+    split_partitions: /split_records
+    timing_evidence: /decision_events
+    selection_records: /search_records
+cross_domain_exports:
+  data_identity:
+    - /dataset_records/*/dataset_id
+    - /dataset_records/*/snapshot_version
+    - /dataset_records/*/snapshot_hash
+    - /split_records/*/split_id
+    - /split_records/*/manifest_hash
+  source_entity_lineage:
+    - /lineage_records/*/upstream_entity_ids
+    - /lineage_records/*/lineage_hash
+  evaluation_context:
+    - /evaluation_records/*/evaluation_id
+    - /evaluation_records/*/independent_statistical_unit
+    - /evaluation_records/*/subgroup_definition
+    - /evaluation_records/*/threshold_definition
+  compatibility_targets:
+    - source_entity_identity
+    - dataset_snapshot
+    - split_independence
+    - label_definition
+    - structural_or_trajectory_source
+    - evaluation_population

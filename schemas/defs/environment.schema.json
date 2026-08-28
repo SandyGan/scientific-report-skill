@@ -1,0 +1,230 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.report-prompt.org/v1/defs/environment.schema.json",
+  "title": "Execution environment",
+  "description": "Vendor-neutral description of software, operating system, container, hardware, and lock artifacts needed to interpret or replay work.",
+  "$defs": {
+    "SoftwareComponent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "version",
+        "content_hash",
+        "role",
+        "source_bindings"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "version": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "content_hash": {
+          "$ref": "./common.schema.json#/$defs/HashField"
+        },
+        "role": {
+          "enum": [
+            "runtime",
+            "library",
+            "compiler",
+            "driver",
+            "firmware",
+            "workflow_engine",
+            "instrument_software",
+            "other"
+          ]
+        },
+        "source_bindings": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/SourceBinding"
+          }
+        }
+      }
+    },
+    "HardwareComponent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component_kind",
+        "manufacturer",
+        "model",
+        "count",
+        "firmware_or_driver",
+        "characteristics"
+      ],
+      "properties": {
+        "component_kind": {
+          "enum": [
+            "cpu",
+            "accelerator",
+            "memory",
+            "storage",
+            "instrument",
+            "sensor",
+            "network",
+            "other"
+          ]
+        },
+        "manufacturer": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "model": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "count": {
+          "$ref": "./common.schema.json#/$defs/IntegerField"
+        },
+        "firmware_or_driver": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "characteristics": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Parameter"
+          }
+        }
+      }
+    },
+    "Environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "environment_id",
+        "environment_version",
+        "environment_hash",
+        "capture_method",
+        "captured_at",
+        "operating_system",
+        "architecture",
+        "container_or_image",
+        "software_components",
+        "hardware_components",
+        "locale",
+        "timezone",
+        "environment_variable_manifest_hash",
+        "lock_artifact_ids",
+        "completeness",
+        "known_nondeterminism",
+        "source_bindings",
+        "extensions"
+      ],
+      "properties": {
+        "environment_id": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "environment_version": {
+          "$ref": "./common.schema.json#/$defs/Version"
+        },
+        "environment_hash": {
+          "$ref": "./common.schema.json#/$defs/HashField"
+        },
+        "capture_method": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "captured_at": {
+          "$ref": "./common.schema.json#/$defs/DateTimeField"
+        },
+        "operating_system": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "architecture": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "container_or_image": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "software_components": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SoftwareComponent"
+          }
+        },
+        "hardware_components": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/HardwareComponent"
+          }
+        },
+        "locale": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "timezone": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "environment_variable_manifest_hash": {
+          "$ref": "./common.schema.json#/$defs/HashField"
+        },
+        "capture_manifest_artifact_id": {
+          "oneOf": [
+            { "$ref": "./common.schema.json#/$defs/Identifier" },
+            { "type": "null" }
+          ]
+        },
+        "captured_invocation_ids": {
+          "type": "array",
+          "items": { "$ref": "./common.schema.json#/$defs/Identifier" },
+          "uniqueItems": true
+        },
+        "lock_artifact_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "completeness": {
+          "enum": [
+            "complete",
+            "partial",
+            "absent",
+            "unknown"
+          ]
+        },
+        "known_nondeterminism": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/NonEmptyString"
+          }
+        },
+        "source_bindings": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/SourceBinding"
+          }
+        },
+        "extensions": {
+          "$ref": "./common.schema.json#/$defs/ExtensionMap"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "completeness": {
+                "const": "complete"
+              }
+            },
+            "required": [
+              "completeness"
+            ]
+          },
+          "then": {
+            "properties": {
+              "environment_hash": {
+                "properties": {
+                  "state": {
+                    "const": "known"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "$ref": "#/$defs/Environment"
+}

@@ -1,0 +1,266 @@
+protocol: work-state-and-counting
+version: 1.0.0
+status: normative
+
+purpose: Represent execution without allowing plans, inferences, external work, or successful retries to inflate project work counts.
+
+hierarchy:
+  order:
+    - campaign
+    - work_unit
+    - attempt
+    - segment
+  definitions:
+    campaign: A grouping of work units under a shared scientific objective; never a counting substitute for its members.
+    work_unit: A bounded item of scientific work with explicit completion criteria.
+    attempt: One actual effort to execute a work unit.
+    segment: A contiguous execution interval, restart, checkpoint range, or procedural phase within an attempt.
+  invariants:
+    - Every attempt belongs to exactly one work unit.
+    - Every segment belongs to exactly one attempt.
+    - Attempts and segments are append-only historical records.
+    - A retry creates a new attempt unless it is a continuation from a recorded checkpoint under the same unchanged attempt plan; either way prior segments remain visible.
+
+work_unit_state:
+  values:
+    planned:
+      meaning: Work is intended but no qualifying execution attempt is evidenced.
+    attempted:
+      meaning: At least one qualifying attempt began, but completion criteria are not evidenced as satisfied.
+    completed:
+      meaning: Completion criteria were defined and evidence shows they were satisfied for the represented scope.
+    not_performed:
+      meaning: A decision or boundary record establishes that the work was not done.
+    unknown:
+      meaning: Available evidence cannot establish whether or how far the work was performed.
+  allowed_transitions:
+    - from: planned
+      to: attempted
+      requires: execution_start_evidence
+    - from: planned
+      to: not_performed
+      requires: decision_or_cutoff_evidence
+    - from: planned
+      to: unknown
+      requires: missingness_record
+    - from: attempted
+      to: completed
+      requires: completion_assessment
+    - from: attempted
+      to: not_performed
+      allowed: false
+      reason: Historical execution cannot be erased; use attempted with discontinued disposition.
+    - from: unknown
+      to: planned
+      requires: newly_bound_planning_evidence
+    - from: unknown
+      to: attempted
+      requires: newly_bound_execution_evidence
+    - from: unknown
+      to: completed
+      requires: newly_bound_execution_and_completion_evidence
+    - from: completed
+      to: attempted
+      requires: correction_or_invalidation_event
+      note: Prior completed state remains in history.
+  terminality: States are current assessments, not destructive lifecycle values.
+  disclosure_projection:
+    rule: withheld is not an execution state; it is a projection state applied to a known internal state or record under disclosure-policy.yaml.
+    requirements:
+      - A protected state must become an explicit withheld field envelope or a record-level withheld shell allowed by the projection schema, never unknown or not_performed.
+      - If existence or membership is protected, section coverage remains withheld and public work counts are withheld or safely coarsened rather than reported as zero.
+      - More-authorized representations retain the actual work-unit state and its evidence.
+
+execution_scope:
+  values:
+    this_project:
+      meaning: New work performed by the project team or under its direct execution control.
+    reanalysis:
+      meaning: Analysis performed in this project on pre-existing observations or artifacts.
+    external_study:
+      meaning: Work reported by an independent external study.
+    upstream_collaborator:
+      meaning: Work performed outside direct project execution control and supplied upstream.
+    synthetic:
+      meaning: A simulation, generated control, or synthetic-data activity; actor and execution evidence are still required.
+  rule: execution_scope is orthogonal to work_unit_state; external completed work remains completed externally, not completed by this project.
+
+truth_classification:
+  derivation:
+    performed:
+      all:
+        - state is attempted or completed
+        - qualifying execution evidence is present
+        - execution_scope is this_project, reanalysis, or synthetic
+    planned:
+      all:
+        - state is planned
+        - no qualifying execution evidence is present
+    inferred:
+      all:
+        - execution state is asserted only through an inference
+      forced_state: unknown
+      rule: Inference alone cannot establish attempted or completed.
+    external:
+      all:
+        - execution_scope is external_study or upstream_collaborator
+    not_performed:
+      all:
+        - state is not_performed
+    unknown:
+      all:
+        - state is unknown
+  narrative_rule: The truth classification must be available to renderers and must not be collapsed into a generic completed or methods-present label.
+
+completion_contract:
+  work_unit_required_fields:
+    - work_unit_id
+    - objective
+    - state
+    - execution_scope
+    - completion_criteria
+    - completion_assessment
+    - attempt_ids
+  completion_criteria:
+    timing_values:
+      - predefined
+      - adaptive
+      - post_hoc
+      - missing
+      - not_applicable
+    requirements:
+      - Each criterion is objectively evaluable or explicitly unknown.
+      - Criteria identify required outputs, quality conditions, and scope.
+      - Criteria must not be reconstructed as predefined without timing evidence.
+  completed_requires:
+    - At least one qualifying attempt exists.
+    - Completion criteria state is not missing.
+    - Every mandatory criterion has a known pass outcome.
+    - Completion evidence binds to attempt, segment, source, or artifact records.
+    - Any material deviation is represented and assessed.
+  completed_forbidden_when:
+    - Only a plan, method template, external paper, inferred result, or artifact filename is available.
+    - Mandatory criteria are unknown or failed.
+    - The only successful record belongs to a different work unit or execution scope.
+
+attempt_outcomes:
+  values:
+    - succeeded
+    - partially_succeeded
+    - failed
+    - aborted
+    - cancelled_after_start
+    - running_at_cutoff
+    - outcome_unknown
+  rules:
+    - Outcome is distinct from work-unit completion.
+    - An attempt may yield usable early results and later fail technically.
+    - Failure events are separate records and may coexist with any non-cancelled result disposition.
+    - A later success never deletes or changes an earlier failure outcome.
+
+segment_states:
+  values:
+    - completed
+    - stopped
+    - crashed
+    - superseded_by_restart
+    - running_at_cutoff
+    - unknown
+  restart_requirements:
+    - predecessor_segment_id
+    - checkpoint_or_restart_binding state
+    - parameter_diff state
+    - restart_reason state
+
+count_definitions:
+  project_work_units:
+    unit: unique work_unit_id
+    denominator:
+      include_scopes:
+        - this_project
+        - reanalysis
+        - synthetic
+      include_states:
+        - planned
+        - attempted
+        - completed
+        - not_performed
+        - unknown
+    numerator:
+      include_states:
+        - completed
+    display: completed project work units / all in-scope project work units
+    rule: Also provide separate counts by execution_scope and state.
+  new_project_work_units:
+    unit: unique work_unit_id
+    denominator:
+      include_scopes:
+        - this_project
+        - synthetic
+    numerator:
+      include_states:
+        - completed
+    rule: Reanalysis must not be silently included in a count labelled new work.
+  project_reanalysis_work_units:
+    unit: unique work_unit_id
+    denominator:
+      include_scopes:
+        - reanalysis
+    numerator:
+      include_states:
+        - completed
+  external_work_units:
+    unit: unique work_unit_id
+    denominator:
+      include_scopes:
+        - external_study
+        - upstream_collaborator
+    numerator:
+      include_states:
+        - completed
+    rule: This metric must be labelled external and must not be added to project completion numerators.
+  attempts:
+    unit: unique attempt_id
+    denominator: attempts that began within the declared scope and cutoff
+    numerators:
+      failed: attempt outcome is failed
+      partial: attempt outcome is partially_succeeded
+      successful: attempt outcome is succeeded
+    rule: An attempt with multiple failure events is counted once in the failed-attempt numerator; failure-event counts may be shown separately.
+  segments:
+    unit: unique segment_id
+    rule: Segment counts must never be presented as independent attempts or biological, statistical, or computational replicates.
+  not_performed:
+    unit: unique work_unit_id
+    rule: Include visibly in scope accounting but never in a performed or completed numerator.
+  unknown:
+    unit: unique work_unit_id
+    rule: Include visibly in the denominator when in scope and never infer it into another bucket.
+
+counting_invariants:
+  - Counts use stable unique identifiers, never rows, files, outputs, checkpoints, or narrative mentions.
+  - The label, unit, numerator rule, denominator rule, scope, and cutoff accompany every displayed ratio.
+  - Empty denominators are not_applicable only when the metric is proven inapplicable; otherwise their state is unknown.
+  - Pooled samples, aliquots, frames, technical replicates, workers, seeds, and checkpoints do not inflate biological or independent evidence counts.
+  - A work unit may appear in one state bucket per snapshot and one execution-scope bucket; revisions retain historical states separately.
+  - inferred assertions never enter execution counts.
+
+conformance_rules:
+  WRK001:
+    condition: A completed work unit lacks completion criteria or completion evidence.
+    outcome: blocker
+  WRK002:
+    condition: External or upstream work enters a project-performed numerator.
+    outcome: blocker
+  WRK003:
+    condition: A successful retry overwrites or hides a failed attempt or segment.
+    outcome: blocker
+  WRK004:
+    condition: Planned or inferred work is represented as attempted or completed without execution evidence.
+    outcome: blocker
+  WRK005:
+    condition: A displayed count lacks an explicit unit, numerator, denominator, scope, or cutoff.
+    outcome: error
+  WRK006:
+    condition: Segment, artifact, or row counts are presented as work-unit or attempt counts.
+    outcome: blocker

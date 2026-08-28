@@ -1,0 +1,246 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.report-prompt.org/v1/defs/invocation.schema.json",
+  "title": "Invocation record",
+  "description": "Provider-neutral record of an actual or planned command, notebook, protocol, instrument, manual, or workflow invocation.",
+  "$defs": {
+    "Argument": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "position",
+        "name",
+        "value"
+      ],
+      "properties": {
+        "position": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "name": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "value": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        }
+      }
+    },
+    "Invocation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "invocation_id",
+        "invocation_version",
+        "invocation_kind",
+        "record_role",
+        "executable",
+        "arguments",
+        "command_line",
+        "working_directory",
+        "parameters",
+        "input_artifact_ids",
+        "output_artifact_ids",
+        "started_at",
+        "ended_at",
+        "termination_status",
+        "exit_code",
+        "log_artifact_ids",
+        "source_bindings",
+        "extensions"
+      ],
+      "properties": {
+        "invocation_id": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "invocation_version": {
+          "$ref": "./common.schema.json#/$defs/Version"
+        },
+        "invocation_kind": {
+          "enum": [
+            "command",
+            "notebook",
+            "workflow",
+            "instrument",
+            "protocol",
+            "manual_action",
+            "service_call",
+            "other",
+            "unknown"
+          ]
+        },
+        "record_role": {
+          "enum": [
+            "historical_actual",
+            "planned",
+            "recipe_template",
+            "verification_run",
+            "external_record",
+            "unknown"
+          ]
+        },
+        "environment_id": {
+          "oneOf": [
+            { "$ref": "./common.schema.json#/$defs/Identifier" },
+            { "type": "null" }
+          ]
+        },
+        "random_state_id": {
+          "oneOf": [
+            { "$ref": "./common.schema.json#/$defs/Identifier" },
+            { "type": "null" }
+          ]
+        },
+        "input_manifest_hash": {
+          "$ref": "./common.schema.json#/$defs/HashField"
+        },
+        "output_manifest_hash": {
+          "$ref": "./common.schema.json#/$defs/HashField"
+        },
+        "argument_capture_status": {
+          "enum": ["complete", "partial", "unknown", "not_applicable"]
+        },
+        "parameter_capture_status": {
+          "enum": ["complete", "partial", "unknown", "not_applicable"]
+        },
+        "executable": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "arguments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Argument"
+          }
+        },
+        "command_line": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "working_directory": {
+          "$ref": "./common.schema.json#/$defs/RelativePathField"
+        },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Parameter"
+          }
+        },
+        "input_artifact_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "output_artifact_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "started_at": {
+          "$ref": "./common.schema.json#/$defs/DateTimeField"
+        },
+        "ended_at": {
+          "$ref": "./common.schema.json#/$defs/DateTimeField"
+        },
+        "termination_status": {
+          "enum": [
+            "not_started",
+            "running",
+            "completed",
+            "failed",
+            "interrupted",
+            "aborted",
+            "unknown"
+          ]
+        },
+        "exit_code": {
+          "$ref": "./common.schema.json#/$defs/IntegerField"
+        },
+        "log_artifact_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "source_bindings": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/SourceBinding"
+          }
+        },
+        "extensions": {
+          "$ref": "./common.schema.json#/$defs/ExtensionMap"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "invocation_kind": {
+                "const": "command"
+              }
+            },
+            "required": [
+              "invocation_kind"
+            ]
+          },
+          "then": {
+            "anyOf": [
+              {
+                "properties": {
+                  "executable": {
+                    "properties": {
+                      "state": {
+                        "const": "known"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "command_line": {
+                    "properties": {
+                      "state": {
+                        "const": "known"
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "termination_status": {
+                "const": "completed"
+              }
+            },
+            "required": [
+              "termination_status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "ended_at": {
+                "properties": {
+                  "state": {
+                    "enum": [
+                      "known",
+                      "withheld"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "$ref": "#/$defs/Invocation"
+}

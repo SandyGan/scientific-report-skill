@@ -1,0 +1,97 @@
+{
+  "response_id": "response:wetlab-extraction-example-001",
+  "response_version": "1.0.0",
+  "schema_version": "1.0.0",
+  "request_id": "request:wetlab-extraction-example-001",
+  "request_contract_hash": "sha256:d12ac408e89e2fe82455a7696179cd8080ef9b0f37ca5d242e4007659d715006",
+  "prompt_id": "report_prompt.bundle",
+  "prompt_version": "0.3.0",
+  "prompt_contracts_hash": "sha256:62d65a298a4060c0df61aaac53bd1189a91f89207c7409415aea84bde1908a59",
+  "target_schema_id": "https://schemas.report-prompt.org/v1/scientific-report.schema.json",
+  "target_schema_version": "1.0.0",
+  "authorized_patch_roots": [
+    "/review_tasks"
+  ],
+  "accepted_state_hash": "sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "stage": "S2_atomic_fact_extraction",
+  "status": "cannot_complete",
+  "cannot_complete_reason": "The source records an assay attempt, failed positive control, no-signal result, exclusion, planned repeat with no evidence of performance, and policy-based withholding, but the request authorizes only /review_tasks. The required scientific records cannot be represented without exceeding request-owned roots.",
+  "candidate_operations": [],
+  "source_bindings": [
+    {
+      "source_item_id": "source:eln-entry-42",
+      "source_snapshot_id": "snapshot:example-001",
+      "snapshot_registry_hash": "sha256:0600aba3e5d8a927341ce6fe09ff9257309c0448fb6397fedf689cd05a6c284f",
+      "content_hash": "sha256:8a4ca954ea75cf4484b3155f8b453ca4e567efd7a3898a45d436130515aa18fa",
+      "excerpt_hash": "sha256:8a4ca954ea75cf4484b3155f8b453ca4e567efd7a3898a45d436130515aa18fa",
+      "chunk_ids": [
+        "chunk:eln-entry-42:0"
+      ],
+      "locator": {
+        "locator_type": "whole_source",
+        "value": "entire embedded source chunk",
+        "parser_name": "plain-text-parser",
+        "parser_version": "1.2.0"
+      },
+      "parser_identity": {
+        "parser_name": "plain-text-parser",
+        "parser_version": "1.2.0",
+        "configuration_hash": "sha256:893fb02ea08f060fdcab08792163ea1c0d5f6bc8eb810bdc19f7f1b65b7a2a9f",
+        "parser_result_id": "parser-result:eln-entry-42:0"
+      },
+      "binding_scope": "whole_source",
+      "binding_role": "direct"
+    }
+  ],
+  "processed_unit_ids": [
+    "chunk:eln-entry-42:0"
+  ],
+  "excluded_items": [],
+  "unreadable_items": [],
+  "conflicts": [],
+  "missingness": [],
+  "review_tasks": [
+    {
+      "review_task_id": "review:wetlab-example:authorize-adverse-records",
+      "category": "other",
+      "description": "Issue a new request with explicit canonical roots for the assay attempt, failed positive control and FailureEvent, no-signal Result, exclusion DecisionEvent, planned-repeat/non-performance status, and disclosure-safe withholding record. The current /review_tasks-only authorization cannot represent these source-recorded adverse facts, so scientific extraction remains incomplete.",
+      "severity": "blocking",
+      "affected_object_ids": [
+        "source:eln-entry-42"
+      ],
+      "required_reviewer_role": "generation orchestrator",
+      "status": "open"
+    }
+  ],
+  "forbidden_inferences_detected": [
+    {
+      "detection_id": "forbidden:wetlab-example:adverse-omission",
+      "inference_kind": "unsupported_completion",
+      "description": "A review task alone cannot substitute for the recorded attempt, control failure, negative result, exclusion, planned non-performance, and withholding records.",
+      "affected_operation_ids": [],
+      "source_item_ids": [
+        "source:eln-entry-42"
+      ],
+      "disposition": "response_blocked"
+    }
+  ],
+  "reproducibility_coverage": null,
+  "continuation": {
+    "state": "complete",
+    "omitted_unit_ids": [],
+    "next_cursor": null,
+    "orchestrator_verification": null
+  },
+  "created_at": "2026-05-13T00:00:00Z",
+  "extensions": {
+    "candidate_only": true,
+    "downstream_validation_claim": "not_run",
+    "scientific_extraction_complete": false,
+    "authorization_gap": [
+      "/attempts",
+      "/failures",
+      "/results",
+      "/decision_events"
+    ]
+  }
+}

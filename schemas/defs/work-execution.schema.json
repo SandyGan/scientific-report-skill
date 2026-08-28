@@ -1,0 +1,866 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.report-prompt.org/v1/defs/work-execution.schema.json",
+  "title": "Work execution history",
+  "description": "Append-oriented Campaign, WorkUnit, Attempt, and Segment records that keep planned, project-performed, reanalyzed, external, failed, and unknown work distinct.",
+  "$defs": {
+    "WorkState": {
+      "enum": [
+        "planned",
+        "attempted",
+        "completed",
+        "not_performed",
+        "unknown"
+      ]
+    },
+    "ExecutionScope": {
+      "enum": [
+        "this_project",
+        "reanalysis",
+        "external_study",
+        "upstream_collaborator",
+        "synthetic"
+      ]
+    },
+    "Campaign": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "campaign_id",
+        "campaign_version",
+        "title",
+        "objective",
+        "work_state",
+        "execution_scope",
+        "work_unit_ids",
+        "source_bindings",
+        "extensions"
+      ],
+      "properties": {
+        "campaign_id": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "campaign_version": {
+          "$ref": "./common.schema.json#/$defs/Version"
+        },
+        "title": {
+          "$ref": "./common.schema.json#/$defs/NonEmptyString"
+        },
+        "objective": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "work_state": {
+          "$ref": "#/$defs/WorkState"
+        },
+        "execution_scope": {
+          "$ref": "#/$defs/ExecutionScope"
+        },
+        "work_unit_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "source_bindings": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/SourceBinding"
+          }
+        },
+        "extensions": {
+          "$ref": "./common.schema.json#/$defs/ExtensionMap"
+        }
+      }
+    },
+    "WorkUnit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "work_unit_id",
+        "work_unit_version",
+        "campaign_id",
+        "title",
+        "objective",
+        "work_state",
+        "execution_scope",
+        "completion_criterion_timing",
+        "completion_criteria",
+        "completion_assessment",
+        "completion_evidence",
+        "attempt_ids",
+        "method_ids",
+        "decision_event_ids",
+        "input_entity_ids",
+        "output_object_ids",
+        "source_bindings",
+        "extensions"
+      ],
+      "properties": {
+        "work_unit_id": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "work_unit_version": {
+          "$ref": "./common.schema.json#/$defs/Version"
+        },
+        "campaign_id": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "title": {
+          "$ref": "./common.schema.json#/$defs/NonEmptyString"
+        },
+        "objective": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "work_state": {
+          "$ref": "#/$defs/WorkState"
+        },
+        "execution_scope": {
+          "$ref": "#/$defs/ExecutionScope"
+        },
+        "completion_criterion_timing": {
+          "enum": [
+            "predefined",
+            "adaptive",
+            "post_hoc",
+            "missing",
+            "not_applicable"
+          ]
+        },
+        "completion_criteria": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "completion_assessment": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "completion_evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/SourceBinding"
+          }
+        },
+        "attempt_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "method_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "decision_event_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "input_entity_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "output_object_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "source_bindings": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/SourceBinding"
+          }
+        },
+        "extensions": {
+          "$ref": "./common.schema.json#/$defs/ExtensionMap"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "work_state": {
+                "const": "completed"
+              }
+            },
+            "required": [
+              "work_state"
+            ]
+          },
+          "then": {
+            "properties": {
+              "completion_criterion_timing": {
+                "enum": [
+                  "predefined",
+                  "adaptive",
+                  "post_hoc"
+                ]
+              },
+              "completion_criteria": {
+                "properties": {
+                  "state": {
+                    "const": "known"
+                  }
+                }
+              },
+              "completion_assessment": {
+                "properties": {
+                  "state": {
+                    "const": "known"
+                  }
+                }
+              },
+              "completion_evidence": {
+                "minItems": 1
+              },
+              "attempt_ids": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "work_state": {
+                "enum": [
+                  "planned",
+                  "not_performed"
+                ]
+              }
+            },
+            "required": [
+              "work_state"
+            ]
+          },
+          "then": {
+            "properties": {
+              "attempt_ids": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Attempt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "attempt_id",
+        "attempt_version",
+        "work_unit_id",
+        "attempt_ordinal",
+        "execution_scope",
+        "attempt_outcome",
+        "started_at",
+        "ended_at",
+        "method_ids",
+        "parameter_set",
+        "input_material_ids",
+        "input_artifact_ids",
+        "segment_ids",
+        "result_ids",
+        "failure_event_ids",
+        "output_artifact_ids",
+        "usable_output_status",
+        "superseded_by_attempt_id",
+        "source_bindings",
+        "extensions"
+      ],
+      "properties": {
+        "attempt_id": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "attempt_version": {
+          "$ref": "./common.schema.json#/$defs/Version"
+        },
+        "work_unit_id": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "attempt_ordinal": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "execution_scope": {
+          "$ref": "#/$defs/ExecutionScope"
+        },
+        "attempt_outcome": {
+          "enum": [
+            "succeeded",
+            "partially_succeeded",
+            "failed",
+            "aborted",
+            "cancelled_after_start",
+            "running_at_cutoff",
+            "outcome_unknown"
+          ]
+        },
+        "started_at": {
+          "$ref": "./common.schema.json#/$defs/DateTimeField"
+        },
+        "ended_at": {
+          "$ref": "./common.schema.json#/$defs/DateTimeField"
+        },
+        "method_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "parameter_set": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Parameter"
+          }
+        },
+        "input_material_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "input_artifact_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "segment_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "result_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "failure_event_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "output_artifact_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "usable_output_status": {
+          "enum": [
+            "usable",
+            "usable_with_qualification",
+            "not_usable",
+            "not_assessed",
+            "unknown"
+          ]
+        },
+        "superseded_by_attempt_id": {
+          "oneOf": [
+            {
+              "$ref": "./common.schema.json#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "attempt_relations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AttemptRelation"
+          }
+        },
+        "source_bindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "./common.schema.json#/$defs/SourceBinding"
+          }
+        },
+        "extensions": {
+          "$ref": "./common.schema.json#/$defs/ExtensionMap"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "attempt_outcome": {
+                "enum": [
+                  "failed",
+                  "aborted"
+                ]
+              }
+            },
+            "required": [
+              "attempt_outcome"
+            ]
+          },
+          "then": {
+            "properties": {
+              "failure_event_ids": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "AttemptRelation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "relation_id",
+        "prior_attempt_id",
+        "relationship",
+        "rationale",
+        "source_bindings"
+      ],
+      "properties": {
+        "relation_id": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "prior_attempt_id": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "relationship": {
+          "const": "not_a_retry"
+        },
+        "rationale": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "source_bindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "./common.schema.json#/$defs/SourceBinding"
+          }
+        }
+      }
+    },
+    "Segment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "segment_id",
+        "segment_version",
+        "attempt_id",
+        "segment_ordinal",
+        "segment_kind",
+        "segment_state",
+        "predecessor_segment_id",
+        "restart_reason",
+        "checkpoint_input_artifact_id",
+        "checkpoint_output_artifact_id",
+        "parameter_diff",
+        "started_at",
+        "ended_at",
+        "parameters",
+        "result_ids",
+        "failure_event_ids",
+        "output_artifact_ids",
+        "source_bindings",
+        "extensions"
+      ],
+      "properties": {
+        "segment_id": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "segment_version": {
+          "$ref": "./common.schema.json#/$defs/Version"
+        },
+        "attempt_id": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "segment_ordinal": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "segment_kind": {
+          "enum": [
+            "phase",
+            "checkpoint_interval",
+            "restart",
+            "replicate_interval",
+            "batch",
+            "other"
+          ]
+        },
+        "segment_state": {
+          "enum": [
+            "completed",
+            "stopped",
+            "crashed",
+            "superseded_by_restart",
+            "running_at_cutoff",
+            "unknown"
+          ]
+        },
+        "predecessor_segment_id": {
+          "oneOf": [
+            {
+              "$ref": "./common.schema.json#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "restart_reason": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "checkpoint_input_artifact_id": {
+          "oneOf": [
+            {
+              "$ref": "./common.schema.json#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "checkpoint_output_artifact_id": {
+          "oneOf": [
+            {
+              "$ref": "./common.schema.json#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "parameter_diff": {
+          "$ref": "./common.schema.json#/$defs/StringArrayField"
+        },
+        "started_at": {
+          "$ref": "./common.schema.json#/$defs/DateTimeField"
+        },
+        "ended_at": {
+          "$ref": "./common.schema.json#/$defs/DateTimeField"
+        },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Parameter"
+          }
+        },
+        "result_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "failure_event_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "output_artifact_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "source_bindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "./common.schema.json#/$defs/SourceBinding"
+          }
+        },
+        "extensions": {
+          "$ref": "./common.schema.json#/$defs/ExtensionMap"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "segment_kind": {
+                "const": "restart"
+              }
+            },
+            "required": [
+              "segment_kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "predecessor_segment_id": {
+                "$ref": "./common.schema.json#/$defs/Identifier"
+              },
+              "restart_reason": {
+                "properties": {
+                  "state": {
+                    "enum": [
+                      "known",
+                      "withheld"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Method": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method_id",
+        "method_version",
+        "name",
+        "method_kind",
+        "execution_status",
+        "execution_scope",
+        "description",
+        "planned_parameters",
+        "actual_parameters",
+        "protocol_artifact_ids",
+        "deviation_descriptions",
+        "source_bindings",
+        "extensions"
+      ],
+      "properties": {
+        "method_id": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "method_version": {
+          "$ref": "./common.schema.json#/$defs/Version"
+        },
+        "name": {
+          "$ref": "./common.schema.json#/$defs/NonEmptyString"
+        },
+        "method_kind": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "execution_status": {
+          "enum": [
+            "performed",
+            "planned",
+            "inferred",
+            "external",
+            "not_performed",
+            "unknown"
+          ]
+        },
+        "execution_scope": {
+          "$ref": "#/$defs/ExecutionScope"
+        },
+        "description": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "planned_parameters": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Parameter"
+          }
+        },
+        "actual_parameters": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Parameter"
+          }
+        },
+        "protocol_artifact_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "deviation_descriptions": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/NonEmptyString"
+          }
+        },
+        "source_bindings": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/SourceBinding"
+          }
+        },
+        "extensions": {
+          "$ref": "./common.schema.json#/$defs/ExtensionMap"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "execution_status": {
+                "const": "performed"
+              }
+            },
+            "required": [
+              "execution_status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "actual_parameters": {
+                "minItems": 1
+              },
+              "source_bindings": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "DecisionEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision_event_id",
+        "decision_event_version",
+        "decision_kind",
+        "description",
+        "timing_class",
+        "decided_at",
+        "decision_maker",
+        "triggering_object_ids",
+        "affected_object_ids",
+        "rationale",
+        "alternatives_considered",
+        "source_bindings",
+        "extensions"
+      ],
+      "properties": {
+        "decision_event_id": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "decision_event_version": {
+          "$ref": "./common.schema.json#/$defs/Version"
+        },
+        "decision_kind": {
+          "enum": [
+            "scope_change",
+            "method_change",
+            "stopping",
+            "restart",
+            "exclusion",
+            "outlier_handling",
+            "population_definition",
+            "metric_or_endpoint_selection",
+            "model_or_trial_selection",
+            "conflict_adjudication",
+            "disclosure",
+            "other"
+          ]
+        },
+        "description": {
+          "$ref": "./common.schema.json#/$defs/NonEmptyString"
+        },
+        "timing_class": {
+          "enum": [
+            "predefined",
+            "adaptive",
+            "post_hoc",
+            "missing",
+            "not_applicable"
+          ]
+        },
+        "decided_at": {
+          "$ref": "./common.schema.json#/$defs/DateTimeField"
+        },
+        "decision_maker": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "triggering_object_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "affected_object_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "rationale": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "alternatives_considered": {
+          "$ref": "./common.schema.json#/$defs/StringArrayField"
+        },
+        "source_bindings": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/SourceBinding"
+          }
+        },
+        "extensions": {
+          "$ref": "./common.schema.json#/$defs/ExtensionMap"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "timing_class": {
+                "enum": [
+                  "predefined",
+                  "adaptive",
+                  "post_hoc"
+                ]
+              }
+            },
+            "required": [
+              "timing_class"
+            ]
+          },
+          "then": {
+            "properties": {
+              "source_bindings": {
+                "minItems": 1,
+                "contains": {
+                  "properties": {
+                    "binding_role": {
+                      "const": "decision_timing"
+                    }
+                  },
+                  "required": [
+                    "binding_role"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

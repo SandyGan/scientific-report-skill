@@ -1,0 +1,789 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.report-prompt.org/v1/defs/result-and-disposition.schema.json",
+  "title": "Result and disposition",
+  "description": "Keeps scientific effect, statistical decision, interpretability, record use, and technical failure on orthogonal axes.",
+  "$defs": {
+    "ScientificEffectClass": {
+      "enum": [
+        "increase",
+        "decrease",
+        "no_detectable_effect",
+        "equivalent",
+        "heterogeneous",
+        "effect_present_direction_uncertain",
+        "not_estimated",
+        "unknown",
+        "not_applicable",
+        "withheld"
+      ]
+    },
+    "StatisticalDecision": {
+      "enum": [
+        "reject_null",
+        "do_not_reject_null",
+        "equivalent",
+        "noninferior",
+        "inconclusive",
+        "descriptive_only",
+        "not_performed",
+        "unknown",
+        "not_applicable",
+        "withheld"
+      ]
+    },
+    "InterpretabilityStatus": {
+      "enum": [
+        "interpretable",
+        "qualified",
+        "inconclusive",
+        "not_interpretable",
+        "unknown",
+        "not_applicable",
+        "withheld"
+      ]
+    },
+    "RecordDisposition": {
+      "enum": [
+        "primary",
+        "sensitivity_only",
+        "contextual",
+        "excluded",
+        "superseded",
+        "retracted",
+        "pending_review",
+        "unknown",
+        "not_applicable",
+        "withheld"
+      ]
+    },
+    "NumericInterval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lower",
+        "upper",
+        "level",
+        "interval_kind",
+        "unit"
+      ],
+      "properties": {
+        "lower": {
+          "$ref": "./common.schema.json#/$defs/NumberField"
+        },
+        "upper": {
+          "$ref": "./common.schema.json#/$defs/NumberField"
+        },
+        "level": {
+          "$ref": "./common.schema.json#/$defs/NumberField"
+        },
+        "interval_kind": {
+          "enum": [
+            "confidence",
+            "credible",
+            "prediction",
+            "range",
+            "interquartile",
+            "other",
+            "not_applicable",
+            "unknown"
+          ]
+        },
+        "unit": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        }
+      }
+    },
+    "EffectEstimate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "estimate",
+        "unit",
+        "scale",
+        "interval",
+        "p_value",
+        "sample_or_analysis_unit_count",
+        "estimation_method"
+      ],
+      "properties": {
+        "estimate": {
+          "$ref": "./common.schema.json#/$defs/NumberField"
+        },
+        "unit": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "scale": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "interval": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/NumericInterval"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "p_value": {
+          "$ref": "./common.schema.json#/$defs/NumberField"
+        },
+        "sample_or_analysis_unit_count": {
+          "$ref": "./common.schema.json#/$defs/IntegerField"
+        },
+        "estimation_method": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        }
+      }
+    },
+    "NegativeEvidenceAssessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "control_status",
+        "quality_control_status",
+        "sensitivity_status",
+        "detection_limit",
+        "minimum_detectable_effect",
+        "equivalence_bounds",
+        "observed_interval",
+        "eligible_for_biological_counterevidence",
+        "eligibility_reason"
+      ],
+      "properties": {
+        "control_status": {
+          "enum": [
+            "valid",
+            "failed",
+            "partial",
+            "not_recorded",
+            "not_applicable",
+            "unknown"
+          ]
+        },
+        "quality_control_status": {
+          "enum": [
+            "passed",
+            "failed",
+            "partial",
+            "not_assessed",
+            "not_applicable",
+            "unknown"
+          ]
+        },
+        "sensitivity_status": {
+          "enum": [
+            "adequate",
+            "inadequate",
+            "not_established",
+            "not_applicable",
+            "unknown"
+          ]
+        },
+        "detection_limit": {
+          "$ref": "./common.schema.json#/$defs/NumberField"
+        },
+        "minimum_detectable_effect": {
+          "$ref": "./common.schema.json#/$defs/NumberField"
+        },
+        "equivalence_bounds": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/NumericInterval"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "observed_interval": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/NumericInterval"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eligible_for_biological_counterevidence": {
+          "type": "boolean"
+        },
+        "eligibility_reason": {
+          "$ref": "./common.schema.json#/$defs/NonEmptyString"
+        },
+        "control_record_ids": {
+          "type": "array",
+          "items": { "$ref": "./common.schema.json#/$defs/Identifier" },
+          "uniqueItems": true
+        },
+        "quality_control_event_ids": {
+          "type": "array",
+          "items": { "$ref": "./common.schema.json#/$defs/Identifier" },
+          "uniqueItems": true
+        },
+        "analysis_context_ids": {
+          "type": "array",
+          "items": { "$ref": "./common.schema.json#/$defs/Identifier" },
+          "uniqueItems": true
+        },
+        "analysis_population_id": {
+          "oneOf": [
+            { "$ref": "./common.schema.json#/$defs/Identifier" },
+            { "type": "null" }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "eligible_for_biological_counterevidence": {
+                "const": true
+              }
+            },
+            "required": [
+              "eligible_for_biological_counterevidence"
+            ]
+          },
+          "then": {
+            "required": [
+              "control_record_ids",
+              "quality_control_event_ids",
+              "analysis_context_ids",
+              "analysis_population_id"
+            ],
+            "properties": {
+              "control_status": {
+                "const": "valid"
+              },
+              "quality_control_status": {
+                "const": "passed"
+              },
+              "sensitivity_status": {
+                "const": "adequate"
+              },
+              "control_record_ids": {
+                "type": "array",
+                "minItems": 1
+              },
+              "quality_control_event_ids": {
+                "type": "array",
+                "minItems": 1
+              },
+              "analysis_context_ids": {
+                "type": "array"
+              },
+              "analysis_population_id": {
+                "$ref": "./common.schema.json#/$defs/Identifier"
+              }
+            },
+            "anyOf": [
+              {
+                "required": [
+                  "minimum_detectable_effect"
+                ],
+                "properties": {
+                  "minimum_detectable_effect": {
+                    "properties": {
+                      "state": {
+                        "const": "known"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "required": [
+                  "detection_limit"
+                ],
+                "properties": {
+                  "detection_limit": {
+                    "properties": {
+                      "state": {
+                        "const": "known"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "equivalence_bounds": {
+                    "$ref": "#/$defs/NumericInterval"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "Result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "result_id",
+        "result_version",
+        "result_kind",
+        "statement",
+        "work_unit_id",
+        "attempt_id",
+        "segment_id",
+        "analysis_population_id",
+        "estimand",
+        "population_or_system",
+        "condition",
+        "time_or_frame_scope",
+        "unit",
+        "effect_estimate",
+        "derivation_closure_status",
+        "scientific_effect_class",
+        "statistical_decision",
+        "interpretability_status",
+        "record_disposition",
+        "disposition_reason",
+        "qualification_ids",
+        "blocker_ids",
+        "negative_evidence_assessment",
+        "data_slice_ids",
+        "derivation_ids",
+        "analysis_run_ids",
+        "output_artifact_ids",
+        "decision_event_ids",
+        "conflict_set_ids",
+        "source_bindings",
+        "extensions"
+      ],
+      "properties": {
+        "result_id": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "result_version": {
+          "$ref": "./common.schema.json#/$defs/Version"
+        },
+        "result_kind": {
+          "enum": [
+            "quantitative",
+            "qualitative",
+            "observation",
+            "classification",
+            "comparison",
+            "other"
+          ]
+        },
+        "statement": {
+          "$ref": "./common.schema.json#/$defs/NonEmptyString"
+        },
+        "work_unit_id": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "attempt_id": {
+          "oneOf": [
+            {
+              "$ref": "./common.schema.json#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "segment_id": {
+          "oneOf": [
+            {
+              "$ref": "./common.schema.json#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "analysis_population_id": {
+          "oneOf": [
+            {
+              "$ref": "./common.schema.json#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "estimand": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "population_or_system": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "condition": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "time_or_frame_scope": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "intervention": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "dose": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "endpoint": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "system_state": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "comparison_definition": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "unit": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "effect_estimate": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/EffectEstimate"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "derivation_closure_status": {
+          "enum": [
+            "complete",
+            "partial",
+            "absent",
+            "not_applicable",
+            "unknown"
+          ]
+        },
+        "scientific_effect_class": {
+          "$ref": "#/$defs/ScientificEffectClass"
+        },
+        "statistical_decision": {
+          "$ref": "#/$defs/StatisticalDecision"
+        },
+        "interpretability_status": {
+          "$ref": "#/$defs/InterpretabilityStatus"
+        },
+        "record_disposition": {
+          "$ref": "#/$defs/RecordDisposition"
+        },
+        "disposition_reason": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "qualification_ids": {
+          "type": "array",
+          "items": { "$ref": "./common.schema.json#/$defs/Identifier" },
+          "uniqueItems": true
+        },
+        "blocker_ids": {
+          "type": "array",
+          "items": { "$ref": "./common.schema.json#/$defs/Identifier" },
+          "uniqueItems": true
+        },
+        "negative_evidence_assessment": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/NegativeEvidenceAssessment"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "data_slice_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "derivation_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "analysis_run_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "output_artifact_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "decision_event_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "conflict_set_ids": {
+          "type": "array",
+          "items": { "$ref": "./common.schema.json#/$defs/Identifier" },
+          "uniqueItems": true
+        },
+        "source_bindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "./common.schema.json#/$defs/SourceBinding"
+          }
+        },
+        "extensions": {
+          "$ref": "./common.schema.json#/$defs/ExtensionMap"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "result_kind": {
+                "const": "quantitative"
+              }
+            },
+            "required": [
+              "result_kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "effect_estimate": {
+                "$ref": "#/$defs/EffectEstimate"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "result_kind": {
+                "const": "quantitative"
+              },
+              "derivation_closure_status": {
+                "const": "complete"
+              }
+            },
+            "required": [
+              "result_kind",
+              "derivation_closure_status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "analysis_run_ids": {
+                "minItems": 1
+              },
+              "data_slice_ids": {
+                "minItems": 1
+              },
+              "derivation_ids": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "scientific_effect_class": {
+                "enum": [
+                  "no_detectable_effect",
+                  "equivalent"
+                ]
+              }
+            },
+            "required": [
+              "scientific_effect_class"
+            ]
+          },
+          "then": {
+            "properties": {
+              "negative_evidence_assessment": {
+                "$ref": "#/$defs/NegativeEvidenceAssessment"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "record_disposition": {
+                "enum": [
+                  "excluded",
+                  "superseded",
+                  "retracted"
+                ]
+              }
+            },
+            "required": [
+              "record_disposition"
+            ]
+          },
+          "then": {
+            "properties": {
+              "disposition_reason": {
+                "properties": {
+                  "state": {
+                    "enum": [
+                      "known",
+                      "withheld"
+                    ]
+                  }
+                }
+              },
+              "decision_event_ids": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "FailureEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "failure_event_id",
+        "failure_event_version",
+        "failure_class",
+        "severity",
+        "description",
+        "onset_or_detection",
+        "affected_object_id",
+        "work_unit_id",
+        "attempt_id",
+        "segment_id",
+        "related_object_ids",
+        "partial_result_ids",
+        "impact",
+        "resolution_status",
+        "recovery_attempt_ids",
+        "evidence_bindings",
+        "extensions"
+      ],
+      "properties": {
+        "failure_event_id": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "failure_event_version": {
+          "$ref": "./common.schema.json#/$defs/Version"
+        },
+        "failure_class": {
+          "enum": [
+            "instrument",
+            "reagent_or_material",
+            "protocol_deviation",
+            "data_integrity",
+            "software",
+            "hardware",
+            "resource_exhaustion",
+            "convergence_or_stability",
+            "quality_control",
+            "access_or_permission",
+            "operator_or_process",
+            "unknown",
+            "withheld"
+          ]
+        },
+        "severity": {
+          "enum": [
+            "information",
+            "recoverable",
+            "major",
+            "blocking",
+            "unknown",
+            "withheld"
+          ]
+        },
+        "description": {
+          "$ref": "./common.schema.json#/$defs/NonEmptyString"
+        },
+        "onset_or_detection": {
+          "$ref": "./common.schema.json#/$defs/DateTimeField"
+        },
+        "affected_object_id": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "work_unit_id": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "attempt_id": {
+          "oneOf": [
+            {
+              "$ref": "./common.schema.json#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "segment_id": {
+          "oneOf": [
+            {
+              "$ref": "./common.schema.json#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "related_object_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "partial_result_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "impact": {
+          "$ref": "./common.schema.json#/$defs/NonEmptyString"
+        },
+        "resolution_status": {
+          "enum": [
+            "unresolved",
+            "mitigated",
+            "resolved_for_future_attempts",
+            "not_applicable",
+            "unknown",
+            "withheld"
+          ]
+        },
+        "recovery_attempt_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "evidence_bindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "./common.schema.json#/$defs/SourceBinding"
+          }
+        },
+        "extensions": {
+          "$ref": "./common.schema.json#/$defs/ExtensionMap"
+        }
+      }
+    }
+  }
+}

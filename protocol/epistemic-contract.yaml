@@ -1,0 +1,186 @@
+protocol: epistemic-contract
+version: 1.0.0
+status: normative
+
+normative_language:
+  must: required for conformance
+  must_not: prohibited for conformance
+  should: required unless a documented justification is recorded
+  may: optional
+
+precedence:
+  order:
+    - epistemic_contract
+    - disclosure_policy
+    - report_mode_requirements
+    - domain_overlay
+    - presentation
+  rules:
+    - A domain overlay may strengthen, but must not weaken, this contract.
+    - Presentation rules must never change scientific meaning.
+    - When two rules conflict, the rule that preserves more uncertainty and less disclosure controls pending review.
+
+canonical_boundaries:
+  authoring_input:
+    authority: unvalidated evidence and declarations
+    rule: Authoring material may propose facts but is never itself a validation attestation.
+  scientific_payload:
+    authority: canonical normalized scientific facts
+    public_filename: scientific-report.public.json
+    rules:
+      - The public scientific payload is the only scientific fact source for public rendering.
+      - Validation, build status, and generation-process audit data must not be embedded as scientific facts.
+  validation_attestation:
+    authority: validation result for exactly one scientific payload digest
+    public_filename: validation-attestation.json
+    rules:
+      - An attestation must identify the canonicalization algorithm and payload digest.
+      - A payload change invalidates an attestation whose digest no longer matches.
+      - Absence, mismatch, expiry, or unknown validator status must render validation status as not_verified, never passed.
+  presentation:
+    authority: deterministic projection only
+    rule: A renderer must not introduce a number, citation, conclusion, status, or relationship absent from its input payload.
+  generation_audit:
+    authority: optional peripheral process record
+    rule: Adding or deleting it must not alter the scientific payload, its digest, validation status, or reproducibility assessment.
+
+missing_value_envelope:
+  applies_to: source-derived scientific fields that may be missing or restricted
+  required_keys:
+    - state
+    - value
+    - source_bindings
+    - missing_reason
+    - provenance_status
+  states:
+    known:
+      value_rule: value must be non-null and valid for the field
+      missing_reason_rule: must be null
+      provenance_rule: source_bindings or a complete derivation binding must be present
+    unknown:
+      value_rule: value must be null
+      missing_reason_rule: a non-empty reason code and human-readable explanation are required
+      provenance_rule: provenance_status may be complete, partial, or absent
+    not_applicable:
+      value_rule: value must be null
+      missing_reason_rule: must identify the satisfied applicability rule
+      provenance_rule: the applicability decision and its inputs must be traceable
+    withheld:
+      value_rule: value must be null in the projection where it is withheld
+      missing_reason_rule: must contain a non-sensitive policy reason code; it must not encode the hidden value
+      provenance_rule: a non-secret disclosure decision identifier is required
+  provenance_status_values:
+    - complete
+    - partial
+    - absent
+  forbidden_sentinels:
+    - ""
+    - TBD
+    - TBA
+    - N/A
+    - NA
+    - unknown_as_text
+    - redacted_as_text
+  invariants:
+    - A field's state and value must agree; null never silently means unknown.
+    - unknown, not_applicable, and withheld are semantically distinct and must survive normalization, projection, rendering, export, and revision.
+    - A value must not be inferred merely because it is conventional, likely, present in a template, or reported by an external study.
+    - Withholding a known value changes disclosure, not epistemic knowledge; an authorized internal representation may remain known.
+
+assertion_classes:
+  observed:
+    definition: Directly recorded measurement, event, or state in a bound source.
+  declared:
+    definition: A named accountable party's statement, explicitly represented as a declaration.
+  derived:
+    definition: Output of a recorded transformation whose inputs and method are bound.
+  inferred:
+    definition: A reasoned conclusion that is not directly observed; premises and argument steps are required.
+  planned:
+    definition: Intended future or conditional work; never evidence that execution occurred.
+  external:
+    definition: Work or finding produced outside the report project's execution boundary.
+
+core_invariants:
+  EPI001:
+    rule: Every non-background scientific assertion must bind to direct evidence, a derivation closure, or explicit upstream claims and argument steps.
+    failure: blocker
+  EPI002:
+    rule: Planned, inferred, external, not-performed, and unknown work must never be narrated or counted as project-performed work.
+    failure: blocker
+  EPI003:
+    rule: Unknown values must remain unknown; normalization and narrative generation must not guess them.
+    failure: blocker
+  EPI004:
+    rule: Negative, null, failed, excluded, superseded, retracted, and conflicting records within scope must remain first-class records.
+    failure: blocker
+  EPI005:
+    rule: A retry appends a new attempt or segment and must not overwrite prior history.
+    failure: blocker
+  EPI006:
+    rule: Every numeric claim must preserve units, population or denominator, uncertainty where applicable, and a derivation or exact source locator.
+    failure: blocker
+  EPI007:
+    rule: The report must state its source universe, cutoff, inclusion boundary, exclusion boundary, and completeness class.
+    failure: blocker
+  EPI008:
+    rule: Conflicting values must not be silently reconciled; conflict or justified heterogeneity must be represented explicitly.
+    failure: blocker
+  EPI009:
+    rule: A source correction, retraction, or invalidation must propagate to dependent evidence, derivations, claims, question resolutions, and summaries.
+    failure: blocker
+  EPI010:
+    rule: Validation claims must come only from a matching validation attestation, not from prose, filenames, or generation logs.
+    failure: blocker
+  EPI011:
+    rule: Public rendering must be a deterministic, lossless presentation of the public scientific payload for all material scientific states.
+    failure: blocker
+  EPI012:
+    rule: Disclosure projection must preserve the existence and semantic state of withheld required records without leaking protected values.
+    failure: blocker
+
+forbidden_inferences:
+  - infer execution from past-tense prose or a detailed method description
+  - infer project ownership from an external publication or collaborator statement
+  - infer completion from a successful artifact without completion criteria and execution evidence
+  - infer prospective timing from a document date that does not establish decision lock time
+  - infer independence from distinct filenames, runs, models, samples, or citations
+  - infer no effect from lack of statistical significance
+  - infer reproducibility from availability of code or a recipe alone
+  - infer completeness from processing all sources that happened to be registered
+  - infer applicability from an empty collection
+  - infer a hidden value from a redaction token, digest, filename, ordering, size, or metadata
+
+revision_policy:
+  model: append_only_events_with_versioned_objects
+  requirements:
+    - Prior source, attempt, decision, evidence, and claim states must remain auditable.
+    - Corrections create a new object version or revision event; they do not mutate historical meaning invisibly.
+    - Superseded and retracted records remain addressable and carry their disposition.
+    - Downstream validity is recomputed from the changed node through declared dependencies.
+  dependent_status_after_unresolved_change: review_required
+
+controlled_wording:
+  requirements:
+    - Wording strength must not exceed claim type, evidence support, uncertainty, bridge validity, or question-resolution status.
+    - Qualifications and material counterevidence must appear with the claim, not only in an annex.
+    - Completeness wording must follow source-coverage.yaml.
+    - Reproducibility wording must follow reproducibility-policy.yaml.
+    - Public wording must follow disclosure-policy.yaml.
+  prohibited_absolute_terms_when_not_proven:
+    - complete
+    - comprehensive
+    - exhaustive
+    - fully reproduced
+    - definitively resolved
+
+human_review_required_for:
+  - disputed entity identity, merge, relabeling, or cross-domain correspondence
+  - disputed completion evidence
+  - prospective, adaptive, or post hoc classification without decisive timing evidence
+  - adjudication of materially conflicting values
+  - critical exclusions, outliers, and analysis-population changes
+  - high-impact causal or mechanistic claims
+  - cross-domain construct, sequence, condition, dose, or timescale alignment
+  - propagation after source correction or retraction
+  - ethics, permission, disclosure, and de-identification decisions

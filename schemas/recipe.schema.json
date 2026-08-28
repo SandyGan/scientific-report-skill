@@ -1,0 +1,611 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.report-prompt.org/v1/recipe.schema.json",
+  "title": "Reproduction recipe",
+  "description": "Provider-neutral, ordered replay or repeat recipe with versioned inputs, environment and random-state requirements, expected outputs, acceptance criteria, and explicit differences from historical execution.",
+  "$defs": {
+    "RecipeInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input_id",
+        "name",
+        "artifact_id",
+        "artifact_version",
+        "content_hash",
+        "required",
+        "access_state",
+        "access_conditions",
+        "target_relative_path"
+      ],
+      "properties": {
+        "input_id": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "name": {
+          "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+        },
+        "artifact_id": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "artifact_version": {
+          "$ref": "./defs/common.schema.json#/$defs/Version"
+        },
+        "content_hash": {
+          "$ref": "./defs/common.schema.json#/$defs/HashField"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "access_state": {
+          "$ref": "./defs/common.schema.json#/$defs/AccessState"
+        },
+        "access_conditions": {
+          "$ref": "./defs/common.schema.json#/$defs/StringField"
+        },
+        "target_relative_path": {
+          "$ref": "./defs/common.schema.json#/$defs/RelativePathField"
+        }
+      }
+    },
+    "RecipeStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "step_id",
+        "step_order",
+        "name",
+        "action_kind",
+        "description",
+        "executable_or_action",
+        "arguments",
+        "working_directory",
+        "parameters",
+        "prerequisite_step_ids",
+        "input_ids",
+        "expected_output_ids",
+        "manual_confirmation_required",
+        "failure_handling"
+      ],
+      "properties": {
+        "step_id": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "step_order": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "name": {
+          "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+        },
+        "action_kind": {
+          "enum": [
+            "command",
+            "notebook",
+            "workflow",
+            "protocol",
+            "instrument",
+            "manual_action",
+            "comparison",
+            "other"
+          ]
+        },
+        "description": {
+          "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+        },
+        "executable_or_action": {
+          "$ref": "./defs/common.schema.json#/$defs/StringField"
+        },
+        "arguments": {
+          "$ref": "./defs/common.schema.json#/$defs/StringArrayField"
+        },
+        "working_directory": {
+          "$ref": "./defs/common.schema.json#/$defs/RelativePathField"
+        },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "$ref": "./defs/common.schema.json#/$defs/Parameter"
+          }
+        },
+        "prerequisite_step_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./defs/common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "input_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./defs/common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "expected_output_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./defs/common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "manual_confirmation_required": {
+          "type": "boolean"
+        },
+        "failure_handling": {
+          "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "action_kind": {
+                "const": "command"
+              }
+            },
+            "required": [
+              "action_kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "executable_or_action": {
+                "properties": {
+                  "state": {
+                    "const": "known"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ExpectedOutput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expected_output_id",
+        "artifact_id",
+        "name",
+        "relative_path",
+        "media_type",
+        "comparison_method",
+        "reference_hash",
+        "acceptance_criteria",
+        "required"
+      ],
+      "properties": {
+        "expected_output_id": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "artifact_id": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "name": {
+          "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+        },
+        "relative_path": {
+          "$ref": "./defs/common.schema.json#/$defs/RelativePathField"
+        },
+        "media_type": {
+          "$ref": "./defs/common.schema.json#/$defs/StringField"
+        },
+        "comparison_method": {
+          "enum": [
+            "exact_hash",
+            "numeric_tolerance",
+            "statistical_tolerance",
+            "semantic_comparison",
+            "manual_review",
+            "existence_only",
+            "unknown"
+          ]
+        },
+        "reference_hash": {
+          "$ref": "./defs/common.schema.json#/$defs/HashField"
+        },
+        "acceptance_criteria": {
+          "$ref": "./defs/common.schema.json#/$defs/StringField"
+        },
+        "required": {
+          "type": "boolean"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "comparison_method": {
+                "const": "exact_hash"
+              }
+            },
+            "required": [
+              "comparison_method"
+            ]
+          },
+          "then": {
+            "properties": {
+              "reference_hash": {
+                "properties": {
+                  "state": {
+                    "const": "known"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "RecipeDifference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "difference_id",
+        "step_id",
+        "field_pointer",
+        "historical_value",
+        "recipe_value",
+        "materiality",
+        "impact",
+        "review_status",
+        "source_bindings"
+      ],
+      "properties": {
+        "difference_id": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "step_id": {
+          "$ref": "./defs/common.schema.json#/$defs/Identifier"
+        },
+        "field_pointer": {
+          "$ref": "./defs/common.schema.json#/$defs/JsonPointer"
+        },
+        "historical_value": {
+          "$ref": "./defs/common.schema.json#/$defs/KnownValue"
+        },
+        "recipe_value": {
+          "$ref": "./defs/common.schema.json#/$defs/KnownValue"
+        },
+        "materiality": {
+          "enum": [
+            "material",
+            "non_material",
+            "unknown"
+          ]
+        },
+        "impact": {
+          "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+        },
+        "review_status": {
+          "enum": [
+            "not_reviewed",
+            "accepted",
+            "changes_required",
+            "not_applicable"
+          ]
+        },
+        "source_bindings": {
+          "type": "array",
+          "items": {
+            "$ref": "./defs/common.schema.json#/$defs/SourceBinding"
+          }
+        }
+      }
+    },
+    "RecipeVerification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "verification_run_ids",
+        "verified_at",
+        "comparison_artifact_ids",
+        "summary"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "not_run",
+            "running",
+            "completed_matching",
+            "completed_nonmatching",
+            "failed",
+            "error",
+            "unknown"
+          ]
+        },
+        "verification_run_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./defs/common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "verified_at": {
+          "oneOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "comparison_artifact_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./defs/common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "summary": {
+          "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "not_run"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "verification_run_ids": {
+                "maxItems": 0
+              },
+              "verified_at": {
+                "type": "null"
+              },
+              "comparison_artifact_ids": {
+                "maxItems": 0
+              }
+            }
+          },
+          "else": {
+            "if": {
+              "properties": {
+                "status": {
+                  "enum": [
+                    "completed_matching",
+                    "completed_nonmatching"
+                  ]
+                }
+              },
+              "required": [
+                "status"
+              ]
+            },
+            "then": {
+              "properties": {
+                "verification_run_ids": {
+                  "minItems": 1
+                },
+                "verified_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "comparison_artifact_ids": {
+                  "minItems": 1
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "recipe_id",
+    "recipe_version",
+    "recipe_artifact_id",
+    "schema_version",
+    "title",
+    "purpose",
+    "report_id",
+    "report_version",
+    "target_reproducibility_unit_ids",
+    "target_claim_ids",
+    "target_output_artifact_ids",
+    "historical_invocation_ids",
+    "inputs",
+    "environment_id",
+    "environment_hash",
+    "environment_manifest_artifact_id",
+    "random_state_id",
+    "random_state_artifact_id",
+    "random_state_policy",
+    "steps",
+    "expected_outputs",
+    "historical_alignment",
+    "differences_from_historical",
+    "verification",
+    "created_at",
+    "source_bindings",
+    "extensions"
+  ],
+  "properties": {
+    "recipe_id": {
+      "$ref": "./defs/common.schema.json#/$defs/Identifier"
+    },
+    "recipe_version": {
+      "$ref": "./defs/common.schema.json#/$defs/Version"
+    },
+    "recipe_artifact_id": {
+      "$ref": "./defs/common.schema.json#/$defs/Identifier"
+    },
+    "schema_version": {
+      "$ref": "./defs/common.schema.json#/$defs/Version"
+    },
+    "title": {
+      "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+    },
+    "purpose": {
+      "$ref": "./defs/common.schema.json#/$defs/NonEmptyString"
+    },
+    "report_id": {
+      "$ref": "./defs/common.schema.json#/$defs/Identifier"
+    },
+    "report_version": {
+      "$ref": "./defs/common.schema.json#/$defs/Version"
+    },
+    "target_reproducibility_unit_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "./defs/common.schema.json#/$defs/Identifier"
+      },
+      "uniqueItems": true
+    },
+    "target_claim_ids": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/common.schema.json#/$defs/Identifier"
+      },
+      "uniqueItems": true
+    },
+    "target_output_artifact_ids": {
+      "type": "array",
+      "items": {
+        "$ref": "./defs/common.schema.json#/$defs/Identifier"
+      },
+      "uniqueItems": true
+    },
+    "historical_invocation_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "./defs/common.schema.json#/$defs/Identifier"
+      },
+      "uniqueItems": true
+    },
+    "inputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/RecipeInput"
+      }
+    },
+    "environment_id": {
+      "$ref": "./defs/common.schema.json#/$defs/Identifier"
+    },
+    "environment_hash": {
+      "$ref": "./defs/common.schema.json#/$defs/HashField"
+    },
+    "environment_manifest_artifact_id": {
+      "$ref": "./defs/common.schema.json#/$defs/Identifier"
+    },
+    "random_state_id": {
+      "$ref": "./defs/common.schema.json#/$defs/Identifier"
+    },
+    "random_state_artifact_id": {
+      "oneOf": [
+        { "$ref": "./defs/common.schema.json#/$defs/Identifier" },
+        { "type": "null" }
+      ]
+    },
+    "random_state_policy": {
+      "$ref": "./defs/common.schema.json#/$defs/StringField"
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/RecipeStep"
+      }
+    },
+    "expected_outputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/ExpectedOutput"
+      }
+    },
+    "historical_alignment": {
+      "enum": [
+        "exact",
+        "semantically_equivalent",
+        "differs",
+        "unknown",
+        "not_applicable"
+      ]
+    },
+    "differences_from_historical": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/RecipeDifference"
+      }
+    },
+    "verification": {
+      "$ref": "#/$defs/RecipeVerification"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source_bindings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "./defs/common.schema.json#/$defs/SourceBinding"
+      }
+    },
+    "extensions": {
+      "$ref": "./defs/common.schema.json#/$defs/ExtensionMap"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "historical_alignment": {
+            "const": "differs"
+          }
+        },
+        "required": [
+          "historical_alignment"
+        ]
+      },
+      "then": {
+        "properties": {
+          "differences_from_historical": {
+            "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "historical_alignment": {
+            "const": "exact"
+          }
+        },
+        "required": [
+          "historical_alignment"
+        ]
+      },
+      "then": {
+        "properties": {
+          "differences_from_historical": {
+            "maxItems": 0
+          },
+          "historical_invocation_ids": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ]
+}

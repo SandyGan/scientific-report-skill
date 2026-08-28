@@ -1,0 +1,101 @@
+<section id="resolution" class="report-section" aria-labelledby="resolution-title" data-print-summary="true">
+  <header class="section-heading">
+    <div>
+      <p class="section-code">L1 / resolution ledger</p>
+      <h2 id="resolution-title">Research questions and decision criteria</h2>
+    </div>
+    <p class="section-purpose">Resolution follows declared criteria—not volume of activity. Missing criteria prevent an unsupported “resolved” label.</p>
+  </header>
+
+  <div class="coverage-banner" data-status="{{section_coverage.resolution.state}}">
+    <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-coverage"></use></svg>
+    <span><strong>Section coverage:</strong> <span class="empty-fallback">{{section_coverage.resolution.state}}</span></span>
+    <span class="coverage-banner__reason empty-fallback">{{section_coverage.resolution.reason}}</span>
+  </div>
+
+  <div class="resolution-list">
+    {{#each research_questions}}
+    <article class="resolution-record" data-record data-kind="research-question" data-domain="{{domain}}" data-state="{{resolution_status}}" data-safety-record="{{safety_relevance}}">
+      <header class="resolution-record__header">
+        <div class="record-id-block">
+          <span class="record-type">Research question</span>
+          <code>{{question_id}}</code>
+        </div>
+        <span class="status-chip" data-status="{{resolution_status}}"><span class="status-marker" aria-hidden="true"></span><span class="empty-fallback">{{resolution_status}}</span></span>
+      </header>
+
+      <h3 class="resolution-record__question empty-fallback">{{question_text}}</h3>
+      <p class="resolution-record__answer empty-fallback">{{qualified_answer}}</p>
+
+      <div class="decision-grid">
+        <dl class="key-value-list">
+          <div><dt>Criteria timing</dt><dd class="empty-fallback">{{criteria_timing}}</dd></div>
+          <div><dt>Resolution criteria</dt><dd class="empty-fallback">{{resolution_criteria}}</dd></div>
+          <div><dt>Assessment</dt><dd class="empty-fallback">{{criteria_assessment}}</dd></div>
+          <div><dt>Answer field state</dt><dd class="empty-fallback">{{answer_state}}</dd></div>
+        </dl>
+
+        <div class="resolution-scale" aria-label="Resolution status: {{resolution_status}}">
+          <span data-step="not_addressed">Not addressed</span>
+          <span data-step="unresolved">Unresolved</span>
+          <span data-step="partially_resolved">Partially resolved</span>
+          <span data-step="resolved">Resolved</span>
+          <span class="resolution-scale__indicator" data-current="{{resolution_status}}">Recorded: <strong class="empty-fallback">{{resolution_status}}</strong></span>
+        </div>
+      </div>
+
+      <details class="disclosure" data-disclosure>
+        <summary>
+          <span>Inspect supporting ledger</span>
+          <span class="summary-meta"><span class="empty-fallback">{{support_count}}</span> support · <span class="empty-fallback">{{challenge_count}}</span> challenge · <span class="empty-fallback">{{open_gap_count}}</span> open gap</span>
+        </summary>
+        <div class="disclosure__body">
+          <div class="three-column-ledger">
+            <div>
+              <h4>Supporting claims</h4>
+              <ul class="record-link-list">
+                {{#each supporting_claims}}
+                <li><code>{{claim_id}}</code><span>{{statement}}</span><span class="dependency-tag empty-fallback">{{dependency_class}}</span></li>
+                {{else}}
+                <li class="missing-entry">No supporting claim records supplied.</li>
+                {{/each}}
+              </ul>
+            </div>
+            <div>
+              <h4>Counterevidence and conflicts</h4>
+              <ul class="record-link-list">
+                {{#each challenges}}
+                <li data-safety-record="true"><code>{{record_id}}</code><span>{{statement}}</span><span class="status-chip status-chip--small" data-status="{{status}}">{{status}}</span></li>
+                {{else}}
+                <li class="missing-entry">No challenge records supplied; absence is not interpreted as none.</li>
+                {{/each}}
+              </ul>
+            </div>
+            <div>
+              <h4>Open criteria and boundaries</h4>
+              <ul class="record-link-list">
+                {{#each open_items}}
+                <li data-safety-record="true"><code>{{record_id}}</code><span>{{statement}}</span><span class="state-label empty-fallback">{{state}}</span></li>
+                {{else}}
+                <li class="missing-entry">No open-item records supplied.</li>
+                {{/each}}
+              </ul>
+            </div>
+          </div>
+          {{#if adjudication_note}}
+          <div class="adjudication-note">
+            <span class="field-label">Human adjudication</span>
+            <p>{{adjudication_note}}</p>
+          </div>
+          {{/if}}
+        </div>
+      </details>
+    </article>
+    {{else}}
+    <div class="section-empty" data-state="{{section_coverage.resolution.state}}">
+      <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#icon-unknown"></use></svg>
+      <div><h3>No research-question records rendered</h3><p>Use the section-coverage state above to distinguish unknown, not applicable, withheld, and absent records.</p></div>
+    </div>
+    {{/each}}
+  </div>
+</section>

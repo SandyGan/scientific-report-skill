@@ -1,0 +1,176 @@
+protocol: decision-timing
+version: 1.0.0
+status: normative
+
+purpose: Classify scientific decisions by when they were locked relative to access to outcome-bearing information.
+
+applies_to:
+  - research-question resolution criteria
+  - hypotheses and estimands
+  - primary and secondary endpoints
+  - inclusion and exclusion criteria
+  - sample-size and stopping rules
+  - randomization and blinding plans
+  - quality-control thresholds
+  - preprocessing and feature selection
+  - model, hyperparameter, checkpoint, and threshold selection
+  - analysis populations and contrasts
+  - outlier decisions
+  - equivalence and noninferiority bounds
+  - simulation burn-in, frame range, stride, and convergence criteria
+  - representative image, structure, run, or trajectory selection
+  - claim wording thresholds
+
+classification:
+  values:
+    predefined:
+      definition: The decision was immutably recorded before access to outcome-bearing information relevant to that decision.
+      minimum_evidence:
+        - decision content and version
+        - trusted lock time or event ordering
+        - identity of the locked record
+        - definition of outcome-bearing access boundary
+    adaptive:
+      definition: The decision changed under a predefined adaptation rule that constrained triggers, permissible changes, and information access.
+      minimum_evidence:
+        - original locked decision
+        - locked adaptation rule
+        - triggering information
+        - adaptation event and authorized range
+        - resulting decision version
+    post_hoc:
+      definition: The decision was made or materially changed after access to relevant outcome-bearing information, outside a qualifying predefined adaptation rule.
+      minimum_evidence:
+        - decision content
+        - earliest established decision time or ordering
+        - relevant access event
+    missing:
+      definition: Timing cannot be established or the decision record is absent.
+      minimum_evidence:
+        - missing reason
+    not_applicable:
+      definition: No such decision is required for the represented scientific activity.
+      minimum_evidence:
+        - satisfied applicability rule
+  projection_state:
+    withheld:
+      definition: Timing is known internally but cannot be disclosed in this projection.
+      rule: Withholding must not be converted to missing or not_applicable.
+
+outcome_bearing_information:
+  definition: Any information capable of influencing the decision toward a favorable, selected, or narratively preferred result.
+  examples:
+    - group labels paired with outcomes
+    - unblinded assay results
+    - test-set metrics or labels
+    - trial rankings
+    - trajectory analyses used to choose burn-in or frame ranges
+    - preliminary figures or summary statistics
+    - failure patterns that motivate selective exclusion
+    - collaborator messages revealing result direction
+  rule: Access is decision-specific; possession of unrelated project data does not automatically make every decision post hoc.
+
+trusted_ordering_evidence:
+  sufficient_when_scope_matches:
+    - signed or immutable registration with verifiable time
+    - append-only electronic record with revision history and access controls
+    - version-control object plus corroborating repository and access history
+    - instrument, scheduler, workflow, or data-access log with established clock semantics
+    - witnessed decision record with accountable declaration and corroborating event ordering
+  insufficient_alone:
+    - past-tense or future-tense prose
+    - a filesystem modification time
+    - a filename containing a date or words such as final or preregistered
+    - a current document lacking revision history
+    - a publication date
+    - an author's unsupported recollection
+  rule: Insufficient evidence may support a declared account but cannot establish predefined by itself.
+
+required_decision_record:
+  fields:
+    - decision_id
+    - decision_type
+    - subject_ids
+    - content
+    - classification
+    - decision_event_time
+    - time_semantics
+    - outcome_access_boundary
+    - evidence_bindings
+    - supersedes_decision_id
+    - accountable_party
+  time_semantics_values:
+    - exact_trusted
+    - bounded_before
+    - bounded_after
+    - event_order_only
+    - declared_unverified
+    - unknown
+    - not_applicable
+    - withheld
+  content_rule: Source-derived decision content uses the missing-value envelope; a missing decision must not be reconstructed from the executed analysis.
+
+classification_algorithm:
+  steps:
+    - priority: 1
+      if: Decision applicability is proven false.
+      classify_as: not_applicable
+    - priority: 2
+      if: Decision content or timing evidence is absent or cannot establish ordering.
+      classify_as: missing
+    - priority: 3
+      if: Relevant outcome-bearing access preceded the decision or material change and no qualifying adaptation rule applies.
+      classify_as: post_hoc
+    - priority: 4
+      if: A locked adaptation rule preceded access and the change stayed within the rule.
+      classify_as: adaptive
+    - priority: 5
+      if: A locked decision preceded all relevant outcome-bearing access.
+      classify_as: predefined
+    - priority: 6
+      otherwise: true
+      classify_as: missing
+  rule: When evidence conflicts, use the least favorable supported classification pending human adjudication; never average classifications.
+
+material_change:
+  includes:
+    - changing a primary endpoint, estimand, direction, population, threshold, or contrast
+    - adding or removing data based on observed outcomes
+    - choosing among analyses based on performance or significance
+    - changing stopping or convergence criteria after inspecting progress
+    - relabeling primary and exploratory analyses
+  excludes_if_predefined:
+    - clerical correction that does not alter meaning
+    - transformation explicitly mandated by a locked rule
+  requirement: Every material change creates a new DecisionEvent linked to the previous version.
+
+interaction_with_reporting:
+  - Timing class must accompany the affected result and claim where it changes interpretation.
+  - Post hoc does not mean false; it limits confirmatory wording and requires exploratory labeling.
+  - Missing timing does not default to post hoc, but it forbids prospective or confirmatory claims.
+  - Adaptive decisions are not equivalent to predefined fixed decisions and must display their trigger and rule.
+  - A report cutoff before a decision outcome yields unknown current timing status unless a later revision incorporates it.
+
+human_adjudication_required_when:
+  - access boundaries are disputed
+  - clocks or event ordering conflict
+  - an adaptation falls near or outside its authorized range
+  - outcome information may have been indirectly revealed
+  - a material change is characterized as clerical
+
+conformance_rules:
+  TIM001:
+    condition: A decision is labelled predefined without sufficient trusted ordering evidence.
+    outcome: blocker
+  TIM002:
+    condition: An adaptive label lacks a locked adaptation rule, trigger, or permitted-change record.
+    outcome: blocker
+  TIM003:
+    condition: A post-hoc material change overwrites the earlier decision.
+    outcome: blocker
+  TIM004:
+    condition: Missing timing is narrated as prospective, preregistered, or confirmatory.
+    outcome: blocker
+  TIM005:
+    condition: A timing classification is inferred solely from tense, filename, publication date, or filesystem metadata.
+    outcome: blocker

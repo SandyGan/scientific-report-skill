@@ -1,0 +1,502 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.report-prompt.org/v1/defs/quantitative-derivation.schema.json",
+  "title": "Quantitative derivation",
+  "description": "DataSlice, DerivationRecord, and AnalysisRun contracts for closing the path from versioned inputs to hashed outputs.",
+  "$defs": {
+    "ArtifactBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_id",
+        "artifact_version",
+        "content_hash"
+      ],
+      "properties": {
+        "artifact_id": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "artifact_version": {
+          "$ref": "./common.schema.json#/$defs/Version"
+        },
+        "content_hash": {
+          "$ref": "./common.schema.json#/$defs/HashField"
+        }
+      }
+    },
+    "SliceLocator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "locator_kind",
+        "table_or_object",
+        "columns_or_fields",
+        "row_or_record_selector",
+        "frame_or_time_selector",
+        "query",
+        "filter_expressions",
+        "ordering"
+      ],
+      "properties": {
+        "locator_kind": {
+          "enum": [
+            "table_rows",
+            "records",
+            "array_slice",
+            "frames",
+            "time_window",
+            "query",
+            "files",
+            "other"
+          ]
+        },
+        "table_or_object": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "columns_or_fields": {
+          "$ref": "./common.schema.json#/$defs/StringArrayField"
+        },
+        "row_or_record_selector": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "frame_or_time_selector": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "query": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "filter_expressions": {
+          "$ref": "./common.schema.json#/$defs/StringArrayField"
+        },
+        "ordering": {
+          "$ref": "./common.schema.json#/$defs/StringArrayField"
+        },
+        "all_records": {
+          "$ref": "./common.schema.json#/$defs/BooleanField"
+        },
+        "file_selectors": {
+          "$ref": "./common.schema.json#/$defs/StringArrayField"
+        },
+        "selection_semantics": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        }
+      }
+    },
+    "DataSlice": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "data_slice_id",
+        "data_slice_version",
+        "name",
+        "input_artifacts",
+        "locator",
+        "analysis_population_id",
+        "selected_unit_count",
+        "excluded_unit_count",
+        "selection_decision_event_ids",
+        "slice_hash",
+        "created_by_derivation_id",
+        "source_bindings",
+        "extensions"
+      ],
+      "properties": {
+        "data_slice_id": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "data_slice_version": {
+          "$ref": "./common.schema.json#/$defs/Version"
+        },
+        "name": {
+          "$ref": "./common.schema.json#/$defs/NonEmptyString"
+        },
+        "input_artifacts": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/ArtifactBinding"
+          }
+        },
+        "locator": {
+          "$ref": "#/$defs/SliceLocator"
+        },
+        "analysis_population_id": {
+          "oneOf": [
+            {
+              "$ref": "./common.schema.json#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "selected_unit_count": {
+          "$ref": "./common.schema.json#/$defs/IntegerField"
+        },
+        "excluded_unit_count": {
+          "$ref": "./common.schema.json#/$defs/IntegerField"
+        },
+        "selection_decision_event_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "slice_hash": {
+          "$ref": "./common.schema.json#/$defs/HashField"
+        },
+        "created_by_derivation_id": {
+          "oneOf": [
+            {
+              "$ref": "./common.schema.json#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source_bindings": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/SourceBinding"
+          }
+        },
+        "extensions": {
+          "$ref": "./common.schema.json#/$defs/ExtensionMap"
+        }
+      }
+    },
+    "DerivedValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "value",
+        "unit",
+        "value_hash"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "value": {
+          "$ref": "./common.schema.json#/$defs/KnownValue"
+        },
+        "unit": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "value_hash": {
+          "$ref": "./common.schema.json#/$defs/HashField"
+        }
+      }
+    },
+    "DerivationRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "derivation_id",
+        "derivation_version",
+        "derivation_kind",
+        "description",
+        "input_data_slice_ids",
+        "input_derivation_ids",
+        "input_artifact_ids",
+        "operation_or_formula",
+        "code_artifact_ids",
+        "parameters",
+        "analysis_run_id",
+        "output_data_slice_ids",
+        "output_artifact_ids",
+        "derived_values",
+        "derivation_status",
+        "source_bindings",
+        "extensions"
+      ],
+      "properties": {
+        "derivation_id": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "derivation_version": {
+          "$ref": "./common.schema.json#/$defs/Version"
+        },
+        "derivation_kind": {
+          "enum": [
+            "filter",
+            "transform",
+            "aggregation",
+            "statistical_estimate",
+            "model_fit",
+            "simulation_analysis",
+            "manual_calculation",
+            "mapping",
+            "other"
+          ]
+        },
+        "description": {
+          "$ref": "./common.schema.json#/$defs/NonEmptyString"
+        },
+        "input_data_slice_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "input_derivation_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "input_artifact_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "operation_or_formula": {
+          "$ref": "./common.schema.json#/$defs/StringField"
+        },
+        "code_artifact_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Parameter"
+          }
+        },
+        "analysis_run_id": {
+          "oneOf": [
+            {
+              "$ref": "./common.schema.json#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "output_data_slice_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "output_artifact_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "derived_values": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DerivedValue"
+          }
+        },
+        "derivation_status": {
+          "enum": [
+            "complete",
+            "partial",
+            "failed",
+            "invalidated",
+            "unknown"
+          ]
+        },
+        "source_bindings": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/SourceBinding"
+          }
+        },
+        "extensions": {
+          "$ref": "./common.schema.json#/$defs/ExtensionMap"
+        }
+      },
+      "anyOf": [
+        {
+          "properties": {
+            "input_data_slice_ids": {
+              "minItems": 1
+            }
+          }
+        },
+        {
+          "properties": {
+            "input_derivation_ids": {
+              "minItems": 1
+            }
+          }
+        },
+        {
+          "properties": {
+            "input_artifact_ids": {
+              "minItems": 1
+            }
+          }
+        }
+      ]
+    },
+    "AnalysisRun": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "analysis_run_id",
+        "analysis_run_version",
+        "run_role",
+        "invocation_id",
+        "code_artifacts",
+        "environment_id",
+        "random_state_id",
+        "input_data_slice_ids",
+        "input_derivation_ids",
+        "started_at",
+        "ended_at",
+        "execution_status",
+        "exit_code",
+        "output_artifact_ids",
+        "output_manifest_hash",
+        "log_artifact_ids",
+        "source_bindings",
+        "extensions"
+      ],
+      "properties": {
+        "analysis_run_id": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "analysis_run_version": {
+          "$ref": "./common.schema.json#/$defs/Version"
+        },
+        "run_role": {
+          "enum": [
+            "historical_primary",
+            "historical_secondary",
+            "sensitivity",
+            "verification_rerun",
+            "exploratory",
+            "external",
+            "unknown"
+          ]
+        },
+        "invocation_id": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "code_artifacts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ArtifactBinding"
+          }
+        },
+        "environment_id": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "random_state_id": {
+          "$ref": "./common.schema.json#/$defs/Identifier"
+        },
+        "input_data_slice_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "input_derivation_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "started_at": {
+          "$ref": "./common.schema.json#/$defs/DateTimeField"
+        },
+        "ended_at": {
+          "$ref": "./common.schema.json#/$defs/DateTimeField"
+        },
+        "execution_status": {
+          "enum": [
+            "completed",
+            "failed",
+            "interrupted",
+            "running",
+            "unknown"
+          ]
+        },
+        "exit_code": {
+          "$ref": "./common.schema.json#/$defs/IntegerField"
+        },
+        "output_artifact_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "output_manifest_hash": {
+          "$ref": "./common.schema.json#/$defs/HashField"
+        },
+        "log_artifact_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/Identifier"
+          },
+          "uniqueItems": true
+        },
+        "source_bindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "./common.schema.json#/$defs/SourceBinding"
+          }
+        },
+        "extensions": {
+          "$ref": "./common.schema.json#/$defs/ExtensionMap"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "execution_status": {
+                "const": "completed"
+              }
+            },
+            "required": [
+              "execution_status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "ended_at": {
+                "properties": {
+                  "state": {
+                    "enum": [
+                      "known",
+                      "withheld"
+                    ]
+                  }
+                }
+              },
+              "output_manifest_hash": {
+                "properties": {
+                  "state": {
+                    "const": "known"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,465 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.report-prompt.org/v1/defs/source-coverage.schema.json",
+  "title": "Source universe and coverage",
+  "description": "Protocol-aligned source universe, item disposition, reconciliation, and multi-axis completeness contract.",
+  "$defs": {
+    "SourceSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_snapshot_id",
+        "created_at",
+        "registry_hash",
+        "snapshot_method",
+        "source_bindings"
+      ],
+      "properties": {
+        "source_snapshot_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "created_at": { "$ref": "./common.schema.json#/$defs/DateTimeField" },
+        "registry_hash": { "$ref": "./common.schema.json#/$defs/HashField" },
+        "snapshot_method": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "source_bindings": {
+          "type": "array",
+          "items": { "$ref": "./common.schema.json#/$defs/SourceBinding" }
+        }
+      }
+    },
+    "SourceDisposition": {
+      "enum": [
+        "included",
+        "excluded_with_reason",
+        "unreadable",
+        "inaccessible",
+        "duplicate",
+        "unmapped",
+        "pending"
+      ]
+    },
+    "SourceContentAccess": {
+      "enum": [
+        "available",
+        "available_with_conditions",
+        "partially_accessible",
+        "unreadable",
+        "inaccessible",
+        "unknown",
+        "withheld"
+      ]
+    },
+    "ByteRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start_byte", "end_byte_exclusive"],
+      "properties": {
+        "start_byte": { "type": "integer", "minimum": 0 },
+        "end_byte_exclusive": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "AdverseContentFinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "finding_id",
+        "category",
+        "start_byte",
+        "end_byte_exclusive",
+        "excerpt_hash",
+        "disposition",
+        "mapped_object_ids"
+      ],
+      "properties": {
+        "finding_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "category": {
+          "enum": [
+            "failed_attempt",
+            "crashed_segment",
+            "adverse_quality_event",
+            "exclusion",
+            "negative_or_null_result",
+            "retraction",
+            "supersession"
+          ]
+        },
+        "start_byte": { "type": "integer", "minimum": 0 },
+        "end_byte_exclusive": { "type": "integer", "minimum": 1 },
+        "excerpt_hash": { "$ref": "./common.schema.json#/$defs/Hash" },
+        "disposition": { "enum": ["mapped", "unmapped"] },
+        "mapped_object_ids": {
+          "type": "array",
+          "items": { "$ref": "./common.schema.json#/$defs/Identifier" },
+          "uniqueItems": true
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "disposition": { "const": "mapped" } }, "required": ["disposition"] },
+          "then": { "properties": { "mapped_object_ids": { "minItems": 1 } } },
+          "else": { "properties": { "mapped_object_ids": { "maxItems": 0 } } }
+        }
+      ]
+    },
+    "ExtractionCoverageAttestation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "attestation_id",
+        "attestation_version",
+        "source_item_id",
+        "source_snapshot_id",
+        "source_content_hash",
+        "source_byte_size",
+        "extraction_status",
+        "covered_byte_ranges",
+        "extracted_text_hash",
+        "parser_identity",
+        "adverse_scan_status",
+        "adverse_pattern_set_id",
+        "adverse_pattern_set_version",
+        "adverse_pattern_set_hash",
+        "adverse_content_findings",
+        "created_at",
+        "extensions"
+      ],
+      "properties": {
+        "attestation_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "attestation_version": { "$ref": "./common.schema.json#/$defs/Version" },
+        "source_item_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "source_snapshot_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "source_content_hash": { "$ref": "./common.schema.json#/$defs/Hash" },
+        "source_byte_size": { "type": "integer", "minimum": 0 },
+        "extraction_status": { "enum": ["complete", "partial", "not_run", "error"] },
+        "covered_byte_ranges": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ByteRange" }
+        },
+        "extracted_text_hash": {
+          "oneOf": [
+            { "$ref": "./common.schema.json#/$defs/Hash" },
+            { "type": "null" }
+          ]
+        },
+        "parser_identity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "version", "configuration_hash"],
+          "properties": {
+            "name": { "$ref": "./common.schema.json#/$defs/NonEmptyString" },
+            "version": { "$ref": "./common.schema.json#/$defs/Version" },
+            "configuration_hash": { "$ref": "./common.schema.json#/$defs/Hash" }
+          }
+        },
+        "adverse_scan_status": { "enum": ["complete", "partial", "not_run", "error"] },
+        "adverse_pattern_set_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "adverse_pattern_set_version": { "$ref": "./common.schema.json#/$defs/Version" },
+        "adverse_pattern_set_hash": { "$ref": "./common.schema.json#/$defs/Hash" },
+        "adverse_content_findings": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/AdverseContentFinding" }
+        },
+        "created_at": { "type": "string", "format": "date-time" },
+        "extensions": { "$ref": "./common.schema.json#/$defs/ExtensionMap" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "extraction_status": { "const": "complete" } }, "required": ["extraction_status"] },
+          "then": {
+            "properties": {
+              "extracted_text_hash": { "$ref": "./common.schema.json#/$defs/Hash" },
+              "adverse_scan_status": { "const": "complete" }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "extraction_status": { "enum": ["not_run", "error"] } }, "required": ["extraction_status"] },
+          "then": {
+            "properties": {
+              "covered_byte_ranges": { "maxItems": 0 },
+              "extracted_text_hash": { "type": "null" },
+              "adverse_scan_status": { "enum": ["not_run", "error"] }
+            }
+          }
+        }
+      ]
+    },
+    "SourceItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_item_id",
+        "universe_id",
+        "source_kind",
+        "identity",
+        "title",
+        "location",
+        "content_hash",
+        "registered_at",
+        "snapshot_id",
+        "revision_or_snapshot",
+        "disclosure_class",
+        "disposition",
+        "disposition_reason",
+        "content_access",
+        "canonical_source_item_id",
+        "equivalence_basis",
+        "mapped_object_ids",
+        "source_bindings",
+        "extensions"
+      ],
+      "properties": {
+        "source_item_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "universe_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "source_kind": {
+          "enum": [
+            "eln_entry",
+            "file",
+            "directory_inventory",
+            "instrument_run",
+            "compute_job",
+            "ml_trial",
+            "trajectory",
+            "checkpoint_or_restart",
+            "database_record",
+            "publication",
+            "correspondence",
+            "human_declaration",
+            "external_record",
+            "other"
+          ]
+        },
+        "identity": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "title": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "location": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "content_hash": { "$ref": "./common.schema.json#/$defs/HashField" },
+        "registered_at": { "$ref": "./common.schema.json#/$defs/DateTimeField" },
+        "snapshot_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "revision_or_snapshot": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "disclosure_class": { "$ref": "./common.schema.json#/$defs/DisclosureClass" },
+        "disposition": { "$ref": "#/$defs/SourceDisposition" },
+        "disposition_reason": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "content_access": { "$ref": "#/$defs/SourceContentAccess" },
+        "canonical_source_item_id": {
+          "oneOf": [
+            { "$ref": "./common.schema.json#/$defs/Identifier" },
+            { "type": "null" }
+          ]
+        },
+        "equivalence_basis": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "mapped_object_ids": {
+          "type": "array",
+          "items": { "$ref": "./common.schema.json#/$defs/Identifier" },
+          "uniqueItems": true
+        },
+        "source_bindings": {
+          "type": "array",
+          "items": { "$ref": "./common.schema.json#/$defs/SourceBinding" }
+        },
+        "extraction_coverage_attestation": {
+          "$ref": "#/$defs/ExtractionCoverageAttestation"
+        },
+        "extensions": { "$ref": "./common.schema.json#/$defs/ExtensionMap" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "disposition": { "const": "included" } }, "required": ["disposition"] },
+          "then": {
+            "properties": {
+              "disposition_reason": { "properties": { "state": { "const": "not_applicable" } } },
+              "mapped_object_ids": { "minItems": 1 },
+              "canonical_source_item_id": { "type": "null" },
+              "equivalence_basis": { "properties": { "state": { "const": "not_applicable" } } }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "disposition": { "const": "duplicate" } }, "required": ["disposition"] },
+          "then": {
+            "properties": {
+              "canonical_source_item_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+              "equivalence_basis": { "properties": { "state": { "enum": ["known", "withheld"] } } }
+            }
+          },
+          "else": { "properties": { "canonical_source_item_id": { "type": "null" } } }
+        },
+        {
+          "if": {
+            "properties": { "disposition": { "enum": ["excluded_with_reason", "unreadable", "inaccessible", "duplicate", "unmapped", "pending"] } },
+            "required": ["disposition"]
+          },
+          "then": { "properties": { "disposition_reason": { "properties": { "state": { "enum": ["known", "withheld"] } } } } }
+        },
+        {
+          "if": { "properties": { "disposition": { "const": "unreadable" } }, "required": ["disposition"] },
+          "then": { "properties": { "content_access": { "const": "unreadable" } } }
+        },
+        {
+          "if": { "properties": { "disposition": { "const": "inaccessible" } }, "required": ["disposition"] },
+          "then": { "properties": { "content_access": { "const": "inaccessible" } } }
+        }
+      ]
+    },
+    "CoverageReconciliation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "registered",
+        "terminally_disposed",
+        "included",
+        "excluded_with_reason",
+        "unreadable",
+        "inaccessible",
+        "duplicate",
+        "unmapped",
+        "pending",
+        "included_mapped"
+      ],
+      "properties": {
+        "registered": { "type": "integer", "minimum": 0 },
+        "terminally_disposed": { "type": "integer", "minimum": 0 },
+        "included": { "type": "integer", "minimum": 0 },
+        "excluded_with_reason": { "type": "integer", "minimum": 0 },
+        "unreadable": { "type": "integer", "minimum": 0 },
+        "inaccessible": { "type": "integer", "minimum": 0 },
+        "duplicate": { "type": "integer", "minimum": 0 },
+        "unmapped": { "type": "integer", "minimum": 0 },
+        "pending": { "type": "integer", "minimum": 0 },
+        "included_mapped": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "CoverageAxes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["inventory_accounting", "accessibility", "scientific_incorporation"],
+      "properties": {
+        "inventory_accounting": { "enum": ["complete", "incomplete", "unknown"] },
+        "accessibility": { "enum": ["all_accessible", "limitations_present", "unknown"] },
+        "scientific_incorporation": { "enum": ["complete_within_boundary", "partial", "none", "unknown"] }
+      }
+    },
+    "SourceCoverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "universe_id",
+        "title",
+        "scope_statement",
+        "inclusion_boundary",
+        "exclusion_boundary",
+        "cutoff",
+        "cutoff_event_semantics",
+        "authority_basis",
+        "authority_evidence",
+        "enumeration_status",
+        "snapshot_bindings",
+        "item_ids",
+        "snapshots",
+        "items",
+        "reconciliation",
+        "coverage_axes",
+        "report_completeness",
+        "coverage_limitations"
+      ],
+      "properties": {
+        "universe_id": { "$ref": "./common.schema.json#/$defs/Identifier" },
+        "title": { "$ref": "./common.schema.json#/$defs/NonEmptyString" },
+        "scope_statement": { "$ref": "./common.schema.json#/$defs/NonEmptyString" },
+        "inclusion_boundary": { "$ref": "./common.schema.json#/$defs/NonEmptyString" },
+        "exclusion_boundary": { "$ref": "./common.schema.json#/$defs/NonEmptyString" },
+        "cutoff": { "$ref": "./common.schema.json#/$defs/DateTimeField" },
+        "cutoff_event_semantics": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "authority_basis": {
+          "enum": [
+            "authoritative_registry",
+            "reconciled_authoritative_registries",
+            "declared_inventory",
+            "discovery_process",
+            "none"
+          ]
+        },
+        "authority_evidence": { "$ref": "./common.schema.json#/$defs/StringField" },
+        "enumeration_status": {
+          "enum": [
+            "authoritative_exhaustive",
+            "registered_not_proven_exhaustive",
+            "open_ended",
+            "unknown"
+          ]
+        },
+        "snapshot_bindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "./common.schema.json#/$defs/Identifier" },
+          "uniqueItems": true
+        },
+        "item_ids": {
+          "type": "array",
+          "items": { "$ref": "./common.schema.json#/$defs/Identifier" },
+          "uniqueItems": true
+        },
+        "snapshots": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/SourceSnapshot" }
+        },
+        "items": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SourceItem" }
+        },
+        "reconciliation": { "$ref": "#/$defs/CoverageReconciliation" },
+        "coverage_axes": { "$ref": "#/$defs/CoverageAxes" },
+        "report_completeness": {
+          "enum": [
+            "proven_within_declared_universe",
+            "registered_sources_accounted_for",
+            "partial",
+            "cannot_be_established"
+          ]
+        },
+        "coverage_limitations": {
+          "type": "array",
+          "items": { "$ref": "./common.schema.json#/$defs/NonEmptyString" }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "enumeration_status": { "const": "authoritative_exhaustive" } }, "required": ["enumeration_status"] },
+          "then": {
+            "properties": {
+              "authority_basis": { "enum": ["authoritative_registry", "reconciled_authoritative_registries"] },
+              "authority_evidence": { "properties": { "state": { "const": "known" } } }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "report_completeness": { "const": "proven_within_declared_universe" } }, "required": ["report_completeness"] },
+          "then": {
+            "properties": {
+              "enumeration_status": { "const": "authoritative_exhaustive" },
+              "coverage_axes": {
+                "properties": {
+                  "inventory_accounting": { "const": "complete" },
+                  "scientific_incorporation": { "const": "complete_within_boundary" }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "report_completeness": { "const": "registered_sources_accounted_for" } }, "required": ["report_completeness"] },
+          "then": {
+            "properties": {
+              "enumeration_status": { "const": "registered_not_proven_exhaustive" },
+              "coverage_axes": { "properties": { "inventory_accounting": { "const": "complete" } } },
+              "coverage_limitations": { "minItems": 1 }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "report_completeness": { "enum": ["partial", "cannot_be_established"] } }, "required": ["report_completeness"] },
+          "then": { "properties": { "coverage_limitations": { "minItems": 1 } } }
+        }
+      ]
+    }
+  },
+  "$ref": "#/$defs/SourceCoverage"
+}

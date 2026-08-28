@@ -1,0 +1,359 @@
+protocol: section-manifests
+version: 1.0.0
+status: normative
+
+purpose: Make module and section presence, applicability, evidence coverage, and rendering obligations explicit.
+
+module_manifest_contract:
+  required_fields:
+    - module_id
+    - protocol_version
+    - status
+    - applicability_decision_id
+    - detected_triggers
+    - section_ids
+  status_values:
+    enabled:
+      meaning: Module applies and its fields, sections, and gates are active.
+    not_applicable:
+      meaning: A recorded applicability rule proves the module irrelevant.
+    undetermined:
+      meaning: Available context cannot decide whether the module applies.
+  rules:
+    - core must always be enabled.
+    - A module with any detected domain trigger must be enabled.
+    - A module must not be omitted; non-enabled modules remain in the manifest as not_applicable or undetermined.
+    - undetermined blocks release when the module could contain material scientific records.
+
+section_coverage_contract:
+  required_fields:
+    - section_id
+    - applicability
+    - coverage_status
+    - source_universe_ids
+    - represented_object_ids
+    - omission_or_gap_reasons
+    - evidence_bindings
+    - last_evaluated_at
+  applicability_values:
+    - applicable
+    - not_applicable
+    - undetermined
+  coverage_status_values:
+    covered:
+      meaning: All required in-scope record classes for this section are represented within the declared source boundary.
+    partial:
+      meaning: Some required record classes or in-scope records are missing, unreadable, inaccessible, unmapped, or unresolved.
+    no_records:
+      meaning: The section applies, source accounting was evaluated, and no in-scope records were found.
+    unknown:
+      meaning: Coverage cannot be established.
+    not_applicable:
+      meaning: Applicability is proven false by a recorded rule.
+    withheld:
+      meaning: The section applies and has known protected content whose details cannot be shown in this projection.
+  valid_combinations:
+    applicable:
+      - covered
+      - partial
+      - no_records
+      - unknown
+      - withheld
+    not_applicable:
+      - not_applicable
+    undetermined:
+      - unknown
+  requirements:
+    covered:
+      - source accounting is complete for the section boundary
+      - every required record class is represented or has a justified no-records determination
+      - no material unreadable, inaccessible, unmapped, or withheld gap prevents the coverage claim
+    partial:
+      - every known gap is listed with impact state
+    no_records:
+      - source accounting is complete for the section boundary
+      - a negative inventory result is bound as evidence
+      - empty collections alone are insufficient
+    not_applicable:
+      - applicability decision is bound
+    withheld:
+      - disclosure decision is bound
+      - hidden record counts are withheld when counts could leak information
+  rendering_rules:
+    - Every manifest section renders a heading or explicit status row in full_archive.
+    - covered, partial, no_records, unknown, not_applicable, and withheld are rendered as distinct text states.
+    - A section is never silently omitted because its collection is empty.
+    - Summary may aggregate sections but links to each full-archive status.
+    - Print and no-script views preserve the same statuses.
+
+modules:
+  core:
+    always_enabled: true
+    sections:
+      - id: identity_and_scope
+        order: 10
+        title: Report identity, scope, and cutoff
+        required_record_classes:
+          - report identity
+          - project identity
+          - report and schema versions
+          - title and language
+          - report mode
+          - scope
+          - cutoff
+          - inclusion and exclusion boundaries
+        release_minimum: covered
+      - id: module_and_section_coverage
+        order: 20
+        title: Module and section coverage
+        required_record_classes:
+          - module manifest
+          - section coverage ledger
+          - applicability decisions
+        release_minimum: covered
+      - id: source_universe_and_coverage
+        order: 30
+        title: Source universe and coverage
+        required_record_classes:
+          - source universes
+          - source items
+          - dispositions
+          - snapshots
+          - completeness axes and metrics
+        release_minimum: covered_or_explicitly_limited
+      - id: research_questions_and_resolution
+        order: 40
+        title: Research questions and resolution
+        required_record_classes:
+          - research questions
+          - resolution criteria and timing
+          - resolution statuses
+          - bounded answers
+        release_minimum: covered_or_no_records
+      - id: entities_materials_and_systems
+        order: 50
+        title: Entities, materials, datasets, and systems
+        required_record_classes:
+          - entities and versions
+          - identity evidence
+          - material or data lineage
+        release_minimum: covered_or_no_records
+      - id: execution_history
+        order: 60
+        title: Work units, attempts, segments, and decisions
+        required_record_classes:
+          - campaigns
+          - work units
+          - attempts
+          - segments
+          - decision events
+          - completion assessments
+        release_minimum: covered_or_no_records
+      - id: methods_parameters_and_deviations
+        order: 70
+        title: Methods, parameters, and deviations
+        required_record_classes:
+          - methods
+          - actual and planned parameters distinguished
+          - deviations
+          - controls and quality conditions
+        release_minimum: covered_or_no_records
+      - id: results_failures_and_dispositions
+        order: 80
+        title: Results, failures, and record dispositions
+        required_record_classes:
+          - result axes
+          - failure events
+          - exclusions
+          - negative and null results
+          - superseded and retracted records
+        release_minimum: covered_or_no_records
+      - id: quantitative_derivations
+        order: 90
+        title: Quantitative derivations
+        required_record_classes:
+          - data slices
+          - derivation records
+          - analysis runs
+          - output artifacts
+          - numeric claim links
+        release_minimum: covered_or_no_records
+      - id: claims_arguments_and_bridges
+        order: 100
+        title: Claims, evidence, arguments, and cross-domain bridges
+        required_record_classes:
+          - claims
+          - evidence items
+          - argument steps
+          - claim dependencies
+          - evidence dependency groups
+          - cross-domain bridges
+        release_minimum: covered_or_no_records
+      - id: conflicts_counterevidence_and_uncertainty
+        order: 110
+        title: Conflicts, counterevidence, and uncertainty
+        required_record_classes:
+          - conflict sets
+          - counterevidence
+          - alternative explanations
+          - uncertainty and limitations
+        release_minimum: covered_or_no_records
+      - id: artifacts_and_reproducibility
+        order: 120
+        title: Artifacts and reproducibility units
+        required_record_classes:
+          - artifacts and access
+          - historical invocations
+          - recipes and differences
+          - environments
+          - random states
+          - reproducibility units and events
+        release_minimum: covered_or_no_records
+      - id: revisions_corrections_and_retractions
+        order: 130
+        title: Revisions, corrections, and retractions
+        required_record_classes:
+          - revision events
+          - invalidation propagation
+          - successor and predecessor links
+        release_minimum: covered_or_no_records
+      - id: disclosure_and_limitations
+        order: 140
+        title: Disclosure state and limitations
+        required_record_classes:
+          - disclosure profile and decisions
+          - withheld-state summary
+          - limitations
+        release_minimum: covered
+      - id: validation_and_package_status
+        order: 150
+        title: Validation and package status
+        data_boundary: non_scientific_attestation_and_manifest
+        required_record_classes:
+          - payload digest
+          - validation attestation state
+          - package manifest state
+          - gate outcomes
+        release_minimum: covered
+
+  wet_lab:
+    applicability_rule: Domain trigger wet_lab is present.
+    sections:
+      - id: wet_lab_material_identity
+        order: 210
+        title: Biological materials and identity
+        required_record_classes:
+          - species, donor, sample, aliquot, well, pool, and batch lineage
+          - cell identity, passage, authentication, and contamination checks
+          - construct, sequence, reagent, instrument, and lot identity
+      - id: wet_lab_design_and_controls
+        order: 220
+        title: Experimental design, controls, and analysis populations
+        required_record_classes:
+          - biological and technical replicate definitions
+          - experimental, observational, and analysis units
+          - randomization, balance, blinding, and unblinding
+          - controls, dropout, contamination, and exclusions
+      - id: wet_lab_protocol_and_measurement
+        order: 230
+        title: Protocol and measurement details
+        required_record_classes:
+          - ordered steps, waits, temperatures, volumes, and deviations
+          - calibration, imaging, ROI, and processing history
+          - detection limits, minimum detectable effects, intervals, and equivalence bounds
+
+  ai_ml:
+    applicability_rule: Domain trigger ai_ml is present.
+    sections:
+      - id: ai_ml_data_and_labels
+        order: 310
+        title: Data lineage, splits, labels, and leakage controls
+        required_record_classes:
+          - dataset snapshots, licenses, split manifests, and group keys
+          - source-to-row lineage
+          - label provenance, raters, blinding, agreement, and adjudication
+          - deduplication and leakage assessments
+      - id: ai_ml_training_and_selection
+        order: 320
+        title: Training, trials, baselines, and selection
+        required_record_classes:
+          - baseline and architecture records
+          - code tree and change state
+          - pretrained sources and checkpoints
+          - search space, all trials, failed trials, selection rule, and test access
+          - seed derivation, hardware, and nondeterminism
+      - id: ai_ml_evaluation_and_inference
+        order: 330
+        title: Evaluation, calibration, subgroups, and inference
+        required_record_classes:
+          - metrics, intervals, independent units, and subgroup results
+          - calibration and threshold decisions
+          - inference recipe and smoke-test status
+
+  molecular_dynamics:
+    applicability_rule: Domain trigger molecular_dynamics is present.
+    sections:
+      - id: md_system_construction
+        order: 410
+        title: Simulation system identity and construction
+        required_record_classes:
+          - source structure, assembly, model, chain, and mapping
+          - missing residues, variants, termini, bonds, and components
+          - protonation, force field, charge, typing, solvent, ions, box, and boundaries
+      - id: md_execution_and_restarts
+        order: 420
+        title: Simulation protocol, replicas, segments, and restarts
+        required_record_classes:
+          - minimization, equilibration, production, and enhanced-sampling stages
+          - integrator, timestep, coupling, constraints, cutoffs, and long-range methods
+          - replicas, seed tree, checkpoints, restart lineage, and parameter differences
+      - id: md_analysis_and_convergence
+        order: 430
+        title: Trajectory processing, sampling, and convergence
+        required_record_classes:
+          - periodic-boundary handling, fitting, frame slice, and stride
+          - burn-in, correlation time, effective sample size, and convergence criteria
+          - replica heterogeneity and sensitivity analyses
+
+  cross_domain:
+    applicability_rule: Domain trigger cross_domain is present.
+    sections:
+      - id: cross_domain_alignment
+        order: 510
+        title: Cross-domain identity, condition, and scale alignment
+        required_record_classes:
+          - entity and version mappings
+          - construct and sequence alignment
+          - condition, dose, temporal, and spatial alignment
+          - mapping evidence, assumptions, and limitations
+      - id: cross_domain_argument
+        order: 520
+        title: Cross-domain argument and bridge validity
+        required_record_classes:
+          - cross-domain bridges
+          - enabled argument steps
+          - bridge validity and human review state
+          - alternative explanations and failed bridges
+
+release_minimum_semantics:
+  covered: coverage_status must be covered.
+  covered_or_no_records: coverage_status may be covered or no_records.
+  covered_or_explicitly_limited: coverage_status may be covered or partial only when limitations are explicit and no release blocker depends on missing material; authoritative completeness wording remains prohibited unless source coverage proves it.
+  rule: not_applicable is accepted only when section applicability is not_applicable under a valid rule.
+
+conformance_rules:
+  MNF001:
+    condition: A manifest section is absent from SectionCoverage.
+    outcome: blocker
+  MNF002:
+    condition: Section applicability and coverage status form an invalid combination.
+    outcome: blocker
+  MNF003:
+    condition: covered or no_records lacks the required source-accounting evidence.
+    outcome: blocker
+  MNF004:
+    condition: A full archive silently omits a section heading or status.
+    outcome: blocker
+  MNF005:
+    condition: A domain trigger exists but the module or its sections are absent.
+    outcome: blocker
