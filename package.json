@@ -4,6 +4,14 @@
   "private": false,
   "description": "Provider-neutral, evidence-led scientific reporting prompts, schemas, validation, and offline HTML console",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SandyGan/scientific-report-console.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SandyGan/scientific-report-console/issues"
+  },
+  "homepage": "https://github.com/SandyGan/scientific-report-console#readme",
   "keywords": [
     "scientific-reporting",
     "reproducibility",
