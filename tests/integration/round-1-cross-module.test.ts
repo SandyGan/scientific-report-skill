@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 const PROJECT_ROOT = fileURLToPath(new URL("../../", import.meta.url));
 const CLI = path.join(PROJECT_ROOT, "src/cli/index.ts");
-const TSX = path.join(PROJECT_ROOT, "node_modules/.bin/tsx");
+const TSX_CLI = path.join(PROJECT_ROOT, "node_modules", "tsx", "dist", "cli.mjs");
 const temporaryRoots: string[] = [];
 
 async function temporaryDirectory(label: string): Promise<string> {
@@ -19,7 +19,7 @@ async function temporaryDirectory(label: string): Promise<string> {
 
 async function runCli(args: string[], cwd: string): Promise<{ code: number; stdout: string; stderr: string }> {
   return new Promise((resolve) => {
-    execFile(TSX, [CLI, ...args], { cwd, timeout: 120_000, maxBuffer: 16 * 1024 * 1024 }, (error, stdout, stderr) => {
+    execFile(process.execPath, [TSX_CLI, CLI, ...args], { cwd, timeout: 120_000, maxBuffer: 16 * 1024 * 1024 }, (error, stdout, stderr) => {
       const code = error === null
         ? 0
         : typeof (error as NodeJS.ErrnoException & { code?: unknown }).code === "number"
@@ -128,7 +128,7 @@ describe("round-1 cross-module command and packaging contracts", () => {
   it("[PT-08] gives packed consumers an installable tarball workflow rather than a missing-lockfile command", async () => {
     const readme = await readFile(path.join(PROJECT_ROOT, "README.md"), "utf8");
     expect(readme).not.toContain("npm ci");
-    expect(readme).toContain("npm install ../scientific-report-console-0.1.0.tgz");
+    expect(readme).toContain("npm install ../scientific-report-console-0.1.1.tgz");
     expect(readme).toContain("npx scientific-report-console --help");
   });
 });

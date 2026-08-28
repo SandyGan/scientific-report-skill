@@ -50,7 +50,7 @@ interface DisclosureValidationInput {
   projection: DisclosureProjectionRecord;
 }
 
-const DEFAULT_VERSION = "0.1.0";
+const DEFAULT_VERSION = "0.1.1";
 const AUTHORING_FILE = "authoring-input.json";
 
 class CliError extends Error {

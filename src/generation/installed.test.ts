@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 const exec = promisify(execFile);
 const PROJECT_ROOT = fileURLToPath(new URL("../..", import.meta.url));
+const TSC = join(PROJECT_ROOT, "node_modules", "typescript", "bin", "tsc");
 const temporaryRoots: string[] = [];
 
 async function temporaryRoot(): Promise<string> {
@@ -25,7 +26,7 @@ describe("installed generation package subpath", () => {
     const root = await temporaryRoot();
     const packageRoot = join(root, "package-source");
     await mkdir(packageRoot, { recursive: true });
-    await exec(join(PROJECT_ROOT, "node_modules", ".bin", "tsc"), [
+    await exec(process.execPath, [TSC,
       "-p", join(PROJECT_ROOT, "tsconfig.json"),
       "--outDir", join(packageRoot, "dist"),
       "--rootDir", join(PROJECT_ROOT, "src"),
@@ -37,7 +38,7 @@ describe("installed generation package subpath", () => {
     for (const path of ["package.json", "VERSION"]) await cp(join(PROJECT_ROOT, path), join(packageRoot, path));
 
     await exec("npm", ["pack", "--ignore-scripts", "--pack-destination", root], { cwd: packageRoot });
-    const tarball = join(root, "scientific-report-console-0.1.0.tgz");
+    const tarball = join(root, "scientific-report-console-0.1.1.tgz");
     const consumer = join(root, "consumer");
     const modules = join(consumer, "node_modules");
     await mkdir(modules, { recursive: true });

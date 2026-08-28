@@ -16,7 +16,7 @@ registered sources and run records
   -> manifest-bound report bundle
 ```
 
-Version 0.1.0 is a release candidate with automated implementation acceptance. Treat prompt output, rendered pages, schema acceptance, and validation results as review aids—not as proof that a scientific statement is true or that a particular scientific report is ready for publication.
+Version 0.1.1 is a release candidate with automated implementation acceptance. Treat prompt output, rendered pages, schema acceptance, and validation results as review aids—not as proof that a scientific statement is true or that a particular scientific report is ready for publication.
 
 ## Project identity
 
@@ -66,7 +66,7 @@ Install a packed release as a consumer (replace the tarball name with the file p
 ```bash
 mkdir scientific-report-console-consumer && cd scientific-report-console-consumer
 npm init -y
-npm install ../scientific-report-console-0.1.0.tgz
+npm install ../scientific-report-console-0.1.1.tgz
 npx scientific-report-console --help
 ```
 
@@ -91,7 +91,7 @@ Install the release tarball in a small consumer project, render the checked-in c
 ```bash
 mkdir scientific-report-console-consumer && cd scientific-report-console-consumer
 npm init -y
-npm install ../scientific-report-console-0.1.0.tgz
+npm install ../scientific-report-console-0.1.1.tgz
 
 npx scientific-report-console demo --release-only --out scientific-report-demo
 npx scientific-report-console verify scientific-report-demo

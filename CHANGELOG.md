@@ -4,12 +4,18 @@ All notable changes to Scientific Report Console are documented in this file. Th
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-08-28
+
+### Fixed
+
+- Made clean-package and end-to-end CLI tests cross-platform by starting the TypeScript and tsx JavaScript entry points through Node.js instead of invoking POSIX-only `.bin` paths.
+
+## [0.1.0] - 2026-08-28
+
 ### Changed
 
 - Established `scientific-report-console` as the canonical repository, source-directory, npm-package, and CLI name.
 - Retained `report-prompt` as a 0.1.x CLI compatibility alias and preserved the versioned `report_prompt.*` and `report-prompt.org` machine-contract namespaces.
-
-## [0.1.0] - 2026-08-28
 
 ### Added
 

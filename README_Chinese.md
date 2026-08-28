@@ -16,7 +16,7 @@
   -> 由清单约束的报告包
 ```
 
-0.1.0 版本是已经通过自动化实现验收的发布候选。提示词输出、渲染页面、Schema 验收结果和验证结果都只能作为评审辅助，不能据此证明某项科学陈述为真，也不能据此认定某份具体科研报告已经适合发表。
+0.1.1 版本是已经通过自动化实现验收的发布候选。提示词输出、渲染页面、Schema 验收结果和验证结果都只能作为评审辅助，不能据此证明某项科学陈述为真，也不能据此认定某份具体科研报告已经适合发表。
 
 ## 项目标识
 
@@ -66,7 +66,7 @@
 ```bash
 mkdir scientific-report-console-consumer && cd scientific-report-console-consumer
 npm init -y
-npm install ../scientific-report-console-0.1.0.tgz
+npm install ../scientific-report-console-0.1.1.tgz
 npx scientific-report-console --help
 ```
 
@@ -91,7 +91,7 @@ npx scientific-report-console --help
 ```bash
 mkdir scientific-report-console-consumer && cd scientific-report-console-consumer
 npm init -y
-npm install ../scientific-report-console-0.1.0.tgz
+npm install ../scientific-report-console-0.1.1.tgz
 
 npx scientific-report-console demo --release-only --out scientific-report-demo
 npx scientific-report-console verify scientific-report-demo

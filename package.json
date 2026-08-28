@@ -1,6 +1,6 @@
 {
   "name": "scientific-report-console",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": false,
   "description": "Provider-neutral, evidence-led scientific reporting prompts, schemas, validation, and offline HTML console",
   "license": "Apache-2.0",
