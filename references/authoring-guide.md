@@ -4,7 +4,7 @@ This guide describes how to assemble a report without converting missing informa
 
 ## Contract-coherence preflight
 
-Before authoring, inspect `reviews/zero-based/INTEGRATION_BLOCKERS.md` for the closure record and check whether any later change reintroduced a protocol/schema/runtime disagreement. The active v1 surfaces use one vocabulary for public-withheld provenance, applicability decisions, source coverage, attempt/segment outcomes, result axes, claim graphs, reproducibility units, validation hash basis, and human-review outcomes. This alignment does not establish that a particular payload is scientifically correct or release-ready.
+Before authoring, inspect `references/legacy-toolchain-reviews/INTEGRATION_BLOCKERS.md` for the closure record and check whether any later change reintroduced a protocol/schema/runtime disagreement. The active v1 surfaces use one vocabulary for public-withheld provenance, applicability decisions, source coverage, attempt/segment outcomes, result axes, claim graphs, reproducibility units, validation hash basis, and human-review outcomes. This alignment does not establish that a particular payload is scientifically correct or release-ready.
 
 If an applicable mismatch remains:
 

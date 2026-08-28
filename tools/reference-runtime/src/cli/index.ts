@@ -50,7 +50,7 @@ interface DisclosureValidationInput {
   projection: DisclosureProjectionRecord;
 }
 
-const DEFAULT_VERSION = "0.2.0-dev";
+const DEFAULT_VERSION = "0.2.0";
 const AUTHORING_FILE = "authoring-input.json";
 
 class CliError extends Error {
@@ -636,7 +636,7 @@ async function explainRule(ruleCode: string | undefined, jsonOutput: boolean): P
     for (const rule of rules) {
       process.stdout.write(`- ${stringField(rule.id, "UNKNOWN")}: ${stringField(rule.title, "Untitled rule")} [${stringField(rule.severity, "unspecified")}]\n`);
     }
-    process.stdout.write("\nRun 'scientific-report-console explain <RULE_CODE>' for condition and remediation details.\n");
+    process.stdout.write("\nRun 'scientific-report-reference explain <RULE_CODE>' for condition and remediation details.\n");
     return;
   }
 
@@ -651,8 +651,8 @@ async function explainRule(ruleCode: string | undefined, jsonOutput: boolean): P
     throw new CliError(`Rule code not found: ${ruleCode}`, {
       hint:
         suggestions.length > 0
-          ? `Related codes: ${suggestions.join(", ")}. Run 'scientific-report-console explain' to list all rules.`
-          : "Run 'scientific-report-console explain' to list all registered rule codes.",
+          ? `Related codes: ${suggestions.join(", ")}. Run 'scientific-report-reference explain' to list all rules.`
+          : "Run 'scientific-report-reference explain' to list all registered rule codes.",
     });
   }
   if (jsonOutput) {

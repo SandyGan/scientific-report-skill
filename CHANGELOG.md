@@ -2,7 +2,7 @@
 
 All notable changes to Scientific Report Skill are documented here.
 
-## [Unreleased]
+## [0.2.0] - 2026-08-28
 
 ### Changed
 

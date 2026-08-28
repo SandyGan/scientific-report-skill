@@ -18,7 +18,7 @@ A value being accepted by a schema does not make it scientifically correct. Conv
 
 ### Contract alignment status
 
-The zero-based gaps recorded during parallel implementation have been reconciled in the active contract surfaces. The schema now represents public-withheld provenance, authority-bounded source coverage, canonical attempt/segment outcomes, orthogonal result axes, versioned claim/argument/bridge/conflict records, scoped reproducibility levels, and explicit applicability decisions without draft aliases. `reviews/zero-based/INTEGRATION_BLOCKERS.md` records the closure evidence and retained limitations.
+The zero-based gaps recorded during parallel implementation have been reconciled in the active contract surfaces. The schema now represents public-withheld provenance, authority-bounded source coverage, canonical attempt/segment outcomes, orthogonal result axes, versioned claim/argument/bridge/conflict records, scoped reproducibility levels, and explicit applicability decisions without draft aliases. `references/legacy-toolchain-reviews/INTEGRATION_BLOCKERS.md` records the closure evidence and retained limitations.
 
 The common envelope permits `unknown` provenance to be `complete`, `partial`, or `absent`. Every `not_applicable` envelope carries an `applicability_decision_id`; root `applicability_decisions` records identify the rule, target, evaluated context, evidence, result, and decision time. Public `withheld` envelopes require null values and, under semantic validation, absent public provenance with no protected source or derivation bindings.
 

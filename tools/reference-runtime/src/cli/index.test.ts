@@ -118,8 +118,8 @@ describe("CLI render eligibility", () => {
   });
 
   it("recognizes an installed package-bin symlink as direct execution", async () => {
-    const directory = await mkdtemp(join(tmpdir(), "scientific-report-console-cli-"));
-    const link = join(directory, "scientific-report-console");
+    const directory = await mkdtemp(join(tmpdir(), "scientific-report-reference-cli-"));
+    const link = join(directory, "scientific-report-reference");
     try {
       await symlink(fileURLToPath(new URL("./index.ts", import.meta.url)), link);
       await expect(isDirectCliInvocation(link)).resolves.toBe(true);
@@ -129,7 +129,7 @@ describe("CLI render eligibility", () => {
   });
 
   it("[RR-HR-001] fails API and default CLI release verification for an exactly bound human block", async () => {
-    const root = await mkdtemp(join(tmpdir(), "scientific-report-console-human-block-"));
+    const root = await mkdtemp(join(tmpdir(), "scientific-report-reference-human-block-"));
     let restoreStdout: (() => void) | undefined;
     try {
       const fixture = await createExactlyBoundBlockedReview(root);
@@ -156,7 +156,7 @@ describe("CLI render eligibility", () => {
       restoreStdout = () => stdout.mockRestore();
       const cliCode = await runCli([
         "node",
-        "scientific-report-console",
+        "scientific-report-reference",
         "bundle",
         fixture.renderedDirectory,
         "--out",

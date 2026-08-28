@@ -13,13 +13,13 @@
 In addition to the shared core contract data, the orchestrator must supply:
 
 - `stage: "S3_normalization"` and a non-null `normalization_route` conforming to the request schema.
-- Deterministic implementation tuple `normalizer:canonical-s2-exchange` / `1.0.0` / exported `S3_NORMALIZER_HASH` and profile tuple `normalization-profile:s2-preserving-v1` / `1.0.0` / exported `S3_PROFILE_HASH` from the installed `scientific-report-console/generation` API. Callers resolve the tuple with `resolveGenerationProfile`; no caller-supplied profile body or unpinned fallback is executable.
+- Deterministic implementation tuple `normalizer:canonical-s2-exchange` / `1.0.0` / exported `S3_NORMALIZER_HASH` and profile tuple `normalization-profile:s2-preserving-v1` / `1.0.0` / exported `S3_PROFILE_HASH` from the optional `scientific-report-reference-runtime/generation` API under `tools/reference-runtime/`. Callers resolve the tuple with `resolveGenerationProfile`; no caller-supplied profile body or unpinned fallback is executable.
 - Input response ID/hash plus exact source schema ID/version.
 - Canonical scientific-report target schema ID/version and `validation_mode: "validate_input_and_output"`.
 - Target-schema-valid permitted patch roots, accepted state, ID registry, disclosure level, and initial or verified continuation lineage.
 - The complete input response bytes. References, IDs, or hashes without the bytes are insufficient for normalization.
 
-This route is never sent to a language model. The installed `normalizeS2Response` implementation validates the full embedded S2 response, copies candidate operations plus attempt/failure/negative/exclusion/unreadable/conflict/missingness/review/provenance/continuation classes without deletion or synthesis, rebinds the S3 request identities, and runs the production exchange validator on its output. The executable normalizer and profile are selected only by the exact exported version/hash tuples.
+This route is never sent to a language model. When strict normalization is requested and the optional reference runtime is available, `normalizeS2Response` validates the full embedded S2 response, copies candidate operations plus attempt/failure/negative/exclusion/unreadable/conflict/missingness/review/provenance/continuation classes without deletion or synthesis, rebinds the S3 request identities, and runs the production exchange validator on its output. The executable normalizer and profile are selected only by the exact exported version/hash tuples.
 
 ## Structured outputs
 

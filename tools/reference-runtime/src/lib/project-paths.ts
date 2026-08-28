@@ -24,7 +24,7 @@ export function findProjectRoot(startDirectory: string): string {
     if (parent === current) break;
     current = parent;
   }
-  throw new Error(`Unable to locate Scientific Report Console project root from ${startDirectory}`);
+  throw new Error(`Unable to locate Scientific Report Skill project root from ${startDirectory}`);
 }
 
 export function defaultProjectRoot(): string {
@@ -34,7 +34,7 @@ export function defaultProjectRoot(): string {
 export function projectPaths(root = defaultProjectRoot()): ProjectPaths {
   const resolvedRoot = resolve(root);
   if (!isProjectRoot(resolvedRoot)) {
-    throw new Error(`Invalid Scientific Report Console project root: ${resolvedRoot}`);
+    throw new Error(`Invalid Scientific Report Skill project root: ${resolvedRoot}`);
   }
   return {
     root: resolvedRoot,
